@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
 import { persist } from 'zustand/middleware'
 import type {
   Workspace,
@@ -188,48 +189,62 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 // ─── Selectors ────────────────────────────────────────────────────────────────
 
 export const useCurrentWorkspace = () =>
-  useWorkspaceStore((s) =>
-    s.workspaces.find((ws) => ws.id === s.currentWorkspaceId) ?? null,
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.workspaces.find((ws) => ws.id === s.currentWorkspaceId) ?? null,
+    ),
   )
 
 export const useOrgProfile = (workspaceId: string) =>
-  useWorkspaceStore((s) =>
-    s.orgProfiles.find((p) => p.workspaceId === workspaceId) ?? null,
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.orgProfiles.find((p) => p.workspaceId === workspaceId) ?? null,
+    ),
   )
 
 export const useWorkspaceTrips = (workspaceId: string) =>
-  useWorkspaceStore((s) =>
-    s.trips
-      .filter((t) => t.workspaceId === workspaceId)
-      .sort((a, b) => b.date.localeCompare(a.date)),
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.trips
+        .filter((t) => t.workspaceId === workspaceId)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    ),
   )
 
 export const useTodayTrips = (workspaceId: string) => {
   const today = todayISO()
-  return useWorkspaceStore((s) =>
-    s.trips.filter((t) => t.workspaceId === workspaceId && t.date === today),
+  return useWorkspaceStore(
+    useShallow((s) =>
+      s.trips.filter((t) => t.workspaceId === workspaceId && t.date === today),
+    ),
   )
 }
 
 export const useWorkspaceDocuments = (workspaceId: string) =>
-  useWorkspaceStore((s) =>
-    s.documents.filter((d) => d.workspaceId === workspaceId),
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.documents.filter((d) => d.workspaceId === workspaceId),
+    ),
   )
 
 export const useUrgentDocuments = (workspaceId: string) =>
-  useWorkspaceStore((s) =>
-    s.documents.filter(
-      (d) =>
-        d.workspaceId === workspaceId &&
-        (d.status === 'required' || d.status === 'overdue'),
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.documents.filter(
+        (d) =>
+          d.workspaceId === workspaceId &&
+          (d.status === 'required' || d.status === 'overdue'),
+      ),
     ),
   )
 
 export const useWorkspaceEvents = (workspaceId: string) =>
-  useWorkspaceStore((s) =>
-    s.events
-      .filter((e) => e.workspaceId === workspaceId)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.events
+        .filter((e) => e.workspaceId === workspaceId)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    ),
   )
 
 export const useUnreadEventsCount = (workspaceId: string) =>
@@ -238,37 +253,47 @@ export const useUnreadEventsCount = (workspaceId: string) =>
   )
 
 export const useUrgentEvents = (workspaceId: string) =>
-  useWorkspaceStore((s) =>
-    s.events.filter(
-      (e) =>
-        e.workspaceId === workspaceId &&
-        !e.isRead &&
-        (e.severity === 'urgent' || e.severity === 'warning'),
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.events.filter(
+        (e) =>
+          e.workspaceId === workspaceId &&
+          !e.isRead &&
+          (e.severity === 'urgent' || e.severity === 'warning'),
+      ),
     ),
   )
 
 export const useWorkspaceReceipts = (workspaceId: string) =>
-  useWorkspaceStore((s) =>
-    s.receipts
-      .filter((r) => r.workspaceId === workspaceId)
-      .sort((a, b) => b.date.localeCompare(a.date)),
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.receipts
+        .filter((r) => r.workspaceId === workspaceId)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    ),
   )
 
 export const useTodayReceipts = (workspaceId: string) => {
   const today = todayISO()
-  return useWorkspaceStore((s) =>
-    s.receipts.filter((r) => r.workspaceId === workspaceId && r.date === today),
+  return useWorkspaceStore(
+    useShallow((s) =>
+      s.receipts.filter((r) => r.workspaceId === workspaceId && r.date === today),
+    ),
   )
 }
 
 export const useReceiptsByTrip = (tripId: string) =>
-  useWorkspaceStore((s) => s.receipts.filter((r) => r.tripId === tripId))
+  useWorkspaceStore(
+    useShallow((s) => s.receipts.filter((r) => r.tripId === tripId)),
+  )
 
 export const useReceiptsForPeriod = (workspaceId: string, fromDate: string, toDate: string) =>
-  useWorkspaceStore((s) =>
-    s.receipts
-      .filter((r) => r.workspaceId === workspaceId && r.date >= fromDate && r.date <= toDate)
-      .sort((a, b) => b.date.localeCompare(a.date)),
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.receipts
+        .filter((r) => r.workspaceId === workspaceId && r.date >= fromDate && r.date <= toDate)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    ),
   )
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
