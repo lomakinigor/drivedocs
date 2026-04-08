@@ -192,6 +192,17 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-QR02 — Receipt list and trip linking
+
+**Description:** Секция чеков за сегодня на TodayPage. Tap на чек открывает ReceiptDetailSheet с деталями и возможностью привязать чек к поездке (выбор из списка trips workspace). Привязка сохраняется через `attachReceiptToTrip(receiptId, tripId)`. TripDetailSheet показывает число привязанных чеков. Отвязка — действие в ReceiptDetailSheet.
+
+**Screens/Flows:** TodayPage (секция чеков), ReceiptDetailSheet (bottom sheet), TripDetailSheet (linked receipts block)
+**User Stories:** US-QR02, US-QR03
+**Tasks:** T-085, T-086, T-087, T-088
+**Status:** done
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |

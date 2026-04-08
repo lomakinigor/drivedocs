@@ -5,19 +5,23 @@ import { Card } from '@/shared/ui/components/Card'
 import { TripCard } from '@/features/trips/TripCard'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
 import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
-import { useTodayTrips } from '@/app/store/workspaceStore'
+import { ReceiptDetailSheet } from '@/features/receipts/ReceiptDetailSheet'
+import { useTodayTrips, useTodayReceipts } from '@/app/store/workspaceStore'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
-import type { Trip } from '@/entities/types/domain'
+import { RECEIPT_CATEGORY_LABELS } from '@/entities/constants/labels'
+import type { Trip, Receipt } from '@/entities/types/domain'
 
 export function TodayPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const id = workspaceId ?? ''
 
   const todayTrips = useTodayTrips(id)
+  const todayReceipts = useTodayReceipts(id)
   const openQuickTrip = useOpenQuickTrip()
   const [justAdded, setJustAdded] = useState(false)
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [showReceiptSheet, setShowReceiptSheet] = useState(false)
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null)
 
   // Show success banner when a new trip appears in today's list
   const prevCountRef = useRef(todayTrips.length)
@@ -110,6 +114,43 @@ export function TodayPage() {
           </div>
         )}
       </section>
+      {/* Receipts today */}
+      {todayReceipts.length > 0 && (
+        <section>
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            Чеки сегодня
+          </h2>
+          <div className="space-y-2">
+            {todayReceipts.map((receipt) => (
+              <button
+                key={receipt.id}
+                onClick={() => setSelectedReceipt(receipt)}
+                className="w-full text-left"
+              >
+                <Card className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-50 rounded-xl shrink-0">
+                      <Receipt size={16} className="text-green-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {receipt.amount.toLocaleString('ru-RU')} ₽
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {RECEIPT_CATEGORY_LABELS[receipt.category]}
+                      </p>
+                    </div>
+                    <span className={`text-xs font-medium shrink-0 ${receipt.tripId ? 'text-blue-500' : 'text-slate-400'}`}>
+                      {receipt.tripId ? 'К поездке' : 'Не привязан'}
+                    </span>
+                  </div>
+                </Card>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {selectedTrip && (
         <TripDetailSheet
           trip={selectedTrip}
@@ -121,6 +162,14 @@ export function TodayPage() {
         <QuickReceiptSheet
           workspaceId={id}
           onClose={() => setShowReceiptSheet(false)}
+        />
+      )}
+
+      {selectedReceipt && (
+        <ReceiptDetailSheet
+          receipt={selectedReceipt}
+          workspaceId={id}
+          onClose={() => setSelectedReceipt(null)}
         />
       )}
     </div>

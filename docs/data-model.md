@@ -267,11 +267,11 @@ interface Receipt {
 }
 ```
 
-**Relations:** принадлежит Workspace (workspaceId); опционально связан с Trip (tripId)
-**Used in:** QuickReceiptSheet, workspaceStore (`receipts[]`, `addReceipt`)
-**Used by Features:** F-QR01
-**Used by User Stories:** US-QR01
-**Note:** `tripId` и `imageUrl` — reserved для будущего расширения (F-017 full receipt capture). В MVP — опциональны и не отображаются.
+**Relations:** принадлежит Workspace (workspaceId); опционально связан с Trip (tripId — many-to-one)
+**Used in:** QuickReceiptSheet, ReceiptDetailSheet, TodayPage (today receipts), TripDetailSheet (linked receipts count), workspaceStore (`receipts[]`, `addReceipt`, `attachReceiptToTrip`, `detachReceiptFromTrip`)
+**Used by Features:** F-QR01, F-QR02
+**Used by User Stories:** US-QR01, US-QR02, US-QR03
+**Note:** `tripId` активно используется для привязки через `attachReceiptToTrip`. `imageUrl` — зарезервирован для F-017 (фото чека), не используется в текущем MVP.
 
 ---
 

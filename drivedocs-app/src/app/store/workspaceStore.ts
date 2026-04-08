@@ -55,6 +55,8 @@ interface WorkspaceStore {
   addEvent: (event: WorkspaceEvent) => void
   markEventRead: (id: string) => void
   addReceipt: (receipt: Receipt) => void
+  attachReceiptToTrip: (receiptId: string, tripId: string) => void
+  detachReceiptFromTrip: (receiptId: string) => void
   resetWorkspaceConfig: (workspaceId: string) => void
   setOnboarding: (state: OnboardingState | null) => void
   clearOnboarding: () => void
@@ -117,6 +119,22 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 
       addReceipt: (receipt) =>
         set((state) => ({ receipts: [receipt, ...state.receipts] })),
+
+      attachReceiptToTrip: (receiptId, tripId) =>
+        set((state) => ({
+          receipts: state.receipts.map((r) =>
+            r.id === receiptId ? { ...r, tripId } : r,
+          ),
+        })),
+
+      detachReceiptFromTrip: (receiptId) =>
+        set((state) => ({
+          receipts: state.receipts.map((r) => {
+            if (r.id !== receiptId) return r
+            const { tripId: _, ...rest } = r
+            return rest
+          }),
+        })),
 
       markEventRead: (id) =>
         set((state) => ({
@@ -228,6 +246,23 @@ export const useUrgentEvents = (workspaceId: string) =>
         (e.severity === 'urgent' || e.severity === 'warning'),
     ),
   )
+
+export const useWorkspaceReceipts = (workspaceId: string) =>
+  useWorkspaceStore((s) =>
+    s.receipts
+      .filter((r) => r.workspaceId === workspaceId)
+      .sort((a, b) => b.date.localeCompare(a.date)),
+  )
+
+export const useTodayReceipts = (workspaceId: string) => {
+  const today = todayISO()
+  return useWorkspaceStore((s) =>
+    s.receipts.filter((r) => r.workspaceId === workspaceId && r.date === today),
+  )
+}
+
+export const useReceiptsByTrip = (tripId: string) =>
+  useWorkspaceStore((s) => s.receipts.filter((r) => r.tripId === tripId))
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

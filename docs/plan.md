@@ -46,6 +46,27 @@
 
 ---
 
+## Phase 5.6 — Receipt list + trip linking (F-QR02)
+
+**Цель:** показать пользователю список чеков за сегодня; дать возможность привязать чек к поездке через ReceiptDetailSheet.
+
+**Задачи:** T-085, T-086, T-087, T-088
+
+**Затронутые файлы:**
+- `src/app/store/workspaceStore.ts` — add `attachReceiptToTrip`, `detachReceiptFromTrip`, selectors
+- `src/entities/constants/labels.ts` — add `RECEIPT_CATEGORY_LABELS`
+- `src/features/receipts/ReceiptDetailSheet.tsx` (новый)
+- `src/pages/TodayPage.tsx` — add today's receipts section
+- `src/features/trips/TripDetailSheet.tsx` — add linked receipts count
+
+**Acceptance:**
+- Чек появляется в секции TodayPage после сохранения.
+- Tap → ReceiptDetailSheet → видно статус привязки.
+- Можно выбрать поездку из списка → tripId сохраняется.
+- TripDetailSheet показывает число привязанных чеков.
+
+---
+
 ## Phase 6 — Monthly report (next)
 
 **Цель:** пользователь получает текстовый отчёт за месяц (поездки, пробег, маршруты) прямо с телефона и может скопировать его для отправки в бухгалтерию.

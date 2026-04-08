@@ -240,6 +240,38 @@ Self-contained bottom sheet по паттерну AddTripSheet. Поля: сум
 
 ---
 
+## Phase 5.6 — Receipt list + trip linking
+
+### T-085 — Receipt selectors + store actions for linking
+**Type:** impl | **Status:** done | **Owner:** AI
+Добавить в store: `attachReceiptToTrip(receiptId, tripId)`, `detachReceiptFromTrip(receiptId)`. Добавить селекторы: `useWorkspaceReceipts`, `useTodayReceipts`, `useReceiptsByTrip`. Добавить `RECEIPT_CATEGORY_LABELS` в labels.ts.
+**Files/Areas:** `src/app/store/workspaceStore.ts`, `src/entities/constants/labels.ts`
+**Links:** F-QR02, US-QR02, US-QR03
+**Acceptance:** `attachReceiptToTrip` обновляет `tripId` в store; `detachReceiptFromTrip` удаляет его. Селекторы возвращают корректно отфильтрованные receipts.
+
+### T-086 — ReceiptDetailSheet component
+**Type:** impl | **Status:** done | **Owner:** AI
+Self-contained bottom sheet. Показывает: сумму, категорию, дату, комментарий. Секция привязки: если есть `tripId` — показывает маршрут поездки + "Отвязать". Если нет — "Не привязан" + кнопка "Привязать к поездке". По нажатию разворачивается inline список поездок workspace для выбора.
+**Files/Areas:** `src/features/receipts/ReceiptDetailSheet.tsx` (новый)
+**Links:** F-QR02, US-QR03
+**Acceptance:** Tap "Привязать" → список поездок виден. Tap на поездку → `attachReceiptToTrip`, список схлопывается, показывается привязанная поездка. Tap "Отвязать" → `detachReceiptFromTrip`, возвращается "Не привязан".
+
+### T-087 — Today's receipts section in TodayPage
+**Type:** impl | **Status:** done | **Owner:** AI
+Добавить секцию "Чеки сегодня" на TodayPage — только при наличии чеков за сегодня. Каждая карточка: сумма, категория, статус привязки. Tap → ReceiptDetailSheet.
+**Files/Areas:** `src/pages/TodayPage.tsx`
+**Links:** F-QR02, US-QR02
+**Acceptance:** Секция появляется только если есть receipts за сегодня. Tap → ReceiptDetailSheet открывается. Нет чеков сегодня → секция не рендерится.
+
+### T-088 — Linked receipts count in TripDetailSheet
+**Type:** impl | **Status:** done | **Owner:** AI
+Добавить в TripDetailSheet MetaRow с числом привязанных чеков через `useReceiptsByTrip(trip.id)`. Показывать только если count > 0.
+**Files/Areas:** `src/features/trips/TripDetailSheet.tsx`
+**Links:** F-QR02, US-QR03
+**Acceptance:** TripDetailSheet с привязанными чеками показывает "Чеки: N". TripDetailSheet без чеков — строку не показывает.
+
+---
+
 ## Upcoming
 
 ### T-060 — Monthly trip report + clipboard export

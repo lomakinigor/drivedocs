@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { X, MapPin, Car, Calendar, Target, Trash2 } from 'lucide-react'
-import { useWorkspaceStore } from '@/app/store/workspaceStore'
+import { X, MapPin, Car, Calendar, Target, Trash2, Receipt } from 'lucide-react'
+import { useWorkspaceStore, useReceiptsByTrip } from '@/app/store/workspaceStore'
 import type { Trip } from '@/entities/types/domain'
 
 interface TripDetailSheetProps {
@@ -10,6 +10,7 @@ interface TripDetailSheetProps {
 
 export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
   const deleteTrip = useWorkspaceStore((s) => s.deleteTrip)
+  const linkedReceipts = useReceiptsByTrip(trip.id)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const handleDelete = () => {
@@ -93,6 +94,15 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
             <MetaRow icon={<Calendar size={15} className="text-slate-400" />} label="Дата">
               <span className="capitalize">{dateFormatted}</span>
             </MetaRow>
+            {linkedReceipts.length > 0 && (
+              <MetaRow icon={<Receipt size={15} className="text-slate-400" />} label="Чеки">
+                {linkedReceipts.length} {pluralReceipts(linkedReceipts.length)} ·{' '}
+                {linkedReceipts
+                  .reduce((sum, r) => sum + r.amount, 0)
+                  .toLocaleString('ru-RU')}{' '}
+                ₽
+              </MetaRow>
+            )}
           </div>
 
           {/* Delete section */}
@@ -134,7 +144,13 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
   )
 }
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function pluralReceipts(n: number): string {
+  if (n % 10 === 1 && n % 100 !== 11) return 'чек'
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'чека'
+  return 'чеков'
+}
 
 function MetaRow({
   icon,

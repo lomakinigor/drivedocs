@@ -1,4 +1,4 @@
-import type { EntityType, TaxMode, VehicleUsageModel } from '../types/domain'
+import type { EntityType, TaxMode, VehicleUsageModel, ReceiptCategory } from '../types/domain'
 
 export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
   IP: 'ИП',
@@ -25,6 +25,14 @@ export const TAX_MODE_DESCRIPTIONS: Record<TaxMode, string> = {
   USN_INCOME_MINUS_EXPENSES: 'Упрощёнка: налог 15% с прибыли',
   PATENT: 'Фиксированный патентный налог',
   ESHN: 'Единый сельскохозяйственный налог',
+}
+
+export const RECEIPT_CATEGORY_LABELS: Record<ReceiptCategory, string> = {
+  fuel: 'Топливо',
+  parking: 'Парковка',
+  repair: 'Ремонт',
+  wash: 'Мойка',
+  other: 'Другое',
 }
 
 export const VEHICLE_USAGE_MODEL_DESCRIPTIONS: Record<VehicleUsageModel, string> = {
