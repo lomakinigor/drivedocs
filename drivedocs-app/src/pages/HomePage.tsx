@@ -1,0 +1,324 @@
+import { useState } from 'react'
+import { ArrowRight, FileText, AlertTriangle, Car, Plus, Settings, TrendingUp } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Badge } from '@/shared/ui/components/Badge'
+import { Card } from '@/shared/ui/components/Card'
+import { TripCard } from '@/features/trips/TripCard'
+import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
+import { DocumentDetailSheet } from '@/features/documents/DocumentDetailSheet'
+import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
+import { useCurrentWorkspace } from '@/app/store/workspaceStore'
+import { useHomeData } from '@/features/home/useHomeData'
+import { TAX_MODE_LABELS, VEHICLE_USAGE_MODEL_LABELS } from '@/entities/constants/labels'
+import type { MonthlyStats } from '@/features/home/useHomeData'
+import type { Trip, WorkspaceDocument, WorkspaceEvent } from '@/entities/types/domain'
+
+export function HomePage() {
+  const { workspaceId } = useParams<{ workspaceId: string }>()
+  const id = workspaceId ?? ''
+
+  const workspace = useCurrentWorkspace()
+  const data = useHomeData(id)
+  const navigate = useNavigate()
+  const openQuickTrip = useOpenQuickTrip()
+  const [selectedDoc, setSelectedDoc] = useState<WorkspaceDocument | null>(null)
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
+
+  if (!workspace) return null
+
+  // ── Guard: workspace not fully configured ─────────────────────────────────
+  if (!data.isConfigured) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full px-6 text-center py-16">
+        <div className="w-16 h-16 rounded-3xl bg-slate-100 flex items-center justify-center mb-5">
+          <Settings size={28} className="text-slate-400" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900 mb-2">Настройка не завершена</h2>
+        <p className="text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
+          Укажите налоговый режим и правовую модель, чтобы приложение смогло настроить
+          документы и подсказки.
+        </p>
+        <button
+          onClick={() => navigate('/onboarding')}
+          className="bg-blue-600 text-white text-sm font-semibold px-6 py-3 rounded-2xl active:bg-blue-700"
+        >
+          Завершить настройку
+        </button>
+      </div>
+    )
+  }
+
+  const attentionCount = data.urgentDocs.length + data.urgentEvents.length
+
+  return (
+    <div className="px-4 py-5 space-y-5">
+      {/* ── Config strip ─────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Badge variant="blue">{TAX_MODE_LABELS[workspace.taxMode]}</Badge>
+        <Badge variant="slate">{VEHICLE_USAGE_MODEL_LABELS[workspace.vehicleUsageModel]}</Badge>
+      </div>
+
+      {/* ── Today CTA — only when no trips logged today ──────────────────── */}
+      {!data.hasTodayTrips && (
+        <TodayCta onAdd={openQuickTrip} />
+      )}
+
+      {/* ── Monthly stats ────────────────────────────────────────────────── */}
+      <MonthlyStatsSection stats={data.monthlyStats} />
+
+      {/* ── Attention items ──────────────────────────────────────────────── */}
+      {attentionCount > 0 && (
+        <AttentionSection
+          docs={data.urgentDocs}
+          events={data.urgentEvents}
+          workspaceId={id}
+          onOpenDoc={setSelectedDoc}
+        />
+      )}
+
+      {/* ── Recent trips ─────────────────────────────────────────────────── */}
+      <RecentTripsSection
+        trips={data.recentTrips}
+        workspaceId={id}
+        onAdd={openQuickTrip}
+        onOpen={setSelectedTrip}
+      />
+
+      {selectedDoc && (
+        <DocumentDetailSheet
+          doc={selectedDoc}
+          onClose={() => setSelectedDoc(null)}
+        />
+      )}
+
+      {selectedTrip && (
+        <TripDetailSheet
+          trip={selectedTrip}
+          onClose={() => setSelectedTrip(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Sub-sections ─────────────────────────────────────────────────────────────
+// These are file-private components — used only by HomePage.
+
+function TodayCta({ onAdd }: { onAdd: () => void }) {
+  return (
+    <button
+      onClick={onAdd}
+      className="flex items-center gap-3 w-full bg-blue-600 text-white rounded-2xl px-4 py-3.5 text-left active:bg-blue-700 transition-colors"
+    >
+      <div className="p-2 bg-white/20 rounded-xl shrink-0">
+        <Car size={20} className="text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold leading-snug">Добавить поездку</p>
+        <p className="text-xs text-blue-100 mt-0.5">Сегодня поездок ещё нет</p>
+      </div>
+      <Plus size={20} className="text-white/70 shrink-0" />
+    </button>
+  )
+}
+
+function MonthlyStatsSection({ stats }: { stats: MonthlyStats }) {
+  return (
+    <section>
+      <div className="flex items-center gap-1.5 mb-2">
+        <TrendingUp size={13} className="text-slate-400" />
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          За {stats.monthLabel}
+        </h2>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <StatTile
+          value={String(stats.tripCount)}
+          label="поездок"
+          isEmpty={stats.tripCount === 0}
+        />
+        <StatTile
+          value={stats.totalKm % 1 === 0 ? String(stats.totalKm) : stats.totalKm.toFixed(1)}
+          label="км"
+          isEmpty={stats.totalKm === 0}
+        />
+      </div>
+    </section>
+  )
+}
+
+function StatTile({
+  value,
+  label,
+  isEmpty,
+}: {
+  value: string
+  label: string
+  isEmpty: boolean
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5">
+      <p
+        className={`text-2xl font-bold leading-none ${
+          isEmpty ? 'text-slate-200' : 'text-slate-900'
+        }`}
+      >
+        {value}
+      </p>
+      <p className="text-xs text-slate-500 mt-1">{label}</p>
+    </div>
+  )
+}
+
+function AttentionSection({
+  docs,
+  events,
+  workspaceId,
+  onOpenDoc,
+}: {
+  docs: WorkspaceDocument[]
+  events: WorkspaceEvent[]
+  workspaceId: string
+  onOpenDoc: (doc: WorkspaceDocument) => void
+}) {
+  // Show at most 3 total (docs first, then events)
+  const MAX = 3
+  const shownDocs = docs.slice(0, MAX)
+  const remaining = MAX - shownDocs.length
+  const shownEvents = events.slice(0, remaining)
+  const totalCount = docs.length + events.length
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Требуют внимания
+        </h2>
+        {totalCount > MAX && (
+          <Link
+            to={`/w/${workspaceId}/events`}
+            className="text-xs text-blue-600 font-medium flex items-center gap-0.5"
+          >
+            Все <ArrowRight size={12} />
+          </Link>
+        )}
+      </div>
+      <div className="space-y-2">
+        {shownDocs.map((doc) => (
+          <button
+            key={doc.id}
+            onClick={() => onOpenDoc(doc)}
+            className="w-full text-left"
+          >
+            <Card className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-red-50 rounded-xl shrink-0">
+                  <FileText size={18} className="text-red-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-900 leading-snug">{doc.title}</p>
+                  {doc.dueDate && (
+                    <p className="text-xs text-red-500 mt-0.5">
+                      До{' '}
+                      {new Date(doc.dueDate).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                      })}
+                    </p>
+                  )}
+                </div>
+                <span className="text-xs text-blue-600 font-medium shrink-0 mt-0.5">
+                  Открыть →
+                </span>
+              </div>
+            </Card>
+          </button>
+        ))}
+
+        {shownEvents.map((event) => (
+          <Card key={event.id} className="p-4">
+            <div className="flex items-start gap-3">
+              <div
+                className={`p-2 rounded-xl shrink-0 ${
+                  event.severity === 'urgent' ? 'bg-red-50' : 'bg-yellow-50'
+                }`}
+              >
+                <AlertTriangle
+                  size={18}
+                  className={
+                    event.severity === 'urgent' ? 'text-red-500' : 'text-yellow-500'
+                  }
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-900 leading-snug">{event.title}</p>
+                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{event.description}</p>
+              </div>
+              <Link
+                to={`/w/${workspaceId}/events`}
+                className="text-xs text-blue-600 font-medium shrink-0 mt-0.5"
+              >
+                →
+              </Link>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function RecentTripsSection({
+  trips,
+  workspaceId,
+  onAdd,
+  onOpen,
+}: {
+  trips: ReturnType<typeof useHomeData>['recentTrips']
+  workspaceId: string
+  onAdd: () => void
+  onOpen: (trip: Trip) => void
+}) {
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Последние поездки
+        </h2>
+        {trips.length > 0 && (
+          <Link
+            to={`/w/${workspaceId}/trips`}
+            className="text-xs text-blue-600 font-medium flex items-center gap-0.5"
+          >
+            Все <ArrowRight size={12} />
+          </Link>
+        )}
+      </div>
+
+      {trips.length === 0 ? (
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-50 rounded-xl shrink-0">
+              <Car size={18} className="text-slate-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-slate-500">Поездок пока нет</p>
+              <button
+                onClick={onAdd}
+                className="text-xs text-blue-600 font-medium mt-0.5"
+              >
+                Записать первую поездку →
+              </button>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {trips.map((trip) => (
+            <TripCard key={trip.id} trip={trip} showDate onClick={() => onOpen(trip)} />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
