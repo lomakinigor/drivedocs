@@ -73,22 +73,22 @@
 
 ---
 
-## Feature references
+## Related Features
 
-| Feature | ID |
-|---------|-----|
-| Multi-workspace model | F-001 |
-| Onboarding wizard | F-002 |
-| Quick trip entry (global) | F-003 |
-| Trip list & history | F-004 |
-| Trip detail + delete | F-005 |
-| Document center | F-006 |
-| Document detail + status actions | F-007 |
-| Event feed | F-008 |
-| Event detail + mark read | F-009 |
-| Home dashboard | F-010 |
-| Today journal | F-011 |
-| Attention layer (home) | F-012 |
-| Workspace settings | F-013 |
-| Notifications mini-feed | F-014 |
-| Workspace switcher | F-015 |
+Full details in `docs/features.md`.
+
+- F-001 — Multi-workspace model
+- F-002 — Onboarding wizard
+- F-003 — Quick trip entry (global)
+- F-004 — Trip list & history
+- F-005 — Trip detail + delete
+- F-006 — Document center
+- F-007 — Document detail + status actions
+- F-008 — Event feed
+- F-009 — Event detail + mark read
+- F-010 — Home dashboard
+- F-011 — Today journal
+- F-012 — Attention layer (home)
+- F-013 — Workspace settings
+- F-014 — Notifications mini-feed
+- F-015 — Workspace switcher
