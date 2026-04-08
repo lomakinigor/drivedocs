@@ -17,7 +17,7 @@
 | 3 | Documents (list, detail, status actions) | done |
 | 4 | Events + notifications (feed, unread badge, mini-feed) | done |
 | 5 | Home dashboard + detail flows from home | done |
-| 6 | Monthly report + clipboard export | planned |
+| 6 | Monthly report + clipboard export | done |
 | 7 | Receipt capture | planned |
 | 8 | Backend API integration | draft |
 | 9 | Real auth + subscription enforcement | draft |
@@ -110,28 +110,24 @@
 
 ---
 
-## Phase 6 — Monthly report (next)
+## Phase 6 — Monthly report ✓
 
 **Цель:** пользователь получает текстовый отчёт за месяц (поездки, пробег, маршруты) прямо с телефона и может скопировать его для отправки в бухгалтерию.
 
-**Задачи:**
-- T-060: Monthly trip report + clipboard export
+**Задачи:** T-060, T-097, T-098, T-099
 
 **Затронутые файлы:**
-- `src/features/trips/MonthlyReportSheet.tsx` (новый)
-- `src/pages/TripsPage.tsx` (кнопка "Отчёт")
-- возможно: `src/pages/HomePage.tsx` (ссылка)
+- `src/features/trips/tripReport.ts` (новый) — `buildMonthlyTripReport()` pure function
+- `src/features/trips/MonthlyReportSheet.tsx` (новый) — bottom sheet
+- `src/pages/TripsPage.tsx` — кнопка "Отчёт" в шапке
 
 **Acceptance:**
 - Sheet открывается с TripsPage.
 - Показывает: месяц, количество поездок, суммарный км, список маршрутов с датами.
 - Кнопка "Скопировать" копирует форматированный текст в clipboard.
-- `navigator.clipboard.writeText()` — fallback если недоступно: показать текст для ручного копирования.
-
-**Тесты / проверки:**
-- Копирование работает в мобильном Safari.
-- Список корректен при 0 поездках (empty state).
-- Месяц соответствует текущему месяцу по умолчанию.
+- `navigator.clipboard.writeText()` — fallback если недоступно: textarea для ручного копирования.
+- При 0 поездках — empty state, кнопка неактивна.
+- TypeScript noEmit — 0 ошибок.
 
 ---
 

@@ -225,11 +225,21 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-016 — Monthly trip report + clipboard export
+
+**Description:** MonthlyReportSheet открывается с TripsPage по кнопке "Отчёт". Показывает сводку за текущий месяц: количество поездок, суммарный пробег, компактный список маршрутов с датами. Кнопка "Скопировать отчёт" формирует читаемый plain-text и копирует в clipboard через `navigator.clipboard.writeText()`. Если clipboard недоступен — fallback: textarea с текстом для ручного выделения. Пустое состояние при 0 поездках: кнопка копирования неактивна, список заменяется сообщением. Бизнес-логика форматирования текста вынесена в чистую функцию `buildMonthlyTripReport`.
+
+**Screens/Flows:** TripsPage (кнопка "Отчёт" в шапке), MonthlyReportSheet (bottom sheet)
+**User Stories:** US-016
+**Tasks:** T-060, T-097, T-098, T-099
+**Status:** done
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |
 |----|----------|--------|
-| F-016 | Monthly trip report + clipboard export | planned |
 | F-017 | Receipt capture flow (full: photo, trip link) | in-dev → F-QR01 реализует MVP-часть |
 | F-018 | PDF путевых листов | draft |
 | F-019 | Push / email напоминания | draft |

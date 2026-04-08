@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Car, Plus } from 'lucide-react'
+import { Car, Plus, FileText } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { EmptyState } from '@/shared/ui/components/EmptyState'
 import { TripCard } from '@/features/trips/TripCard'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
+import { MonthlyReportSheet } from '@/features/trips/MonthlyReportSheet'
 import { useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import type { Trip } from '@/entities/types/domain'
@@ -15,6 +16,7 @@ export function TripsPage() {
   const trips = useWorkspaceTrips(id)
   const openQuickTrip = useOpenQuickTrip()
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
+  const [reportOpen, setReportOpen] = useState(false)
 
   const totalKm = trips.reduce((sum, t) => sum + t.distanceKm, 0)
 
@@ -30,13 +32,22 @@ export function TripsPage() {
               : 'Пока нет поездок'}
           </p>
         </div>
-        <button
-          onClick={openQuickTrip}
-          className="flex items-center gap-1.5 bg-blue-600 text-white text-sm font-medium px-3 py-2 rounded-xl active:bg-blue-700"
-        >
-          <Plus size={16} />
-          Добавить
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setReportOpen(true)}
+            className="flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 text-sm font-medium px-3 py-2 rounded-xl active:bg-slate-50"
+          >
+            <FileText size={16} />
+            Отчёт
+          </button>
+          <button
+            onClick={openQuickTrip}
+            className="flex items-center gap-1.5 bg-blue-600 text-white text-sm font-medium px-3 py-2 rounded-xl active:bg-blue-700"
+          >
+            <Plus size={16} />
+            Добавить
+          </button>
+        </div>
       </div>
 
       {/* List */}
@@ -66,6 +77,13 @@ export function TripsPage() {
         <TripDetailSheet
           trip={selectedTrip}
           onClose={() => setSelectedTrip(null)}
+        />
+      )}
+
+      {reportOpen && (
+        <MonthlyReportSheet
+          workspaceId={id}
+          onClose={() => setReportOpen(false)}
         />
       )}
     </div>
