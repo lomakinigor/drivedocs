@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "drivedocs",
+  "project_id": "2da2677d-ba66-48fa-8005-9f04a023374a"
+}
