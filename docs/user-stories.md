@@ -17,8 +17,8 @@ Status per story is derived from linked feature status.
 - Список документов соответствует выбранной конфигурации (тип + налоговый режим + модель авто).
 - Пользователь видит итоговый экран с кратким описанием своей схемы.
 
-**Связанные features:** F-001, F-002
-**Связанные tasks:** T-010, T-011
+**Features:** F-001, F-002
+**Tasks:** T-010, T-011
 
 ---
 
@@ -33,8 +33,8 @@ Status per story is derived from linked feature status.
 - Конфигурация workspace хранит тип, налоговый режим, модель авто.
 - Список документов отличается от ИП-конфигурации там, где есть отличия.
 
-**Связанные features:** F-001, F-002
-**Связанные tasks:** T-010, T-011
+**Features:** F-001, F-002
+**Tasks:** T-010, T-011
 
 ---
 
@@ -50,8 +50,8 @@ Status per story is derived from linked feature status.
 - Активный workspace отмечен визуально (checkmark).
 - Можно создать новый workspace прямо из switcher.
 
-**Связанные features:** F-001, F-015
-**Связанные tasks:** T-012
+**Features:** F-001, F-015
+**Tasks:** T-012
 
 ---
 
@@ -68,8 +68,8 @@ Status per story is derived from linked feature status.
 - На TodayPage появляется success banner "Поездка добавлена".
 - Создаётся событие `trip_logged` в ленте.
 
-**Связанные features:** F-003, F-011
-**Связанные tasks:** T-020, T-024, T-045
+**Features:** F-003, F-011
+**Tasks:** T-020, T-024, T-045
 
 ---
 
@@ -85,8 +85,8 @@ Status per story is derived from linked feature status.
 - Показывается общее количество поездок и суммарный пробег.
 - Пустое состояние с CTA если поездок нет.
 
-**Связанные features:** F-004
-**Связанные tasks:** T-022
+**Features:** F-004
+**Tasks:** T-022
 
 ---
 
@@ -102,8 +102,8 @@ Status per story is derived from linked feature status.
 - Кнопка "Удалить" требует подтверждения (inline confirm).
 - После удаления sheet закрывается, поездка исчезает из всех списков.
 
-**Связанные features:** F-005
-**Связанные tasks:** T-051, T-053
+**Features:** F-005
+**Tasks:** T-051, T-053
 
 ---
 
@@ -119,8 +119,8 @@ Status per story is derived from linked feature status.
 - Каждый документ имеет статус: Нужен / В работе / Готов / Просрочен.
 - Пустое состояние если документов нет (workspace не настроен или нет шаблонов).
 
-**Связанные features:** F-006
-**Связанные tasks:** T-031
+**Features:** F-006
+**Tasks:** T-031
 
 ---
 
@@ -136,8 +136,8 @@ Status per story is derived from linked feature status.
 - Кнопки: "Отметить как готовый", "Пометить В работе" (если не in_progress), "Отменить готовность" (если completed).
 - Изменение статуса мгновенно отражается в DocumentsPage и HomePage AttentionSection.
 
-**Связанные features:** F-007
-**Связанные tasks:** T-032, T-033, T-052
+**Features:** F-007
+**Tasks:** T-032, T-033, T-052
 
 ---
 
@@ -153,8 +153,8 @@ Status per story is derived from linked feature status.
 - Непрочитанные события визуально выделены.
 - Tap на событие открывает EventDetailSheet и помечает его прочитанным.
 
-**Связанные features:** F-008, F-009
-**Связанные tasks:** T-041, T-042
+**Features:** F-008, F-009
+**Tasks:** T-041, T-042
 
 ---
 
@@ -172,8 +172,8 @@ Status per story is derived from linked feature status.
 - Tap на документ → DocumentDetailSheet (без навигации).
 - Tap на событие → EventsPage.
 
-**Связанные features:** F-010, F-012
-**Связанные tasks:** T-050, T-052
+**Features:** F-010, F-012
+**Tasks:** T-050, T-052
 
 ---
 
@@ -189,8 +189,8 @@ Status per story is derived from linked feature status.
 - "Сбросить конфигурацию" требует подтверждения и устанавливает `isConfigured: false`.
 - После сброса при входе на HomePage показывается guard с CTA завершить настройку.
 
-**Связанные features:** F-001, F-013, F-015
-**Связанные tasks:** T-013
+**Features:** F-001, F-013, F-015
+**Tasks:** T-013
 
 ---
 
@@ -206,8 +206,8 @@ Status per story is derived from linked feature status.
 - Пустое состояние с CTA если поездок нет.
 - Tap на поездку → TripDetailSheet.
 
-**Связанные features:** F-011, F-003
-**Связанные tasks:** T-023, T-051
+**Features:** F-011, F-003
+**Tasks:** T-023, T-051
 
 ---
 
@@ -223,5 +223,5 @@ Status per story is derived from linked feature status.
 - Tap на событие в NotificationsSheet → помечает прочитанным, открывает EventDetailSheet.
 - Ссылка "Все события →" ведёт на EventsPage.
 
-**Связанные features:** F-009, F-014
-**Связанные tasks:** T-043, T-044
+**Features:** F-009, F-014
+**Tasks:** T-043, T-044

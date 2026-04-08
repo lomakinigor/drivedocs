@@ -12,16 +12,19 @@
 ```typescript
 interface User {
   id: string
-  name: string
   email: string
+  name: string
+  subscriptionStatus: SubscriptionStatus  // 'active' | 'trial' | 'expired' | 'none'
+  subscriptionExpiresAt?: string          // ISO date
+  createdAt: string
 }
 ```
 
-**Связи:** один пользователь → много Workspace
-**Используется в:** auth guard, MobileHeader (имя пользователя)
-**Фичи:** F-001
-**User stories:** US-001, US-002, US-011
-**Примечание:** В MVP `isAuthenticated: true` — хардкод. Реальный auth не реализован.
+**Relations:** один пользователь → много Workspace
+**Used in:** auth guard, MobileHeader (имя пользователя)
+**Used by Features:** F-001
+**Used by User Stories:** US-001, US-002, US-011
+**Note:** В MVP `isAuthenticated: true` — хардкод. `subscriptionStatus` присутствует в типе, но биллинг не реализован (F-020, planned).
 
 ---
 
@@ -30,19 +33,20 @@ interface User {
 ```typescript
 interface Workspace {
   id: string
-  name: string
-  entityType: EntityType           // 'ip' | 'ooo'
-  taxMode: TaxMode                 // 'osn' | 'usn_income' | 'usn_income_expense' | 'patent'
-  vehicleUsageModel: VehicleUsageModel  // 'compensation' | 'rent' | 'waybill'
-  isConfigured: boolean
-  createdAt: string                // ISO date
+  userId: string
+  name: string                          // e.g. "ИП Иванов А.В."
+  entityType: EntityType                // 'IP' | 'OOO'
+  taxMode: TaxMode                      // 'OSN' | 'USN_INCOME' | 'USN_INCOME_MINUS_EXPENSES' | 'PATENT' | 'ESHN'
+  vehicleUsageModel: VehicleUsageModel  // 'COMPENSATION' | 'RENT' | 'FREE_USE'
+  isConfigured: boolean                 // false until onboarding completed
+  createdAt: string                     // ISO date
 }
 ```
 
-**Связи:** принадлежит User; содержит Trip[], WorkspaceDocument[], WorkspaceEvent[]; имеет один OrganizationProfile
-**Используется в:** все страницы (workspace scoping по workspaceId в URL)
-**Фичи:** F-001, F-002, F-010, F-013, F-015
-**User stories:** US-001, US-002, US-003, US-011
+**Relations:** принадлежит User (userId); содержит Trip[], WorkspaceDocument[], WorkspaceEvent[]
+**Used in:** все страницы (workspace scoping по workspaceId в URL)
+**Used by Features:** F-001, F-002, F-010, F-013, F-015
+**Used by User Stories:** US-001, US-002, US-003, US-011
 
 ---
 
@@ -51,15 +55,19 @@ interface Workspace {
 ```typescript
 interface OrganizationProfile {
   workspaceId: string
-  inn: string                      // ИНН
-  vehicleModel: string             // Марка/модель автомобиля
+  entityType: EntityType
+  inn?: string               // ИНН
+  ogrn?: string              // ОГРН (для ООО)
+  organizationName?: string  // Наименование организации
+  ownerFullName?: string     // ФИО владельца (для ИП)
 }
 ```
 
-**Связи:** один-к-одному с Workspace (по workspaceId)
-**Используется в:** OnboardingWizard (создание), SettingsPage (отображение), resetWorkspaceConfig (удаление при сбросе)
-**Фичи:** F-002, F-013
-**User stories:** US-001, US-002, US-011
+**Relations:** один-к-одному с Workspace (по workspaceId)
+**Used in:** OnboardingWizard (создание), SettingsPage (отображение), resetWorkspaceConfig (удаление при сбросе)
+**Used by Features:** F-002, F-013
+**Used by User Stories:** US-001, US-002, US-011
+**Note:** `vehicleModel` не входит в OrganizationProfile — данные об автомобиле хранятся в отдельном `VehicleProfile`.
 
 ---
 
@@ -69,120 +77,196 @@ interface OrganizationProfile {
 interface Trip {
   id: string
   workspaceId: string
-  date: string                     // ISO date 'YYYY-MM-DD'
+  date: string          // ISO date 'YYYY-MM-DD'
   startLocation: string
   endLocation: string
   distanceKm: number
   purpose: string
+  notes?: string
+  createdAt: string
 }
 ```
 
-**Связи:** принадлежит Workspace (workspaceId)
-**Используется в:** TodayPage, TripsPage, HomePage (RecentTripsSection), TripDetailSheet, AddTripSheet
-**Фичи:** F-003, F-004, F-005, F-010, F-011
-**User stories:** US-004, US-005, US-006, US-012
+**Relations:** принадлежит Workspace (workspaceId)
+**Used in:** TodayPage, TripsPage, HomePage (RecentTripsSection), TripDetailSheet, AddTripSheet
+**Used by Features:** F-003, F-004, F-005, F-010, F-011
+**Used by User Stories:** US-004, US-005, US-006, US-012
 
 ---
 
 ## WorkspaceDocument
 
 ```typescript
+type DocumentType = 'one_time' | 'recurring'
+type DocumentStatus = 'required' | 'in_progress' | 'completed' | 'overdue'
+
 interface WorkspaceDocument {
   id: string
   workspaceId: string
-  templateKey: string              // ключ в documentHelp config
   title: string
   description?: string
-  type: 'one_time' | 'recurring'
-  status: DocumentStatus           // 'required' | 'in_progress' | 'completed' | 'overdue'
+  type: DocumentType
+  status: DocumentStatus
   dueDate?: string                 // ISO date
   completedAt?: string             // ISO date, заполняется при status='completed'
+  templateKey?: string             // опциональный ключ в documentHelp config
 }
-
-type DocumentStatus = 'required' | 'in_progress' | 'completed' | 'overdue'
 ```
 
-**Связи:** принадлежит Workspace (workspaceId); `templateKey` → `documentHelp.ts` (plain-language config)
-**Используется в:** DocumentsPage, DocumentDetailSheet, HomePage (AttentionSection)
-**Фичи:** F-006, F-007, F-012
-**User stories:** US-007, US-008, US-010
+**Relations:** принадлежит Workspace (workspaceId); `templateKey` → `documentHelp.ts` (plain-language config)
+**Used in:** DocumentsPage, DocumentDetailSheet, HomePage (AttentionSection)
+**Used by Features:** F-006, F-007, F-012
+**Used by User Stories:** US-007, US-008, US-010
 
 ---
 
 ## WorkspaceEvent
 
 ```typescript
+type EventType = 'fine' | 'reminder' | 'document_due' | 'system' | 'trip_logged' | 'receipt_added'
+type EventSeverity = 'info' | 'warning' | 'urgent'
+
 interface WorkspaceEvent {
   id: string
   workspaceId: string
-  type: EventType                  // 'trip_logged' | 'document_reminder' | 'fine' | 'system'
+  type: EventType
   title: string
   description: string
-  date: string                     // ISO datetime
+  date: string              // ISO datetime
   isRead: boolean
-  severity: 'info' | 'warning' | 'urgent'
+  severity: EventSeverity
+  linkTo?: string           // optional deep link
 }
 ```
 
-**Связи:** принадлежит Workspace (workspaceId)
-**Используется в:** EventsPage, EventDetailSheet, NotificationsSheet, BottomNav (unread badge), HomePage (AttentionSection)
-**Фичи:** F-008, F-009, F-012, F-014
-**User stories:** US-009, US-010, US-013
+**Relations:** принадлежит Workspace (workspaceId)
+**Used in:** EventsPage, EventDetailSheet, NotificationsSheet, BottomNav (unread badge), HomePage (AttentionSection)
+**Used by Features:** F-008, F-009, F-012, F-014
+**Used by User Stories:** US-009, US-010, US-013
 
 ---
 
 ## OnboardingState
 
 ```typescript
+type OnboardingStep =
+  | 'entity_type'
+  | 'workspace_name'
+  | 'inn'
+  | 'tax_mode'
+  | 'vehicle_model'
+  | 'summary'
+  | 'complete'
+
 interface OnboardingState {
-  step: number
+  step: OnboardingStep          // строковый union, не number
   entityType?: EntityType
-  taxMode?: TaxMode
-  vehicleUsageModel?: VehicleUsageModel
   workspaceName?: string
   inn?: string
-  vehicleModel?: string
+  taxMode?: TaxMode
+  vehicleUsageModel?: VehicleUsageModel
 }
 ```
 
-**Связи:** ephemeral; не сохраняется в persist; используется только во время wizard
-**Используется в:** OnboardingWizard
-**Фичи:** F-002
-**User stories:** US-001, US-002
+**Relations:** ephemeral; не сохраняется в persist; используется только во время wizard
+**Used in:** OnboardingWizard
+**Used by Features:** F-002
+**Used by User Stories:** US-001, US-002
 
 ---
 
 ## Enums
 
 ```typescript
-type EntityType = 'ip' | 'ooo'
+type EntityType = 'IP' | 'OOO'
 
-type TaxMode = 'osn' | 'usn_income' | 'usn_income_expense' | 'patent'
+type TaxMode = 'OSN' | 'USN_INCOME' | 'USN_INCOME_MINUS_EXPENSES' | 'PATENT' | 'ESHN'
 
-type VehicleUsageModel = 'compensation' | 'rent' | 'waybill'
+type VehicleUsageModel = 'COMPENSATION' | 'RENT' | 'FREE_USE'
+//  COMPENSATION — компенсация за использование личного авто
+//  RENT         — аренда авто у сотрудника/ИП
+//  FREE_USE     — договор безвозмездного пользования
 
-type EventType = 'trip_logged' | 'document_reminder' | 'fine' | 'system'
+type SubscriptionStatus = 'active' | 'trial' | 'expired' | 'none'
 ```
 
 ---
 
-## Planned entities (не реализованы в MVP)
+## TaxProfile
 
-| Сущность | Назначение | Когда |
-|----------|-----------|-------|
-| Receipt | Чеки (фото + сумма + категория) | F-017 |
-| Subscription | Биллинг и тарифный план | F-020 |
-| Reminder | Правила отправки напоминаний | F-019 |
+```typescript
+interface TaxProfile {
+  workspaceId: string
+  taxMode: TaxMode
+}
+```
+
+**Relations:** один-к-одному с Workspace (по workspaceId)
+**Used by Features:** F-002
+**Note:** Существует как отдельный тип в коде. В текущем MVP дублирует поле `taxMode` в `Workspace`; используется для детализации налоговой конфигурации в будущих итерациях.
+
+---
+
+## VehicleProfile
+
+```typescript
+interface VehicleProfile {
+  workspaceId: string
+  make: string
+  model: string
+  year: number
+  licensePlate: string
+  engineVolume?: number      // cc
+  fuelType?: 'gasoline' | 'diesel' | 'electric' | 'hybrid'
+  ownerFullName?: string
+}
+```
+
+**Relations:** один-к-одному с Workspace (по workspaceId)
+**Used by Features:** F-002, F-013
+**Note:** Существует как тип в коде. В текущем MVP данные об автомобиле вводятся в OnboardingWizard, но не сохраняются в отдельную сущность — хранятся в store как часть конфигурации. Полное использование запланировано в будущих итерациях.
+
+---
+
+## WorkspaceRuleConfig
+
+```typescript
+interface WorkspaceRuleConfig {
+  entityType: EntityType
+  taxMode: TaxMode
+  vehicleUsageModel: VehicleUsageModel
+  requiredDocuments: string[]          // document template keys
+  compensationLimitMonthly?: number    // RUB, для COMPENSATION модели
+  canDeductFuel: boolean
+  canDeductRepairs: boolean
+  requiresWaybill: boolean
+  requiresLogbook: boolean
+}
+```
+
+**Relations:** статическая конфигурация; не персистируется; вычисляется из параметров Workspace
+**Used by Features:** F-002, F-006, F-007
+**Note:** Rule engine config — определяет, какие документы требуются для данной комбинации entityType + taxMode + vehicleUsageModel.
+
+---
+
+## Entities defined in code, not yet wired in UI
+
+Следующие интерфейсы определены в `domain.ts`, но UI для них не реализован в текущем MVP:
+
+| Entity | Назначение | Feature |
+|--------|-----------|---------|
+| `Receipt` | Чеки (сумма, категория, фото) | F-017 (planned) |
+| `Expense` | Расходы, связанные с автомобилем | — (planned) |
+| `Fine` | Штрафы ГИБДД с деталями (КоАП, сумма, статус) | — (сейчас через WorkspaceEvent type='fine') |
+| `Reminder` | Правила напоминаний | F-019 (draft) |
 
 ---
 
 ## Несоответствия с pre-MVP документацией
 
-Следующие сущности были в старом `data-model.md`, но **не реализованы и не планируются в ближайших итерациях:**
-- `TaxProfile` — заменён полями в `Workspace`
-- `VehicleProfile` — заменён `vehicleModel` в `OrganizationProfile`
-- `VehicleUsageModel` (как отдельная сущность) — заменён enum-полем в `Workspace`
-- `OneTimeDocument` / `RecurringDocumentRequirement` — заменены единой `WorkspaceDocument` с полем `type`
-- `Expense` — не реализовано
-- `Fine` — представлено через `WorkspaceEvent` с `type: 'fine'`
-- `HelpScenario` / `DecisionFlowSession` — заменены статическим `documentHelp.ts` config
+- `OneTimeDocument` / `RecurringDocumentRequirement` → заменены единой `WorkspaceDocument` с полем `type`
+- `HelpScenario` / `DecisionFlowSession` → заменены статическим `documentHelp.ts` config
+- `VehicleUsageModel` `'waybill'` → переименован в `'FREE_USE'` в коде
+- `TaxMode` `'usn_income_expense'` → переименован в `'USN_INCOME_MINUS_EXPENSES'`; добавлен `'ESHN'`
+- Все enum values → **uppercase** в коде (`'IP'` не `'ip'`, `'OSN'` не `'osn'`)
