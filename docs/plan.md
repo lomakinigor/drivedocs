@@ -89,6 +89,27 @@
 
 ---
 
+## Phase 5.8 — Receipt period selector + unattached receipts attention (F-QR03 ext, F-AT02)
+
+**Цель:** дать пользователю выбор периода на ReceiptsPage (7/30/90 дней); добавить attention-правило для непривязанных чеков за последние 7 дней на HomePage.
+
+**Задачи:** T-093, T-094, T-095, T-096
+
+**Затронутые файлы:**
+- `src/pages/ReceiptsPage.tsx` — period selector UI, динамический fromDate
+- `src/features/home/attentionRules.ts` — extend `AttentionItemKind`, добавить правило для receipts
+- `src/features/home/useHomeData.ts` — добавить `useReceiptsForPeriod` для unattached receipts за 7 дней
+- `src/pages/HomePage.tsx` — обработать `kind === 'receipt'` в tap handler, иконка Receipt
+
+**Acceptance:**
+- Chips 7/30/90 на ReceiptsPage переключают список и аналитику реактивно.
+- При 0 чеков за период — пустое состояние с подсказкой.
+- На HomePage при наличии непривязанных чеков за 7 дней — warning в AttentionSection.
+- Tap на warning → navigate к ReceiptsPage.
+- TypeScript noEmit — 0 ошибок.
+
+---
+
 ## Phase 6 — Monthly report (next)
 
 **Цель:** пользователь получает текстовый отчёт за месяц (поездки, пробег, маршруты) прямо с телефона и может скопировать его для отправки в бухгалтерию.
@@ -142,6 +163,7 @@
 | 5.5 — QuickReceipt + Rule engine | F-QR01, F-AT01 | T-080..T-084 | US-QR01, US-AT01 |
 | 5.6 — Receipt list + trip linking | F-QR02 | T-085..T-088 | US-QR02, US-QR03 |
 | 5.7 — Receipt history + analytics | F-QR03 | T-089..T-092 | US-QR04, US-QR05 |
+| 5.8 — Period selector + unattached receipts attention | F-QR03 ext, F-AT02 | T-093..T-096 | US-QR06, US-AT02 |
 | 0 — Foundation | — | T-001..T-005 | — |
 | 1 — Workspace + Onboarding | F-001, F-002, F-013, F-015 | T-010..T-013 | US-001, US-002, US-003, US-011 |
 | 2 — Trips | F-003, F-004, F-005, F-011 | T-020..T-024 | US-004, US-005, US-006, US-012 |

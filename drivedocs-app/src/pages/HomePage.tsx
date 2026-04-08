@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, FileText, AlertTriangle, Car, Plus, Settings, TrendingUp } from 'lucide-react'
+import { ArrowRight, FileText, AlertTriangle, Receipt, Car, Plus, Settings, TrendingUp } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Badge } from '@/shared/ui/components/Badge'
 import { Card } from '@/shared/ui/components/Card'
@@ -29,6 +29,8 @@ export function HomePage() {
   const handleAttentionItemTap = (item: AttentionItem) => {
     if (item.kind === 'document' && item.document) {
       setSelectedDoc(item.document)
+    } else if (item.kind === 'receipt') {
+      navigate(`/w/${id}/receipts`)
     } else {
       navigate(`/w/${id}/events`)
     }
@@ -205,7 +207,10 @@ function AttentionSection({
       <div className="space-y-2">
         {shown.map((item) => {
           const isUrgent = item.severity === 'urgent'
-          const Icon = item.kind === 'document' ? FileText : AlertTriangle
+          const Icon =
+            item.kind === 'document' ? FileText :
+            item.kind === 'receipt' ? Receipt :
+            AlertTriangle
           return (
             <button
               key={item.id}

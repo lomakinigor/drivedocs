@@ -4,6 +4,8 @@ import {
   useTodayTrips,
   useUrgentDocuments,
   useUrgentEvents,
+  useReceiptsForPeriod,
+  todayISO,
 } from '@/app/store/workspaceStore'
 import { buildAttentionItems } from './attentionRules'
 import type { AttentionItem } from './attentionRules'
@@ -31,6 +33,15 @@ export type { AttentionItem }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Days to look back for unattached-receipt attention rule (D-AT02) */
+const UNATTACHED_RECEIPT_WINDOW_DAYS = 7
+
+function daysAgoISO(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return d.toISOString().split('T')[0]
+}
+
 function currentMonthPrefix(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -55,8 +66,16 @@ export function useHomeData(workspaceId: string): HomeData {
   // Events — live from store selector (reactive to markEventRead / addEvent)
   const urgentEvents = useUrgentEvents(workspaceId)
 
+  // Receipts — unattached within the attention window (D-AT02)
+  const recentReceipts = useReceiptsForPeriod(
+    workspaceId,
+    daysAgoISO(UNATTACHED_RECEIPT_WINDOW_DAYS - 1),
+    todayISO(),
+  )
+  const unattachedReceipts = recentReceipts.filter((r) => !r.tripId)
+
   // Attention rule engine — pure function, no hooks
-  const attentionItems = buildAttentionItems(urgentDocs, urgentEvents)
+  const attentionItems = buildAttentionItems(urgentDocs, urgentEvents, unattachedReceipts)
 
   // Monthly aggregation
   const monthPrefix = currentMonthPrefix()

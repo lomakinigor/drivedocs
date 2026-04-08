@@ -1,12 +1,12 @@
-import type { WorkspaceDocument, WorkspaceEvent } from '@/entities/types/domain'
+import type { WorkspaceDocument, WorkspaceEvent, Receipt } from '@/entities/types/domain'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type AttentionItemKind = 'document' | 'event'
+export type AttentionItemKind = 'document' | 'event' | 'receipt'
 
 /**
  * Unified attention item — produced by buildAttentionItems(), never persisted.
- * Add new kinds here when extending the rule engine (e.g. 'receipt', 'subscription').
+ * Add new kinds here when extending the rule engine (D-AT01, D-AT02).
  */
 export interface AttentionItem {
   id: string
@@ -23,17 +23,21 @@ export interface AttentionItem {
 
 /**
  * Pure function — no hooks, no side effects.
- * Takes all workspace docs and events, returns sorted AttentionItem[].
  *
  * Rules (extend here to add new attention item types):
  *  - Documents: status 'required' or 'overdue'
  *  - Events: unread, severity 'urgent' or 'warning'
+ *  - Receipts: unattached (no tripId) in recent window → single warning card (D-AT02)
  *
- * Sort order: urgent before warning; within same severity, docs before events.
+ * Sort order: urgent before warning; within same severity, docs before events before receipts.
+ *
+ * @param unattachedReceipts - receipts without tripId for the attention window (e.g. last 7 days).
+ *   Defaults to [] for backward compatibility — existing callers need no changes.
  */
 export function buildAttentionItems(
   docs: WorkspaceDocument[],
   events: WorkspaceEvent[],
+  unattachedReceipts: Receipt[] = [],
 ): AttentionItem[] {
   const docItems: AttentionItem[] = docs
     .filter((d) => d.status === 'required' || d.status === 'overdue')
@@ -62,9 +66,30 @@ export function buildAttentionItems(
       event: e,
     }))
 
+  // Rule: unattached receipts in the recent window → single consolidated warning
+  const receiptItems: AttentionItem[] = []
+  if (unattachedReceipts.length > 0) {
+    const n = unattachedReceipts.length
+    receiptItems.push({
+      id: 'receipts-unattached',
+      kind: 'receipt',
+      title: 'Есть чеки без поездки',
+      subtitle: `${n} ${pluralReceipts(n)} за последние 7 дней`,
+      severity: 'warning',
+    })
+  }
+
   const severityRank = (s: 'urgent' | 'warning') => (s === 'urgent' ? 0 : 1)
 
-  return [...docItems, ...eventItems].sort(
+  return [...docItems, ...eventItems, ...receiptItems].sort(
     (a, b) => severityRank(a.severity) - severityRank(b.severity),
   )
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function pluralReceipts(n: number): string {
+  if (n % 10 === 1 && n % 100 !== 11) return 'чек'
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'чека'
+  return 'чеков'
 }

@@ -8,9 +8,19 @@ import { buildReceiptAnalytics } from '@/features/receipts/receiptAnalytics'
 import { RECEIPT_CATEGORY_LABELS } from '@/entities/constants/labels'
 import type { Receipt as ReceiptType, ReceiptCategory } from '@/entities/types/domain'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Period selector ──────────────────────────────────────────────────────────
 
-const PERIOD_DAYS = 30
+type PeriodDays = 7 | 30 | 90
+
+const PERIODS: { value: PeriodDays; label: string }[] = [
+  { value: 7, label: '7 дней' },
+  { value: 30, label: '30 дней' },
+  { value: 90, label: '90 дней' },
+]
+
+const DEFAULT_PERIOD: PeriodDays = 30
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function daysAgoISO(n: number): string {
   const d = new Date()
@@ -25,7 +35,9 @@ export function ReceiptsPage() {
   const id = workspaceId ?? ''
   const navigate = useNavigate()
 
-  const fromDate = daysAgoISO(PERIOD_DAYS - 1)
+  const [period, setPeriod] = useState<PeriodDays>(DEFAULT_PERIOD)
+
+  const fromDate = daysAgoISO(period - 1)
   const toDate = todayISO()
   const receipts = useReceiptsForPeriod(id, fromDate, toDate)
   const analytics = buildReceiptAnalytics(receipts)
@@ -45,8 +57,29 @@ export function ReceiptsPage() {
         </button>
         <div>
           <h1 className="text-xl font-bold text-slate-900">История чеков</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Последние {PERIOD_DAYS} дней</p>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {receipts.length > 0
+              ? `${receipts.length} за ${period} дн.`
+              : `За последние ${period} дней`}
+          </p>
         </div>
+      </div>
+
+      {/* Period selector */}
+      <div className="flex gap-2">
+        {PERIODS.map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => setPeriod(value)}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors ${
+              period === value
+                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                : 'border-slate-200 bg-white text-slate-600 active:bg-slate-50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {receipts.length === 0 ? (
@@ -55,9 +88,9 @@ export function ReceiptsPage() {
           <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
             <Receipt size={28} className="text-slate-400" />
           </div>
-          <p className="text-sm font-medium text-slate-700">Чеков пока нет</p>
+          <p className="text-sm font-medium text-slate-700">Чеков за этот период нет</p>
           <p className="text-xs text-slate-400 mt-1">
-            Добавьте чек на экране «Сегодня»
+            Добавьте чек на экране «Сегодня» или выберите другой период
           </p>
         </Card>
       ) : (

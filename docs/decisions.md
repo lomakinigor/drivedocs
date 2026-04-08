@@ -214,6 +214,40 @@ Format:
 
 ---
 
+## D-QR06 — Period selector как локальный state компонента (не URL, не store)
+
+- **Date:** 2026-04-08
+- **Context:** ReceiptsPage показывает чеки за N дней. Нужно хранить выбранный период: 7/30/90. Варианты: URL query param, Zustand store, local state компонента.
+- **Options:**
+  1. URL query param `?days=30` — позволяет deep-link на конкретный период
+  2. Zustand store — персистирует выбор между сессиями
+  3. Local `useState` в ReceiptsPage — сбрасывается при навигации
+- **Decision:** Вариант 3. Local state. Период — это UI-предпочтение в рамках одного визита на страницу, не бизнес-данные. URL-чистота важнее deep-link на период для MVP. Если потребуется — легко мигрировать на URL-param.
+- **Consequences:**
+  - При навигации назад/вперёд период сбрасывается на 30 дней.
+  - Нет лишней нагрузки на store и URL.
+  - Тип: `7 | 30 | 90` — строгий union, расширяется добавлением в массив `PERIODS`.
+- **Links:** F-QR03, T-093, US-QR06
+
+---
+
+## D-AT02 — Расширение buildAttentionItems третьим параметром для receipts
+
+- **Date:** 2026-04-08
+- **Context:** Нужно добавить правило "непривязанные чеки" в AttentionSection. `buildAttentionItems(docs, events)` — двух параметров недостаточно. Как расширить без нарушения существующих вызовов?
+- **Options:**
+  1. Новая отдельная функция `buildReceiptAttentionItems(receipts)` — вызывается рядом
+  2. Расширить `buildAttentionItems` третьим опциональным параметром `unattachedReceipts: Receipt[] = []`
+  3. Переделать в объект-параметр `buildAttentionItems({ docs, events, receipts? })`
+- **Decision:** Вариант 2. Опциональный третий параметр с default `[]`. Обратная совместимость сохраняется — все существующие вызовы без третьего аргумента работают без изменений. Логика правила остаётся в одном месте. При добавлении четвёртого типа (например, подписка) можно перейти к варианту 3.
+- **Consequences:**
+  - Единая точка правил в `attentionRules.ts` — принцип D-AT01 сохранён.
+  - `useHomeData` передаёт `unattachedReceipts`, фильтруя `!r.tripId` из `useReceiptsForPeriod(7 дней)`.
+  - Окно 7 дней хардкожено в `useHomeData` (константа `UNATTACHED_RECEIPT_WINDOW_DAYS`).
+- **Links:** F-AT02, T-094, T-095, US-AT02, D-AT01
+
+---
+
 ## D-007 — Self-contained bottom sheet компоненты (без shared BottomSheet wrapper)
 
 - **Date:** 2026-03-15
