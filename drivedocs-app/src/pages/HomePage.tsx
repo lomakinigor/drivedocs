@@ -10,8 +10,8 @@ import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import { useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { useHomeData } from '@/features/home/useHomeData'
 import { TAX_MODE_LABELS, VEHICLE_USAGE_MODEL_LABELS } from '@/entities/constants/labels'
-import type { MonthlyStats } from '@/features/home/useHomeData'
-import type { Trip, WorkspaceDocument, WorkspaceEvent } from '@/entities/types/domain'
+import type { MonthlyStats, AttentionItem } from '@/features/home/useHomeData'
+import type { Trip, WorkspaceDocument } from '@/entities/types/domain'
 
 export function HomePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
@@ -25,6 +25,14 @@ export function HomePage() {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
 
   if (!workspace) return null
+
+  const handleAttentionItemTap = (item: AttentionItem) => {
+    if (item.kind === 'document' && item.document) {
+      setSelectedDoc(item.document)
+    } else {
+      navigate(`/w/${id}/events`)
+    }
+  }
 
   // ── Guard: workspace not fully configured ─────────────────────────────────
   if (!data.isConfigured) {
@@ -48,8 +56,6 @@ export function HomePage() {
     )
   }
 
-  const attentionCount = data.urgentDocs.length + data.urgentEvents.length
-
   return (
     <div className="px-4 py-5 space-y-5">
       {/* ── Config strip ─────────────────────────────────────────────────── */}
@@ -67,12 +73,11 @@ export function HomePage() {
       <MonthlyStatsSection stats={data.monthlyStats} />
 
       {/* ── Attention items ──────────────────────────────────────────────── */}
-      {attentionCount > 0 && (
+      {data.attentionItems.length > 0 && (
         <AttentionSection
-          docs={data.urgentDocs}
-          events={data.urgentEvents}
+          items={data.attentionItems}
           workspaceId={id}
-          onOpenDoc={setSelectedDoc}
+          onItemTap={handleAttentionItemTap}
         />
       )}
 
@@ -171,22 +176,16 @@ function StatTile({
 }
 
 function AttentionSection({
-  docs,
-  events,
+  items,
   workspaceId,
-  onOpenDoc,
+  onItemTap,
 }: {
-  docs: WorkspaceDocument[]
-  events: WorkspaceEvent[]
+  items: AttentionItem[]
   workspaceId: string
-  onOpenDoc: (doc: WorkspaceDocument) => void
+  onItemTap: (item: AttentionItem) => void
 }) {
-  // Show at most 3 total (docs first, then events)
   const MAX = 3
-  const shownDocs = docs.slice(0, MAX)
-  const remaining = MAX - shownDocs.length
-  const shownEvents = events.slice(0, remaining)
-  const totalCount = docs.length + events.length
+  const shown = items.slice(0, MAX)
 
   return (
     <section>
@@ -194,7 +193,7 @@ function AttentionSection({
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Требуют внимания
         </h2>
-        {totalCount > MAX && (
+        {items.length > MAX && (
           <Link
             to={`/w/${workspaceId}/events`}
             className="text-xs text-blue-600 font-medium flex items-center gap-0.5"
@@ -204,65 +203,39 @@ function AttentionSection({
         )}
       </div>
       <div className="space-y-2">
-        {shownDocs.map((doc) => (
-          <button
-            key={doc.id}
-            onClick={() => onOpenDoc(doc)}
-            className="w-full text-left"
-          >
-            <Card className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-red-50 rounded-xl shrink-0">
-                  <FileText size={18} className="text-red-500" />
+        {shown.map((item) => {
+          const isUrgent = item.severity === 'urgent'
+          const Icon = item.kind === 'document' ? FileText : AlertTriangle
+          return (
+            <button
+              key={item.id}
+              onClick={() => onItemTap(item)}
+              className="w-full text-left"
+            >
+              <Card className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-xl shrink-0 ${isUrgent ? 'bg-red-50' : 'bg-yellow-50'}`}>
+                    <Icon
+                      size={18}
+                      className={isUrgent ? 'text-red-500' : 'text-yellow-500'}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-900 leading-snug">{item.title}</p>
+                    {item.subtitle && (
+                      <p className={`text-xs mt-0.5 line-clamp-1 ${isUrgent ? 'text-red-500' : 'text-slate-500'}`}>
+                        {item.subtitle}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs text-blue-600 font-medium shrink-0 mt-0.5">
+                    {item.kind === 'document' ? 'Открыть →' : '→'}
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 leading-snug">{doc.title}</p>
-                  {doc.dueDate && (
-                    <p className="text-xs text-red-500 mt-0.5">
-                      До{' '}
-                      {new Date(doc.dueDate).toLocaleDateString('ru-RU', {
-                        day: 'numeric',
-                        month: 'long',
-                      })}
-                    </p>
-                  )}
-                </div>
-                <span className="text-xs text-blue-600 font-medium shrink-0 mt-0.5">
-                  Открыть →
-                </span>
-              </div>
-            </Card>
-          </button>
-        ))}
-
-        {shownEvents.map((event) => (
-          <Card key={event.id} className="p-4">
-            <div className="flex items-start gap-3">
-              <div
-                className={`p-2 rounded-xl shrink-0 ${
-                  event.severity === 'urgent' ? 'bg-red-50' : 'bg-yellow-50'
-                }`}
-              >
-                <AlertTriangle
-                  size={18}
-                  className={
-                    event.severity === 'urgent' ? 'text-red-500' : 'text-yellow-500'
-                  }
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-900 leading-snug">{event.title}</p>
-                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{event.description}</p>
-              </div>
-              <Link
-                to={`/w/${workspaceId}/events`}
-                className="text-xs text-blue-600 font-medium shrink-0 mt-0.5"
-              >
-                →
-              </Link>
-            </div>
-          </Card>
-        ))}
+              </Card>
+            </button>
+          )
+        })}
       </div>
     </section>
   )

@@ -250,13 +250,60 @@ interface WorkspaceRuleConfig {
 
 ---
 
+## Receipt
+
+```typescript
+type ReceiptCategory = 'fuel' | 'parking' | 'repair' | 'wash' | 'other'
+
+interface Receipt {
+  id: string
+  workspaceId: string
+  tripId?: string        // optional link to a Trip
+  date: string           // ISO date 'YYYY-MM-DD'
+  amount: number         // roubles
+  category: ReceiptCategory
+  description?: string
+  imageUrl?: string      // not used in MVP, reserved for photo capture (F-017)
+}
+```
+
+**Relations:** принадлежит Workspace (workspaceId); опционально связан с Trip (tripId)
+**Used in:** QuickReceiptSheet, workspaceStore (`receipts[]`, `addReceipt`)
+**Used by Features:** F-QR01
+**Used by User Stories:** US-QR01
+**Note:** `tripId` и `imageUrl` — reserved для будущего расширения (F-017 full receipt capture). В MVP — опциональны и не отображаются.
+
+---
+
+## AttentionItem
+
+```typescript
+type AttentionItemKind = 'document' | 'event'
+
+interface AttentionItem {
+  id: string
+  kind: AttentionItemKind
+  title: string
+  subtitle?: string
+  severity: 'urgent' | 'warning'
+  document?: WorkspaceDocument   // present if kind === 'document'
+  event?: WorkspaceEvent         // present if kind === 'event'
+}
+```
+
+**Relations:** виртуальная сущность — создаётся функцией `buildAttentionItems()`, не персистируется
+**Used in:** `attentionRules.ts`, `useHomeData`, `HomePage/AttentionSection`
+**Used by Features:** F-AT01, F-012
+**Used by User Stories:** US-AT01
+
+---
+
 ## Entities defined in code, not yet wired in UI
 
 Следующие интерфейсы определены в `domain.ts`, но UI для них не реализован в текущем MVP:
 
 | Entity | Назначение | Feature |
 |--------|-----------|---------|
-| `Receipt` | Чеки (сумма, категория, фото) | F-017 (planned) |
 | `Expense` | Расходы, связанные с автомобилем | — (planned) |
 | `Fine` | Штрафы ГИБДД с деталями (КоАП, сумма, статус) | — (сейчас через WorkspaceEvent type='fine') |
 | `Reminder` | Правила напоминаний | F-019 (draft) |

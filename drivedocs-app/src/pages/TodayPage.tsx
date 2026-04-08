@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Car, Receipt, CheckCircle, Plus, Clock } from 'lucide-react'
+import { Car, Receipt, CheckCircle, Plus } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { Card } from '@/shared/ui/components/Card'
 import { TripCard } from '@/features/trips/TripCard'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
+import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
 import { useTodayTrips } from '@/app/store/workspaceStore'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import type { Trip } from '@/entities/types/domain'
@@ -16,6 +17,7 @@ export function TodayPage() {
   const openQuickTrip = useOpenQuickTrip()
   const [justAdded, setJustAdded] = useState(false)
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
+  const [showReceiptSheet, setShowReceiptSheet] = useState(false)
 
   // Show success banner when a new trip appears in today's list
   const prevCountRef = useRef(todayTrips.length)
@@ -67,17 +69,15 @@ export function TodayPage() {
           <span className="text-sm font-semibold text-slate-800">Поездка</span>
         </Card>
 
-        {/* Чек — coming soon, visually passive */}
-        <div className="relative p-4 flex flex-col items-center justify-center gap-2 min-h-[100px] bg-white rounded-2xl border border-slate-100 shadow-sm opacity-50">
+        <Card
+          className="p-4 flex flex-col items-center justify-center gap-2 min-h-[100px]"
+          onClick={() => setShowReceiptSheet(true)}
+        >
           <div className="p-2.5 bg-green-100 rounded-2xl">
             <Receipt size={22} className="text-green-600" />
           </div>
           <span className="text-sm font-semibold text-slate-800">Чек</span>
-          <span className="absolute top-2 right-2 flex items-center gap-0.5 text-[10px] font-medium text-slate-400">
-            <Clock size={10} />
-            скоро
-          </span>
-        </div>
+        </Card>
       </div>
 
       {/* Journal */}
@@ -114,6 +114,13 @@ export function TodayPage() {
         <TripDetailSheet
           trip={selectedTrip}
           onClose={() => setSelectedTrip(null)}
+        />
+      )}
+
+      {showReceiptSheet && (
+        <QuickReceiptSheet
+          workspaceId={id}
+          onClose={() => setShowReceiptSheet(false)}
         />
       )}
     </div>

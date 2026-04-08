@@ -5,7 +5,9 @@ import {
   useUrgentDocuments,
   useUrgentEvents,
 } from '@/app/store/workspaceStore'
-import type { WorkspaceDocument, WorkspaceEvent, Trip } from '@/entities/types/domain'
+import { buildAttentionItems } from './attentionRules'
+import type { AttentionItem } from './attentionRules'
+import type { Trip } from '@/entities/types/domain'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,13 +20,14 @@ export interface MonthlyStats {
 export interface HomeData {
   isConfigured: boolean
   monthlyStats: MonthlyStats
-  /** Live from store — reactive to updateDocumentStatus */
-  urgentDocs: WorkspaceDocument[]
-  urgentEvents: WorkspaceEvent[]
+  /** Unified attention items — produced by rule engine, reactive to store changes */
+  attentionItems: AttentionItem[]
   recentTrips: Trip[]
   hasTodayTrips: boolean
   todayTripCount: number
 }
+
+export type { AttentionItem }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -52,6 +55,9 @@ export function useHomeData(workspaceId: string): HomeData {
   // Events — live from store selector (reactive to markEventRead / addEvent)
   const urgentEvents = useUrgentEvents(workspaceId)
 
+  // Attention rule engine — pure function, no hooks
+  const attentionItems = buildAttentionItems(urgentDocs, urgentEvents)
+
   // Monthly aggregation
   const monthPrefix = currentMonthPrefix()
   const monthTrips = allTrips.filter((t) => t.date.startsWith(monthPrefix))
@@ -64,8 +70,7 @@ export function useHomeData(workspaceId: string): HomeData {
   return {
     isConfigured: workspace?.isConfigured ?? true,
     monthlyStats,
-    urgentDocs,
-    urgentEvents,
+    attentionItems,
     recentTrips: allTrips.slice(0, 3),
     hasTodayTrips: todayTrips.length > 0,
     todayTripCount: todayTrips.length,

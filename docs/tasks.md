@@ -201,6 +201,45 @@ Config-strip, TodayCTA, MonthlyStats, AttentionSection (срочные docs + ev
 
 ---
 
+## Phase 5.5 — QuickReceiptSheet + Attention rule engine
+
+### T-080 — Add receipts to store
+**Type:** impl | **Status:** done | **Owner:** AI
+Добавить `receipts: Receipt[]` в `WorkspaceStore`. Экшн `addReceipt(receipt)`. Включить в `partialize` (persist). Инициализировать пустым массивом.
+**Files/Areas:** `src/app/store/workspaceStore.ts`
+**Links:** F-QR01, US-QR01
+**Acceptance:** `addReceipt` сохраняет запись в store; `receipts` персистируется в localStorage.
+
+### T-081 — QuickReceiptSheet component
+**Type:** impl | **Status:** done | **Owner:** AI
+Self-contained bottom sheet по паттерну AddTripSheet. Поля: сумма (required), категория (pill-select: топливо/парковка/ремонт/мойка/другое), дата (default today). Валидация: сумма > 0 обязательна. После сохранения вызывает `addReceipt()`.
+**Files/Areas:** `src/features/receipts/QuickReceiptSheet.tsx` (новый)
+**Links:** F-QR01, US-QR01
+**Acceptance:** Sheet открывается/закрывается. Кнопка "Сохранить" неактивна без суммы. Чек попадает в store после сохранения.
+
+### T-082 — Activate receipt button in TodayPage
+**Type:** impl | **Status:** done | **Owner:** AI
+Заменить пассивный div (opacity-50) на активную кнопку. Добавить `showReceiptSheet` state. Рендерить `QuickReceiptSheet` при открытии.
+**Files/Areas:** `src/pages/TodayPage.tsx`
+**Links:** F-QR01, US-QR01
+**Acceptance:** Кнопка "Чек" кликабельна. Открывается `QuickReceiptSheet`. Убран badge "скоро".
+
+### T-083 — Attention rule engine (attentionRules.ts)
+**Type:** impl | **Status:** done | **Owner:** AI
+Создать `src/features/home/attentionRules.ts`: тип `AttentionItem` с полями `id, kind, title, subtitle, severity, document?, event?`. Чистая функция `buildAttentionItems(docs, events)`. Сортировка: urgent выше warning; документы выше событий при равном severity.
+**Files/Areas:** `src/features/home/attentionRules.ts` (новый)
+**Links:** F-AT01, US-AT01
+**Acceptance:** `buildAttentionItems([requiredDoc], [urgentEvent])` → массив из 2 элементов, doc первый. Empty docs/events → пустой массив.
+
+### T-084 — Wire rule engine into useHomeData + HomePage
+**Type:** impl | **Status:** done | **Owner:** AI
+Обновить `useHomeData`: заменить `urgentDocs: WorkspaceDocument[]` и `urgentEvents: WorkspaceEvent[]` на `attentionItems: AttentionItem[]` через `buildAttentionItems()`. Обновить `HomePage/AttentionSection`: принимает `items: AttentionItem[]` + `onItemTap`. Dispatch: document → DocumentDetailSheet, event → navigate to events.
+**Files/Areas:** `src/features/home/useHomeData.ts`, `src/pages/HomePage.tsx`
+**Links:** F-AT01, F-012, US-AT01
+**Acceptance:** HomePage рендерится без регрессий. AttentionSection показывает unified список. Tap на doc → sheet. Tap на event → EventsPage.
+
+---
+
 ## Upcoming
 
 ### T-060 — Monthly trip report + clipboard export

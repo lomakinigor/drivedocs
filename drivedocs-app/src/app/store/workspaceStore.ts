@@ -6,6 +6,7 @@ import type {
   OnboardingState,
   OrganizationProfile,
   Trip,
+  Receipt,
   WorkspaceDocument,
   WorkspaceEvent,
   DocumentStatus,
@@ -37,6 +38,9 @@ interface WorkspaceStore {
   // Events
   events: WorkspaceEvent[]
 
+  // Receipts
+  receipts: Receipt[]
+
   // Onboarding
   onboarding: OnboardingState | null
 
@@ -50,6 +54,7 @@ interface WorkspaceStore {
   updateDocumentStatus: (documentId: string, status: DocumentStatus) => void
   addEvent: (event: WorkspaceEvent) => void
   markEventRead: (id: string) => void
+  addReceipt: (receipt: Receipt) => void
   resetWorkspaceConfig: (workspaceId: string) => void
   setOnboarding: (state: OnboardingState | null) => void
   clearOnboarding: () => void
@@ -73,6 +78,8 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       documents: mockDocuments,
 
       events: mockEvents,
+
+      receipts: [],
 
       onboarding: null,
 
@@ -107,6 +114,9 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 
       addEvent: (event) =>
         set((state) => ({ events: [event, ...state.events] })),
+
+      addReceipt: (receipt) =>
+        set((state) => ({ receipts: [receipt, ...state.receipts] })),
 
       markEventRead: (id) =>
         set((state) => ({
@@ -151,6 +161,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         trips: state.trips,
         documents: state.documents,
         events: state.events,
+        receipts: state.receipts,
       }),
     },
   ),

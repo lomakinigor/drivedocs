@@ -114,6 +114,38 @@ Format:
 
 ---
 
+## D-QR01 — Receipt хранится в основном Zustand store (не отдельный localStorage ключ)
+
+- **Date:** 2026-04-08
+- **Context:** QuickReceiptSheet сохраняет чеки. Вопрос: куда — в основной `workspaceStore` или отдельный store / localStorage?
+- **Options:**
+  1. Отдельный Zustand store (`receiptStore`)
+  2. В основной `workspaceStore` как `receipts: Receipt[]`
+- **Decision:** Вариант 2. `receipts[]` добавлен в `workspaceStore` рядом с `trips[]`, `documents[]`, `events[]`. Персистируется через `partialize` вместе с остальными данными. `addReceipt` — стандартный action.
+- **Consequences:**
+  - Receipts изолированы по `workspaceId` так же, как trips и documents.
+  - Единый store — проще рефакторинг при подключении backend (D-004 применимо).
+  - При росте объёма данных можно перенести receipts в отдельный store без изменения компонентов.
+- **Links:** F-QR01, T-080, US-QR01
+
+---
+
+## D-AT01 — Rule engine как чистая функция, а не hook
+
+- **Date:** 2026-04-08
+- **Context:** Логика "что показать в AttentionSection" была размазана: `useUrgentDocuments` + `useUrgentEvents` в store, объединение в `useHomeData`, рендер в `AttentionSection`. Нужно централизовать.
+- **Options:**
+  1. Хук `useAttentionItems(workspaceId)` — вызывает store-селекторы внутри себя
+  2. Чистая функция `buildAttentionItems(docs, events)` — принимает данные, возвращает `AttentionItem[]`
+- **Decision:** Вариант 2. `buildAttentionItems` в `attentionRules.ts` — чистая функция без хуков. `useHomeData` получает данные из store-селекторов и передаёт их в `buildAttentionItems`. `HomeData` возвращает `attentionItems: AttentionItem[]`.
+- **Consequences:**
+  - Логика правил тестируема без React-окружения (unit test — просто `buildAttentionItems([], [])`)
+  - Расширение — добавить новый тип items = добавить блок в `attentionRules.ts`, без правок в `useHomeData` или `HomePage`
+  - `AttentionSection` теперь принимает `items: AttentionItem[]` + `onItemTap` — не знает про документы и события по отдельности
+- **Links:** F-AT01, T-083, T-084, US-AT01, tech-spec
+
+---
+
 ## D-007 — Self-contained bottom sheet компоненты (без shared BottomSheet wrapper)
 
 - **Date:** 2026-03-15

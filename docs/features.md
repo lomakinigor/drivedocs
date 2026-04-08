@@ -170,12 +170,34 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-QR01 — QuickReceiptSheet
+
+**Description:** Быстрый ввод чека прямо с TodayPage. Bottom sheet с минимальным набором полей: сумма, категория расхода, дата. Сохраняется в store (receipts[]). Расширяется до привязки к поездке и загрузки фото в будущих итерациях. Заменяет заглушку "Чек — скоро" в TodayPage.
+
+**Screens/Flows:** TodayPage (Quick actions grid), QuickReceiptSheet (bottom sheet)
+**User Stories:** US-QR01
+**Tasks:** T-080, T-081, T-082
+**Status:** done
+
+---
+
+## F-AT01 — Rule engine для AttentionSection
+
+**Description:** Выделенная функция `buildAttentionItems(docs, events)` в `attentionRules.ts`, которая принимает все документы и события workspace и возвращает единый типизированный список `AttentionItem[]`. Заменяет двойную логику в `useHomeData` и `AttentionSection`. Расширяется добавлением новых правил (например, чек без категории, истёкшая подписка) в одном месте.
+
+**Screens/Flows:** HomePage (AttentionSection), useHomeData hook
+**User Stories:** US-AT01
+**Tasks:** T-083, T-084
+**Status:** done
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |
 |----|----------|--------|
 | F-016 | Monthly trip report + clipboard export | planned |
-| F-017 | Receipt capture flow | planned |
+| F-017 | Receipt capture flow (full: photo, trip link) | in-dev → F-QR01 реализует MVP-часть |
 | F-018 | PDF путевых листов | draft |
 | F-019 | Push / email напоминания | draft |
 | F-020 | Биллинг и управление подпиской | draft |
