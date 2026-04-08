@@ -203,6 +203,17 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-QR03 — Receipt history and spending analytics
+
+**Description:** Отдельная страница `ReceiptsPage` со списком всех чеков за последние 30 дней и компактной аналитикой расходов по категориям. Суммы по топливу, парковке, ремонту, мойке, другому + итог за период. Пользователь попадает через ссылку "Все чеки →" с TodayPage. В BottomNav страница не добавляется — это расширение TodayPage.
+
+**Screens/Flows:** ReceiptsPage (page, не sheet), TodayPage (ссылка "Все чеки →")
+**User Stories:** US-QR04, US-QR05
+**Tasks:** T-089, T-090, T-091, T-092
+**Status:** done
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |

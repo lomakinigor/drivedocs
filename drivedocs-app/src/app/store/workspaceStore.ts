@@ -264,6 +264,13 @@ export const useTodayReceipts = (workspaceId: string) => {
 export const useReceiptsByTrip = (tripId: string) =>
   useWorkspaceStore((s) => s.receipts.filter((r) => r.tripId === tripId))
 
+export const useReceiptsForPeriod = (workspaceId: string, fromDate: string, toDate: string) =>
+  useWorkspaceStore((s) =>
+    s.receipts
+      .filter((r) => r.workspaceId === workspaceId && r.date >= fromDate && r.date <= toDate)
+      .sort((a, b) => b.date.localeCompare(a.date)),
+  )
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function todayISO(): string {

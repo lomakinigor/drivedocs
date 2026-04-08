@@ -180,6 +180,40 @@ Format:
 
 ---
 
+## D-QR04 — ReceiptsPage как отдельная страница, не пункт BottomNav
+
+- **Date:** 2026-04-08
+- **Context:** История чеков требует отдельного экрана. BottomNav уже содержит 5 пунктов (Сегодня, Поездки, Документы, События, Настройки). Добавление 6-го нарушит mobile-first UX (слишком много элементов).
+- **Options:**
+  1. Добавить "Чеки" в BottomNav (6-й пункт)
+  2. Отдельная страница, доступная только через ссылку из TodayPage
+  3. Расширить TodayPage — показывать историю прямо там прокруткой
+- **Decision:** Вариант 2. `ReceiptsPage` — полноэкранная страница на маршруте `/w/:workspaceId/receipts`. Точка входа: ссылка "Все чеки →" на TodayPage. В BottomNav не добавляется. Когда появится отдельный receipt-управляемый flow (F-017), ReceiptsPage можно "поднять" в навигацию.
+- **Consequences:**
+  - BottomNav остаётся 5-пунктовым.
+  - `receipts` — дополнительный маршрут в App.tsx, вложенный в `/w/:workspaceId`.
+  - Навигация назад через `navigate(-1)` — кнопка "←" в заголовке страницы.
+  - URL: `/w/:workspaceId/receipts`.
+- **Links:** F-QR03, T-091, US-QR04
+
+---
+
+## D-QR05 — Аналитика чеков как чистая функция (по аналогии с D-AT01)
+
+- **Date:** 2026-04-08
+- **Context:** ReceiptsPage должна показывать суммы по категориям. Можно вычислять инлайн в компоненте или вынести в отдельную функцию.
+- **Options:**
+  1. Вычислять агрегаты прямо в JSX/component body
+  2. Чистая функция `buildReceiptAnalytics(receipts)` в `receiptAnalytics.ts`
+- **Decision:** Вариант 2. `buildReceiptAnalytics(receipts): ReceiptAnalytics` — чистая функция без хуков, по аналогии с `buildAttentionItems` (D-AT01). Возвращает `{ total: number, byCategory: Record<ReceiptCategory, number> }`. Компонент вызывает функцию с уже полученными receipts.
+- **Consequences:**
+  - Логика агрегирования тестируема отдельно от React.
+  - При добавлении новых категорий — меняется только функция и тип.
+  - Нет overhead: вычисляется на небольшом массиве, без мемоизации в MVP.
+- **Links:** F-QR03, T-089, US-QR05, D-AT01
+
+---
+
 ## D-007 — Self-contained bottom sheet компоненты (без shared BottomSheet wrapper)
 
 - **Date:** 2026-03-15

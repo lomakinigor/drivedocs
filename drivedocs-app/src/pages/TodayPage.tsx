@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { Car, Receipt, CheckCircle, Plus } from 'lucide-react'
-import { useParams } from 'react-router-dom'
+import { Car, Receipt as ReceiptIcon, CheckCircle, Plus } from 'lucide-react'
+import { useParams, Link } from 'react-router-dom'
 import { Card } from '@/shared/ui/components/Card'
 import { TripCard } from '@/features/trips/TripCard'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
@@ -62,26 +62,36 @@ export function TodayPage() {
       )}
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card
-          className="p-4 flex flex-col items-center justify-center gap-2 min-h-[100px]"
-          onClick={openQuickTrip}
-        >
-          <div className="p-2.5 bg-blue-100 rounded-2xl">
-            <Car size={22} className="text-blue-600" />
-          </div>
-          <span className="text-sm font-semibold text-slate-800">Поездка</span>
-        </Card>
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3">
+          <Card
+            className="p-4 flex flex-col items-center justify-center gap-2 min-h-[100px]"
+            onClick={openQuickTrip}
+          >
+            <div className="p-2.5 bg-blue-100 rounded-2xl">
+              <Car size={22} className="text-blue-600" />
+            </div>
+            <span className="text-sm font-semibold text-slate-800">Поездка</span>
+          </Card>
 
-        <Card
-          className="p-4 flex flex-col items-center justify-center gap-2 min-h-[100px]"
-          onClick={() => setShowReceiptSheet(true)}
-        >
-          <div className="p-2.5 bg-green-100 rounded-2xl">
-            <Receipt size={22} className="text-green-600" />
-          </div>
-          <span className="text-sm font-semibold text-slate-800">Чек</span>
-        </Card>
+          <Card
+            className="p-4 flex flex-col items-center justify-center gap-2 min-h-[100px]"
+            onClick={() => setShowReceiptSheet(true)}
+          >
+            <div className="p-2.5 bg-green-100 rounded-2xl">
+              <ReceiptIcon size={22} className="text-green-600" />
+            </div>
+            <span className="text-sm font-semibold text-slate-800">Чек</span>
+          </Card>
+        </div>
+        <div className="flex justify-end">
+          <Link
+            to={`/w/${id}/receipts`}
+            className="text-xs text-blue-600 font-medium py-1 px-0.5"
+          >
+            История чеков →
+          </Link>
+        </div>
       </div>
 
       {/* Journal */}
@@ -117,9 +127,17 @@ export function TodayPage() {
       {/* Receipts today */}
       {todayReceipts.length > 0 && (
         <section>
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-            Чеки сегодня
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Чеки сегодня
+            </h2>
+            <Link
+              to={`/w/${id}/receipts`}
+              className="text-xs text-blue-600 font-medium"
+            >
+              Все →
+            </Link>
+          </div>
           <div className="space-y-2">
             {todayReceipts.map((receipt) => (
               <button
@@ -130,7 +148,7 @@ export function TodayPage() {
                 <Card className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-green-50 rounded-xl shrink-0">
-                      <Receipt size={16} className="text-green-600" />
+                      <ReceiptIcon size={16} className="text-green-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-900">

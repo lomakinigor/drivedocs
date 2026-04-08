@@ -268,10 +268,10 @@ interface Receipt {
 ```
 
 **Relations:** принадлежит Workspace (workspaceId); опционально связан с Trip (tripId — many-to-one)
-**Used in:** QuickReceiptSheet, ReceiptDetailSheet, TodayPage (today receipts), TripDetailSheet (linked receipts count), workspaceStore (`receipts[]`, `addReceipt`, `attachReceiptToTrip`, `detachReceiptFromTrip`)
-**Used by Features:** F-QR01, F-QR02
-**Used by User Stories:** US-QR01, US-QR02, US-QR03
-**Note:** `tripId` активно используется для привязки через `attachReceiptToTrip`. `imageUrl` — зарезервирован для F-017 (фото чека), не используется в текущем MVP.
+**Used in:** QuickReceiptSheet, ReceiptDetailSheet, TodayPage (today receipts + "Все чеки →" link), ReceiptsPage (history + analytics), TripDetailSheet (linked receipts count), workspaceStore (`receipts[]`, `addReceipt`, `attachReceiptToTrip`, `detachReceiptFromTrip`, `useWorkspaceReceipts`, `useTodayReceipts`, `useReceiptsByTrip`, `useReceiptsForPeriod`)
+**Used by Features:** F-QR01, F-QR02, F-QR03
+**Used by User Stories:** US-QR01, US-QR02, US-QR03, US-QR04, US-QR05
+**Note:** `tripId` активно используется для привязки через `attachReceiptToTrip`. `imageUrl` — зарезервирован для F-017 (фото чека), не используется в текущем MVP. Аналитика строится только на существующих полях (`amount`, `category`, `date`) без добавления новых полей в сущность.
 
 ---
 
