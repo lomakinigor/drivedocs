@@ -70,6 +70,23 @@
 
 ---
 
+## Traceability index
+
+| Phase | Features | Key Tasks | User Stories |
+|-------|----------|-----------|--------------|
+| 0 — Foundation | — | T-001..T-005 | — |
+| 1 — Workspace + Onboarding | F-001, F-002, F-013, F-015 | T-010..T-013 | US-001, US-002, US-003, US-011 |
+| 2 — Trips | F-003, F-004, F-005, F-011 | T-020..T-024 | US-004, US-005, US-006, US-012 |
+| 3 — Documents | F-006, F-007 | T-030..T-033 | US-007, US-008 |
+| 4 — Events + Notifications | F-008, F-009, F-014 | T-040..T-045 | US-009, US-013 |
+| 5 — Home + Detail flows | F-010, F-012 | T-050..T-053 | US-010 |
+| 6 — Monthly report (next) | F-016 | T-060 | US-005 (расширение) |
+| 7 — Receipts | F-017 | T-061 | — |
+| 8 — Backend | — | T-070 | all |
+| 9 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
+
+---
+
 ## Completed task list (Phase 0–5)
 
 T-001, T-002, T-003, T-004, T-005,
