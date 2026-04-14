@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Receipt as ReceiptIcon, Link, Unlink, Car, ChevronRight, ImageOff } from 'lucide-react'
+import { X, Receipt as ReceiptIcon, Link, Unlink, Car, ChevronRight } from 'lucide-react'
 import { useWorkspaceStore, useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { RECEIPT_CATEGORY_LABELS } from '@/entities/constants/labels'
 import type { Receipt, Trip } from '@/entities/types/domain'
