@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { X } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { X, Camera, RotateCcw } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
 import type { Receipt, ReceiptCategory } from '@/entities/types/domain'
 
@@ -20,10 +20,11 @@ interface FormState {
   category: ReceiptCategory | ''
   date: string
   description: string
+  imageUrl: string | undefined
 }
 
 function initialState(): FormState {
-  return { amount: '', category: '', date: todayISO(), description: '' }
+  return { amount: '', category: '', date: todayISO(), description: '', imageUrl: undefined }
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -37,8 +38,23 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
   const addReceipt = useWorkspaceStore((s) => s.addReceipt)
   const [form, setForm] = useState<FormState>(initialState)
   const [touched, setTouched] = useState(false)
+  const [photoError, setPhotoError] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const set = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }))
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoError(false)
+    set({ imageUrl: URL.createObjectURL(file) })
+  }
+
+  const handleRemovePhoto = () => {
+    set({ imageUrl: undefined })
+    setPhotoError(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   const amountNum = parseFloat(form.amount.replace(',', '.'))
   const isValid = form.amount.trim() !== '' && !isNaN(amountNum) && amountNum > 0
@@ -54,6 +70,7 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
       amount: amountNum,
       category: form.category || 'other',
       description: form.description.trim() || undefined,
+      imageUrl: form.imageUrl,
     }
 
     addReceipt(receipt)
@@ -145,6 +162,61 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
               placeholder="Например, АЗС Лукойл"
               className={fieldClass(false)}
             />
+          </Field>
+
+          {/* Photo capture */}
+          <Field label="Фото чека (необязательно)">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+            {form.imageUrl ? (
+              <div className="space-y-2">
+                <div className="relative">
+                  <img
+                    src={form.imageUrl}
+                    alt="Фото чека"
+                    className="w-full h-32 object-cover rounded-xl"
+                    onError={() => {
+                      setPhotoError(true)
+                      handleRemovePhoto()
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white active:bg-black/70"
+                    aria-label="Удалить фото"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 text-xs text-blue-600 font-medium py-0.5"
+                >
+                  <RotateCcw size={13} />
+                  Переснять
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center gap-2.5 px-3.5 py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 active:bg-slate-50"
+              >
+                <Camera size={18} className="shrink-0 text-slate-400" />
+                <span className="text-sm">Прикрепить фото</span>
+              </button>
+            )}
+            {photoError && (
+              <p className="text-xs text-red-500 mt-1">Не удалось загрузить фото — попробуйте другой файл</p>
+            )}
           </Field>
 
           <div className="h-2" />

@@ -283,3 +283,21 @@ Format:
   - Fallback безопасен для iOS Safari в нестандартных контекстах.
   - Нет зависимости от backend или PDF-генерации.
 - **Links:** F-016, T-097, T-098, US-016
+
+---
+
+## D-009 — Хранение фото чека: object URL вместо base64
+
+- **Date:** 2026-04-14
+- **Context:** F-017 добавляет photo capture в QuickReceiptSheet. Поле `imageUrl?: string` в `Receipt` уже существует. Нужно решить, как хранить изображение в store без backend.
+- **Options:**
+  1. `URL.createObjectURL(file)` — blob URL, живёт только в текущей сессии браузера; не раздувает localStorage
+  2. `FileReader.readAsDataURL(file)` — base64 data URI, персистентный, но мобильные фото (3–10 МБ) → 4–13 МБ base64 → риск переполнения localStorage (квота ~5 МБ)
+  3. IndexedDB — персистентный, без квоты base64, но усложняет архитектуру вне scope MVP
+- **Decision:** Вариант 1 (object URL). Для MVP приоритет — простота. `imageUrl` хранит blob URL. При перезагрузке страницы blob URL становится мёртвым — UI скрывает раздел через `onError` на `<img>`. Backend upload (будущий Phase 8+) заменит object URL на реальный сетевой URL.
+- **Consequences:**
+  - Нет риска переполнения localStorage.
+  - Фото не переживает перезагрузку страницы (known limitation).
+  - ReceiptDetailSheet должен обрабатывать `onError` на `<img>` и скрывать раздел.
+  - Достаточно для демонстрации UX flow до backend интеграции.
+- **Links:** F-017, T-061, T-100, US-017

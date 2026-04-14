@@ -236,11 +236,21 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-017 — Receipt capture flow (MVP: photo attachment)
+
+**Description:** Пользователь может прикрепить фото чека прямо при добавлении в QuickReceiptSheet. Кнопка "Прикрепить фото" открывает камеру (`<input type="file" accept="image/*" capture="environment">`). При выборе файла показывается предпросмотр внутри sheet. После сохранения `imageUrl` сохраняется в store (object URL, ephemeral). ReceiptDetailSheet показывает фото если оно есть; graceful fallback при мёртвой ссылке. OCR, загрузка на сервер, PDF — за рамками этого шага.
+
+**Screens/Flows:** QuickReceiptSheet (photo section), ReceiptDetailSheet (photo display)
+**User Stories:** US-017
+**Tasks:** T-061, T-100, T-101
+**Status:** done
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |
 |----|----------|--------|
-| F-017 | Receipt capture flow (full: photo, trip link) | in-dev → F-QR01 реализует MVP-часть |
 | F-018 | PDF путевых листов | draft |
 | F-019 | Push / email напоминания | draft |
 | F-020 | Биллинг и управление подпиской | draft |

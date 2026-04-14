@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Receipt, Link, Unlink, Car, ChevronRight } from 'lucide-react'
+import { X, Receipt as ReceiptIcon, Link, Unlink, Car, ChevronRight, ImageOff } from 'lucide-react'
 import { useWorkspaceStore, useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { RECEIPT_CATEGORY_LABELS } from '@/entities/constants/labels'
 import type { Receipt, Trip } from '@/entities/types/domain'
@@ -61,7 +61,7 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
         <div className="flex items-center justify-between px-5 pt-2 pb-4 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-green-50 rounded-xl">
-              <Receipt size={18} className="text-green-600" />
+              <ReceiptIcon size={18} className="text-green-600" />
             </div>
             <div>
               <h2 className="text-base font-semibold text-slate-900">
@@ -88,6 +88,11 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
             <p className="text-sm text-slate-600 bg-slate-50 rounded-xl px-4 py-3">
               {liveReceipt.description}
             </p>
+          )}
+
+          {/* Receipt photo */}
+          {liveReceipt.imageUrl && (
+            <ReceiptPhoto imageUrl={liveReceipt.imageUrl} />
           )}
 
           {/* Trip linking section */}
@@ -188,5 +193,29 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
         </div>
       </div>
     </>
+  )
+}
+
+// ─── Receipt photo (graceful fallback on dead blob URL — D-009) ───────────────
+
+function ReceiptPhoto({ imageUrl }: { imageUrl: string }) {
+  const [broken, setBroken] = useState(false)
+
+  if (broken) return null
+
+  return (
+    <div>
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+        Фото чека
+      </p>
+      <div className="relative">
+        <img
+          src={imageUrl}
+          alt="Фото чека"
+          className="w-full rounded-2xl max-h-56 object-cover"
+          onError={() => setBroken(true)}
+        />
+      </div>
+    </div>
   )
 }

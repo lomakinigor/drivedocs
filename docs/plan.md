@@ -18,7 +18,7 @@
 | 4 | Events + notifications (feed, unread badge, mini-feed) | done |
 | 5 | Home dashboard + detail flows from home | done |
 | 6 | Monthly report + clipboard export | done |
-| 7 | Receipt capture | planned |
+| 7 | Receipt capture | done |
 | 8 | Backend API integration | draft |
 | 9 | Real auth + subscription enforcement | draft |
 
@@ -131,14 +131,22 @@
 
 ---
 
-## Phase 7 — Receipt capture (planned)
+## Phase 7 — Receipt capture ✓
 
-**Цель:** пользователь прикрепляет чек к записи из TodayPage.
+**Цель:** пользователь фотографирует чек прямо при добавлении в QuickReceiptSheet; фото сохраняется в store и отображается в ReceiptDetailSheet.
 
-**Задачи:**
-- T-061: Receipt capture flow
+**Задачи:** T-061, T-100, T-101
 
-**Acceptance:** TBD при спецификации.
+**Затронутые файлы:**
+- `src/features/receipts/QuickReceiptSheet.tsx` — секция фото: capture input, превью, удалить/переснять
+- `src/features/receipts/ReceiptDetailSheet.tsx` — отображение фото с graceful fallback
+
+**Acceptance:**
+- QuickReceiptSheet: кнопка открытия камеры, превью после выбора, "Переснять" / "Удалить".
+- `imageUrl` (object URL) сохраняется в receipt через store.
+- ReceiptDetailSheet показывает фото, если `imageUrl` доступен; молча скрывает при ошибке загрузки.
+- Фото необязательно — existing save flow не изменён.
+- TypeScript noEmit — 0 ошибок.
 
 ---
 
