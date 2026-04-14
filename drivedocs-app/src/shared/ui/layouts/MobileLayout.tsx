@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useParams, useNavigate } from 'react-router-dom'
 import { MobileHeader } from '../navigation/MobileHeader'
 import { BottomNav } from '../navigation/BottomNav'
@@ -18,10 +18,12 @@ export function MobileLayout() {
   const [notifOpen, setNotifOpen] = useState(false)
   const [addTripOpen, setAddTripOpen] = useState(false)
 
-  // Sync URL workspaceId → store on mount/change
+// Sync URL workspaceId → store on mount/change
+useEffect(() => {
   if (workspaceId) {
     setCurrentWorkspace(workspaceId)
   }
+}, [workspaceId, setCurrentWorkspace])
 
   const handleSelectWorkspace = (wsId: string) => {
     setCurrentWorkspace(wsId)
