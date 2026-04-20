@@ -6,13 +6,14 @@ import type {
   User,
   OnboardingState,
   OrganizationProfile,
+  VehicleProfile,
   Trip,
   Receipt,
   WorkspaceDocument,
   WorkspaceEvent,
   DocumentStatus,
 } from '@/entities/types/domain'
-import { mockWorkspaces, mockOrgProfiles } from '@/entities/mocks/workspaces'
+import { mockWorkspaces, mockOrgProfiles, mockVehicleProfiles } from '@/entities/mocks/workspaces'
 import { mockUser } from '@/entities/mocks/user'
 import { mockTrips, mockDocuments, mockEvents } from '@/entities/mocks/events'
 
@@ -29,6 +30,9 @@ interface WorkspaceStore {
 
   // Organization profiles (one per workspace)
   orgProfiles: OrganizationProfile[]
+
+  // Vehicle profiles (one per workspace)
+  vehicleProfiles: VehicleProfile[]
 
   // Trips
   trips: Trip[]
@@ -75,6 +79,8 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       currentWorkspaceId: mockWorkspaces[0]?.id ?? null,
 
       orgProfiles: mockOrgProfiles,
+
+      vehicleProfiles: mockVehicleProfiles,
 
       trips: mockTrips,
 
@@ -177,6 +183,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         currentWorkspaceId: state.currentWorkspaceId,
         workspaces: state.workspaces,
         orgProfiles: state.orgProfiles,
+        vehicleProfiles: state.vehicleProfiles,
         trips: state.trips,
         documents: state.documents,
         events: state.events,
@@ -199,6 +206,13 @@ export const useOrgProfile = (workspaceId: string) =>
   useWorkspaceStore(
     useShallow((s) =>
       s.orgProfiles.find((p) => p.workspaceId === workspaceId) ?? null,
+    ),
+  )
+
+export const useVehicleProfile = (workspaceId: string) =>
+  useWorkspaceStore(
+    useShallow((s) =>
+      s.vehicleProfiles.find((p) => p.workspaceId === workspaceId) ?? null,
     ),
   )
 

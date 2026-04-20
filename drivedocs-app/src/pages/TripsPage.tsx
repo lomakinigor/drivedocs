@@ -1,13 +1,24 @@
 import { useState } from 'react'
-import { Car, Plus, FileText } from 'lucide-react'
+import { Car, Plus, FileText, ClipboardList } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { EmptyState } from '@/shared/ui/components/EmptyState'
 import { TripCard } from '@/features/trips/TripCard'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
 import { MonthlyReportSheet } from '@/features/trips/MonthlyReportSheet'
+import { WaybillPreviewSheet } from '@/features/trips/WaybillPreviewSheet'
 import { useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import type { Trip } from '@/entities/types/domain'
+
+function currentMonthRange(): { fromDate: string; toDate: string } {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = d.getMonth()
+  const fromDate = `${year}-${String(month + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const toDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return { fromDate, toDate }
+}
 
 export function TripsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
@@ -17,6 +28,8 @@ export function TripsPage() {
   const openQuickTrip = useOpenQuickTrip()
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
+  const [waybillOpen, setWaybillOpen] = useState(false)
+  const { fromDate: waybillFrom, toDate: waybillTo } = currentMonthRange()
 
   const totalKm = trips.reduce((sum, t) => sum + t.distanceKm, 0)
 
@@ -33,6 +46,13 @@ export function TripsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setWaybillOpen(true)}
+            className="flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 text-sm font-medium px-3 py-2 rounded-xl active:bg-slate-50"
+          >
+            <ClipboardList size={16} />
+            Путевой лист
+          </button>
           <button
             onClick={() => setReportOpen(true)}
             className="flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 text-sm font-medium px-3 py-2 rounded-xl active:bg-slate-50"
@@ -84,6 +104,15 @@ export function TripsPage() {
         <MonthlyReportSheet
           workspaceId={id}
           onClose={() => setReportOpen(false)}
+        />
+      )}
+
+      {waybillOpen && (
+        <WaybillPreviewSheet
+          workspaceId={id}
+          fromDate={waybillFrom}
+          toDate={waybillTo}
+          onClose={() => setWaybillOpen(false)}
         />
       )}
     </div>

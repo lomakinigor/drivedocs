@@ -320,6 +320,22 @@ Format:
 
 ---
 
+## D-012 — WaybillPreviewSheet открывается из TripsPage (не из MonthlyReportSheet)
+
+- **Date:** 2026-04-20
+- **Context:** WaybillPreviewSheet нужно открывать с TripsPage. Два варианта точки входа: (A) кнопка прямо в TripsPage рядом с кнопкой "Отчёт", (B) кнопка внутри MonthlyReportSheet — sheet из sheet.
+- **Options:**
+  1. Вариант A: кнопка "Путевой лист" в header TripsPage, рядом с "Отчёт"
+  2. Вариант B: кнопка внутри MonthlyReportSheet — вложенный вызов sheet из sheet
+- **Decision:** Вариант A. TripsPage уже управляет состоянием `reportOpen` и `selectedTrip`; добавление `waybillOpen` — минимальное изменение по existing pattern. Вложенный sheet из sheet (вариант B) создаёт z-index-конфликты и ломает backdrop-логику без shared portal/sheet-manager.
+- **Consequences:**
+  - Два secondary actions в шапке TripsPage ("Отчёт" и "Путевой лист") — возможна компактизация header при большом количестве кнопок в будущем.
+  - MonthlyReportSheet остаётся без изменений — clipboard export flow сохранён.
+  - Период для WaybillPreviewSheet = текущий месяц (вычисляется один раз при рендере, не реактивно).
+- **Links:** F-018, T-103, D-007
+
+---
+
 ## D-011 — Pure derivation layer отделён от UI и PDF export
 
 - **Date:** 2026-04-20
