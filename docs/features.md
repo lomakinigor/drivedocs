@@ -247,10 +247,20 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-018 — PDF путевого листа из месячного отчёта
+
+**Description:** Генерация PDF путевого листа за выбранный месяц на основе данных workspace и списка поездок. Derivation layer (`buildMonthlyWaybillData`) подготавливает типизированную структуру для будущего preview sheet и PDF export. Включает warnings о неполных данных (нет автомобиля, нет ФИО водителя, нет поездок). PDF-генерация — клиентская, без backend.
+
+**Screens/Flows:** TripsPage (будущая кнопка "Путевой лист"), WaybillPreviewSheet (planned), PDF download (planned)
+**User Stories:** US-018, US-019
+**Tasks:** T-102, T-103, T-104
+**Status:** planned
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |
 |----|----------|--------|
-| F-018 | PDF путевых листов | draft |
 | F-019 | Push / email напоминания | draft |
 | F-020 | Биллинг и управление подпиской | draft |

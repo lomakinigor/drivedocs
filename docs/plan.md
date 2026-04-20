@@ -150,7 +150,21 @@
 
 ---
 
-## Phase 8 — Backend integration (draft)
+## Phase 8 — PDF путевого листа (F-018)
+
+**Цель:** пользователь получает PDF путевого листа за выбранный месяц с данными workspace, автомобиля и поездок.
+
+**Mini-cycle 8.1 (done):** derivation layer — `buildMonthlyWaybillData` + governance docs.
+
+**Mini-cycle 8.2 (planned):** WaybillPreviewSheet — preview данных, warnings, кнопка экспорта (disabled до isExportReady).
+
+**Mini-cycle 8.3 (planned):** PDF generator — выбор библиотеки (T-104), шаблон путевого листа, download.
+
+**Задачи:** T-102, T-103, T-104
+
+---
+
+## Phase 9 — Backend integration (draft)
 
 **Цель:** заменить Zustand mock-данные на API-интеграцию.
 
@@ -174,10 +188,13 @@
 | 3 — Documents | F-006, F-007 | T-030..T-033 | US-007, US-008 |
 | 4 — Events + Notifications | F-008, F-009, F-014 | T-040..T-045 | US-009, US-013 |
 | 5 — Home + Detail flows | F-010, F-012 | T-050..T-053 | US-010 |
-| 6 — Monthly report (next) | F-016 | T-060 | US-005 (расширение) |
-| 7 — Receipts | F-017 | T-061 | — |
-| 8 — Backend | — | T-070 | all |
-| 9 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
+| 6 — Monthly report | F-016 | T-060, T-097..T-099 | US-016 |
+| 7 — Receipt photo | F-017 | T-061, T-100, T-101 | US-017 |
+| 8.1 — Waybill derivation | F-018 | T-102 | US-018, US-019 |
+| 8.2 — Waybill preview (planned) | F-018 | T-103 | US-018, US-019 |
+| 8.3 — PDF export (planned) | F-018 | T-104 | US-018 |
+| 9 — Backend | — | T-070 | all |
+| 10 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
 
 ---
 

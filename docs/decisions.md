@@ -301,3 +301,36 @@ Format:
   - ReceiptDetailSheet должен обрабатывать `onError` на `<img>` и скрывать раздел.
   - Достаточно для демонстрации UX flow до backend интеграции.
 - **Links:** F-017, T-061, T-100, US-017
+
+---
+
+## D-010 — Client-only PDF для F-018 (без backend)
+
+- **Date:** 2026-04-20
+- **Context:** F-018 требует генерации путевого листа в PDF. Вопрос: клиентская генерация или серверный рендеринг?
+- **Options:**
+  1. Server-side: API endpoint принимает данные, возвращает PDF (puppeteer/wkhtmltopdf)
+  2. Client-side: JS-библиотека в браузере (`@react-pdf/renderer`, `jspdf`)
+- **Decision:** Client-only. MVP не имеет backend (Phase 8 ещё не реализована). Клиентская генерация: нет latency, нет серверных расходов, нет зависимости от auth. Библиотека выбирается в T-104 отдельным решением.
+- **Consequences:**
+  - Нет серверных зависимостей для PDF.
+  - Размер бандла увеличится (~100–200 KB) при добавлении PDF-библиотеки.
+  - При подключении backend (Phase 8) можно опционально вынести генерацию на сервер для качества/контроля шаблона — без изменения `buildMonthlyWaybillData` (derivation layer остаётся тем же).
+- **Links:** F-018, T-104, US-018
+
+---
+
+## D-011 — Pure derivation layer отделён от UI и PDF export
+
+- **Date:** 2026-04-20
+- **Context:** F-018 включает три независимых слоя: (1) подготовка данных, (2) preview UI, (3) PDF generation. Можно смешать всё в одном компоненте или разделить.
+- **Options:**
+  1. Вся логика в WaybillPreviewSheet — derivation inline в компоненте
+  2. Отдельная чистая функция `buildMonthlyWaybillData` → sheet использует её результат → PDF-генератор тоже использует тот же результат
+- **Decision:** Вариант 2. `buildMonthlyWaybillData` в `waybillData.ts` — чистая функция без React, по паттерну D-AT01 / D-QR05 / D-008. Preview sheet и PDF-генератор оба работают с `MonthlyWaybillData`. Изменение шаблона документа затрагивает только derivation layer.
+- **Consequences:**
+  - `MonthlyWaybillData` — единый typed contract между derivation, UI и export.
+  - Функция тестируема без браузера/React.
+  - При смене PDF-библиотеки (T-104) derivation layer не меняется.
+  - Паттерн консистентен с `buildAttentionItems`, `buildReceiptAnalytics`, `buildMonthlyTripReport`.
+- **Links:** F-018, T-102, T-103, T-104, D-AT01, D-QR05, D-008
