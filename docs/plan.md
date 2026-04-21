@@ -19,7 +19,7 @@
 | 5 | Home dashboard + detail flows from home | done |
 | 6 | Monthly report + clipboard export | done |
 | 7 | Receipt capture | done |
-| 8 | Backend API integration | draft |
+| 8 | Backend foundation (Supabase) | done |
 | 9 | Real auth + subscription enforcement | draft |
 
 ---
@@ -164,13 +164,36 @@
 
 ---
 
-## Phase 9 — Backend integration (draft)
+## Phase 8 — Backend foundation ✓
 
-**Цель:** заменить Zustand mock-данные на API-интеграцию.
+**Цель:** заменить mock-only persistence реальным backend, сохранив frontend architecture стабильной.
 
-**Принцип:** store actions (`addTrip`, `updateDocumentStatus`, etc.) остаются публичным интерфейсом. Реализация actions переключается с мутации состояния на API-вызов + optimistic update или refetch. Компоненты не меняются.
+**Backend:** Supabase (PostgreSQL). Решение: D-014.
 
-**Задачи:** T-070, T-071, T-072
+**Persistence strategy:** optimistic local update + async backend call. D-015.
+
+**Backend-backed entities:** workspaces, org_profiles, vehicle_profiles, trips, receipts.
+**Local-only (Phase 8):** documents, events — добавляются с RLS в Phase 9. D-016.
+
+**Задачи:** T-070, T-106, T-107, T-108
+
+**Затронутые файлы:**
+- `src/lib/supabase.ts` (новый)
+- `src/lib/db/repository.ts` (новый)
+- `src/lib/db/schema.sql` (новый)
+- `src/app/store/workspaceStore.ts` — backend-wired actions, hydration, new vehicle profile actions
+- `src/app/App.tsx` — dynamic root redirect, hydration on mount
+- `.env.example` (новый)
+
+---
+
+## Phase 9 — Real auth + subscription enforcement (draft)
+
+**Цель:** заменить `isAuthenticated: true` + `user_id = 'user-1'` на реальный Supabase Auth flow. Добавить RLS policies.
+
+**Принцип:** Supabase Auth JWT → `auth.uid()` заменяет `ANON_USER_ID` в repository. RLS policies на все таблицы. Phase 8 schema готова к этому переходу без изменений.
+
+**Задачи:** T-071, T-072
 
 ---
 
@@ -194,8 +217,8 @@
 | 8.2 — Waybill preview | F-018 | T-103 | US-018, US-019 |
 | 8.3 — PDF export | F-018 | T-104 | US-018 |
 | 8.4 — PDF template enhancement | F-018 | T-105 | US-018, US-019 |
-| 9 — Backend | — | T-070 | all |
-| 10 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
+| 8 — Backend foundation | — | T-070, T-106, T-107, T-108 | all |
+| 9 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
 
 ---
 

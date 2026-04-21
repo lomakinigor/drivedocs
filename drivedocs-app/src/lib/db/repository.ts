@@ -1,0 +1,383 @@
+/**
+ * Persistence repository — typed data access layer between the Zustand store and Supabase.
+ *
+ * All functions return early (no-op) when Supabase is not configured.
+ * Callers (store actions) apply optimistic local updates first; these functions
+ * handle the backend persistence side. Errors are surfaced to the caller as thrown
+ * Error instances — callers decide how to handle (store sets syncError).
+ *
+ * user_id is hardcoded to ANON_USER_ID for Phase 8.
+ * Phase 9 replaces it with supabase.auth.getUser().id.
+ */
+
+import { supabase } from '../supabase'
+import type {
+  Workspace,
+  OrganizationProfile,
+  VehicleProfile,
+  Trip,
+  Receipt,
+} from '@/entities/types/domain'
+
+// Phase 9: replace with auth.uid()
+export const ANON_USER_ID = 'user-1'
+
+// ─── Row types (snake_case DB columns) ────────────────────────────────────────
+
+interface WorkspaceRow {
+  id: string
+  user_id: string
+  name: string
+  entity_type: string
+  tax_mode: string
+  vehicle_usage_model: string
+  is_configured: boolean
+  created_at: string
+}
+
+interface OrgProfileRow {
+  workspace_id: string
+  entity_type: string
+  inn: string | null
+  ogrn: string | null
+  organization_name: string | null
+  owner_full_name: string | null
+}
+
+interface VehicleProfileRow {
+  workspace_id: string
+  make: string
+  model: string
+  year: number
+  license_plate: string
+  engine_volume: number | null
+  fuel_type: string | null
+  owner_full_name: string | null
+}
+
+interface TripRow {
+  id: string
+  workspace_id: string
+  date: string
+  start_location: string
+  end_location: string
+  distance_km: number
+  purpose: string
+  notes: string | null
+  created_at: string
+}
+
+interface ReceiptRow {
+  id: string
+  workspace_id: string
+  trip_id: string | null
+  date: string
+  amount: number
+  category: string
+  description: string | null
+  created_at: string
+}
+
+// ─── Mappers ──────────────────────────────────────────────────────────────────
+
+function rowToWorkspace(r: WorkspaceRow): Workspace {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    name: r.name,
+    entityType: r.entity_type as Workspace['entityType'],
+    taxMode: r.tax_mode as Workspace['taxMode'],
+    vehicleUsageModel: r.vehicle_usage_model as Workspace['vehicleUsageModel'],
+    isConfigured: r.is_configured,
+    createdAt: r.created_at,
+  }
+}
+
+function workspaceToRow(ws: Workspace): WorkspaceRow {
+  return {
+    id: ws.id,
+    user_id: ws.userId,
+    name: ws.name,
+    entity_type: ws.entityType,
+    tax_mode: ws.taxMode,
+    vehicle_usage_model: ws.vehicleUsageModel,
+    is_configured: ws.isConfigured,
+    created_at: ws.createdAt,
+  }
+}
+
+function rowToOrgProfile(r: OrgProfileRow): OrganizationProfile {
+  return {
+    workspaceId: r.workspace_id,
+    entityType: r.entity_type as OrganizationProfile['entityType'],
+    inn: r.inn ?? undefined,
+    ogrn: r.ogrn ?? undefined,
+    organizationName: r.organization_name ?? undefined,
+    ownerFullName: r.owner_full_name ?? undefined,
+  }
+}
+
+function orgProfileToRow(p: OrganizationProfile): OrgProfileRow {
+  return {
+    workspace_id: p.workspaceId,
+    entity_type: p.entityType,
+    inn: p.inn ?? null,
+    ogrn: p.ogrn ?? null,
+    organization_name: p.organizationName ?? null,
+    owner_full_name: p.ownerFullName ?? null,
+  }
+}
+
+function rowToVehicleProfile(r: VehicleProfileRow): VehicleProfile {
+  return {
+    workspaceId: r.workspace_id,
+    make: r.make,
+    model: r.model,
+    year: r.year,
+    licensePlate: r.license_plate,
+    engineVolume: r.engine_volume ?? undefined,
+    fuelType: r.fuel_type as VehicleProfile['fuelType'] ?? undefined,
+    ownerFullName: r.owner_full_name ?? undefined,
+  }
+}
+
+function vehicleProfileToRow(p: VehicleProfile): VehicleProfileRow {
+  return {
+    workspace_id: p.workspaceId,
+    make: p.make,
+    model: p.model,
+    year: p.year,
+    license_plate: p.licensePlate,
+    engine_volume: p.engineVolume ?? null,
+    fuel_type: p.fuelType ?? null,
+    owner_full_name: p.ownerFullName ?? null,
+  }
+}
+
+function rowToTrip(r: TripRow): Trip {
+  return {
+    id: r.id,
+    workspaceId: r.workspace_id,
+    date: r.date,
+    startLocation: r.start_location,
+    endLocation: r.end_location,
+    distanceKm: Number(r.distance_km),
+    purpose: r.purpose,
+    notes: r.notes ?? undefined,
+    createdAt: r.created_at,
+  }
+}
+
+function tripToRow(t: Trip): TripRow {
+  return {
+    id: t.id,
+    workspace_id: t.workspaceId,
+    date: t.date,
+    start_location: t.startLocation,
+    end_location: t.endLocation,
+    distance_km: t.distanceKm,
+    purpose: t.purpose,
+    notes: t.notes ?? null,
+    created_at: t.createdAt,
+  }
+}
+
+function rowToReceipt(r: ReceiptRow): Receipt {
+  return {
+    id: r.id,
+    workspaceId: r.workspace_id,
+    tripId: r.trip_id ?? undefined,
+    date: r.date,
+    amount: Number(r.amount),
+    category: r.category as Receipt['category'],
+    description: r.description ?? undefined,
+    // imageUrl intentionally omitted — object URLs are ephemeral (D-009)
+  }
+}
+
+function receiptToRow(r: Receipt): ReceiptRow {
+  return {
+    id: r.id,
+    workspace_id: r.workspaceId,
+    trip_id: r.tripId ?? null,
+    date: r.date,
+    amount: r.amount,
+    category: r.category,
+    description: r.description ?? null,
+    created_at: new Date().toISOString(),
+  }
+}
+
+// ─── Workspace repo ───────────────────────────────────────────────────────────
+
+export const workspaceRepo = {
+  async listByUser(userId: string): Promise<Workspace[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('workspaces')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at')
+    if (error) throw new Error(error.message)
+    return (data as WorkspaceRow[]).map(rowToWorkspace)
+  },
+
+  async upsert(workspace: Workspace): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('workspaces')
+      .upsert(workspaceToRow(workspace))
+    if (error) throw new Error(error.message)
+  },
+
+  async update(id: string, patch: Partial<Workspace>): Promise<void> {
+    if (!supabase) return
+    const row: Partial<WorkspaceRow> = {}
+    if (patch.name !== undefined) row.name = patch.name
+    if (patch.entityType !== undefined) row.entity_type = patch.entityType
+    if (patch.taxMode !== undefined) row.tax_mode = patch.taxMode
+    if (patch.vehicleUsageModel !== undefined) row.vehicle_usage_model = patch.vehicleUsageModel
+    if (patch.isConfigured !== undefined) row.is_configured = patch.isConfigured
+    const { error } = await supabase.from('workspaces').update(row).eq('id', id)
+    if (error) throw new Error(error.message)
+  },
+}
+
+// ─── OrgProfile repo ──────────────────────────────────────────────────────────
+
+export const orgProfileRepo = {
+  async listByUser(userId: string): Promise<OrganizationProfile[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('org_profiles')
+      .select('*, workspaces!inner(user_id)')
+      .eq('workspaces.user_id', userId)
+    if (error) throw new Error(error.message)
+    return (data as OrgProfileRow[]).map(rowToOrgProfile)
+  },
+
+  async upsert(profile: OrganizationProfile): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('org_profiles')
+      .upsert(orgProfileToRow(profile))
+    if (error) throw new Error(error.message)
+  },
+}
+
+// ─── VehicleProfile repo ──────────────────────────────────────────────────────
+
+export const vehicleProfileRepo = {
+  async listByUser(userId: string): Promise<VehicleProfile[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('vehicle_profiles')
+      .select('*, workspaces!inner(user_id)')
+      .eq('workspaces.user_id', userId)
+    if (error) throw new Error(error.message)
+    return (data as VehicleProfileRow[]).map(rowToVehicleProfile)
+  },
+
+  async upsert(profile: VehicleProfile): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('vehicle_profiles')
+      .upsert(vehicleProfileToRow(profile))
+    if (error) throw new Error(error.message)
+  },
+
+  async updatePartial(workspaceId: string, patch: Partial<VehicleProfile>): Promise<void> {
+    if (!supabase) return
+    const row: Partial<VehicleProfileRow> = {}
+    if (patch.make !== undefined) row.make = patch.make
+    if (patch.model !== undefined) row.model = patch.model
+    if (patch.year !== undefined) row.year = patch.year
+    if (patch.licensePlate !== undefined) row.license_plate = patch.licensePlate
+    if (patch.engineVolume !== undefined) row.engine_volume = patch.engineVolume ?? null
+    if (patch.fuelType !== undefined) row.fuel_type = patch.fuelType ?? null
+    if (patch.ownerFullName !== undefined) row.owner_full_name = patch.ownerFullName ?? null
+    const { error } = await supabase
+      .from('vehicle_profiles')
+      .update(row)
+      .eq('workspace_id', workspaceId)
+    if (error) throw new Error(error.message)
+  },
+}
+
+// ─── Trip repo ────────────────────────────────────────────────────────────────
+
+export const tripRepo = {
+  async listByUser(userId: string): Promise<Trip[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('trips')
+      .select('*, workspaces!inner(user_id)')
+      .eq('workspaces.user_id', userId)
+      .order('date', { ascending: false })
+    if (error) throw new Error(error.message)
+    return (data as TripRow[]).map(rowToTrip)
+  },
+
+  async insert(trip: Trip): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase.from('trips').insert(tripToRow(trip))
+    if (error) throw new Error(error.message)
+  },
+
+  async delete(id: string): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase.from('trips').delete().eq('id', id)
+    if (error) throw new Error(error.message)
+  },
+}
+
+// ─── Receipt repo ─────────────────────────────────────────────────────────────
+
+export const receiptRepo = {
+  async listByUser(userId: string): Promise<Receipt[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('receipts')
+      .select('*, workspaces!inner(user_id)')
+      .eq('workspaces.user_id', userId)
+      .order('date', { ascending: false })
+    if (error) throw new Error(error.message)
+    return (data as ReceiptRow[]).map(rowToReceipt)
+  },
+
+  async insert(receipt: Receipt): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase.from('receipts').insert(receiptToRow(receipt))
+    if (error) throw new Error(error.message)
+  },
+
+  async updateTripLink(receiptId: string, tripId: string | null): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('receipts')
+      .update({ trip_id: tripId })
+      .eq('id', receiptId)
+    if (error) throw new Error(error.message)
+  },
+}
+
+// ─── Bulk hydration ───────────────────────────────────────────────────────────
+
+export interface HydratedUserData {
+  workspaces: Workspace[]
+  orgProfiles: OrganizationProfile[]
+  vehicleProfiles: VehicleProfile[]
+  trips: Trip[]
+  receipts: Receipt[]
+}
+
+export async function fetchAllUserData(userId: string): Promise<HydratedUserData> {
+  const [workspaces, orgProfiles, vehicleProfiles, trips, receipts] = await Promise.all([
+    workspaceRepo.listByUser(userId),
+    orgProfileRepo.listByUser(userId),
+    vehicleProfileRepo.listByUser(userId),
+    tripRepo.listByUser(userId),
+    receiptRepo.listByUser(userId),
+  ])
+  return { workspaces, orgProfiles, vehicleProfiles, trips, receipts }
+}

@@ -1,9 +1,21 @@
 # Data Model
 
-**Версия:** 3.0 — выровнена под фактическое состояние MVP кода.
-**Дата:** 7 апреля 2026 г.
+**Версия:** 4.0 — Phase 8 backend (Supabase) добавлен.
+**Дата:** 21 апреля 2026 г.
 
 Сущности, которые не реализованы в коде, отмечены как `[planned]`.
+
+**Backend persistence status (Phase 8):**
+
+| Entity | Backend-backed | Notes |
+|--------|---------------|-------|
+| Workspace | ✅ | `workspaces` table |
+| OrganizationProfile | ✅ | `org_profiles` table |
+| VehicleProfile | ✅ | `vehicle_profiles` table |
+| Trip | ✅ | `trips` table |
+| Receipt | ✅ | `receipts` table (no image_url — D-009) |
+| WorkspaceDocument | ❌ local | Added in Phase 9 with RLS |
+| WorkspaceEvent | ❌ local | Added in Phase 9 with push notifications |
 
 ---
 

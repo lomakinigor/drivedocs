@@ -367,3 +367,66 @@ Format:
   - При смене PDF-библиотеки (T-104) derivation layer не меняется.
   - Паттерн консистентен с `buildAttentionItems`, `buildReceiptAnalytics`, `buildMonthlyTripReport`.
 - **Links:** F-018, T-102, T-103, T-104, D-AT01, D-QR05, D-008
+
+---
+
+## D-014 — Supabase как backend foundation (Phase 8)
+
+- **Date:** 2026-04-21
+- **Context:** Phase 8 заменяет mock-only persistence реальным backend. Два главных кандидата: Supabase (PostgreSQL + JS SDK) и PocketBase (Go single binary).
+- **Options:**
+  1. **Supabase** — Postgres-based, отличный TypeScript SDK, встроенный auth (JWT + RLS), `@tanstack/react-query` уже в проекте, `supabase gen types` → типизированный клиент, бесплатный cloud tier
+  2. **PocketBase** — Go single binary, простой self-hosting, хорошая DX для малых проектов, слабее на RLS и auth extensibility
+- **Decision:** Supabase.
+  - `@tanstack/react-query` и `zod` уже в package.json → логичные партнёры.
+  - Phase 9 (реальный auth) — JWT + RLS = стандартный Supabase паттерн; upgrade path минимален.
+  - PostgreSQL schema хорошо отображает workspace-scoped multi-tenant данные.
+  - `user_id = 'user-1'` (hardcoded Phase 8) → `auth.uid()` (Phase 9) без изменения схемы.
+  - PocketBase не имеет эквивалента RLS; при росте пользователей нужен ручной фильтр на бэке.
+- **Consequences:**
+  - `src/lib/supabase.ts` — singleton клиент (null если env vars отсутствуют → localStorage-only mode).
+  - `src/lib/db/repository.ts` — typed data access layer между store и Supabase.
+  - `src/lib/db/schema.sql` — SQL migration (применить через Supabase SQL editor или `supabase db push`).
+  - Env vars: `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`; если отсутствуют — приложение работает как прежде.
+  - Когда env vars есть, приложение гидрируется из backend на старте; write actions сразу делают optimistic local update + async backend call.
+- **Links:** T-070, D-004, tech-spec
+
+---
+
+## D-015 — Optimistic update + fire-and-forget sync (Phase 8 persistence strategy)
+
+- **Date:** 2026-04-21
+- **Context:** При backend-wired store actions нужно решить, как управлять состоянием: synchronous optimistic или async-await в компоненте.
+- **Options:**
+  1. Компонент await'ит store action → показывает loading state → применяет результат
+  2. Store action: синхронный local update (Zustand `set`) + async backend call; ошибка видна через `syncError` state
+- **Decision:** Вариант 2. Optimistic local update + fire-and-forget.
+  - Local state обновляется мгновенно (пользователь не ждёт сети).
+  - Async backend call происходит после. При ошибке — `syncError` выставляется в store; нет silent data loss.
+  - Rollback не реализован в MVP (слишком сложно для данного scope). Пользователь может refresh → данные подтянутся с backend.
+  - Компоненты не меняются: call sites остаются `action(args)` без await (D-004 сохранён).
+  - Действия storeactions промотированы до `async (): Promise<void>` — backward-совместимо, так как компоненты не await'ят возврат.
+- **Consequences:**
+  - `isSyncing: boolean` + `syncError: string | null` — новые поля в store для visibility.
+  - Новые selectors: `useSyncError()`, `useIsSyncing()`.
+  - Нет скрытых зависаний: при backend unavailable app continues working с local data.
+- **Links:** T-070, D-004, tech-spec
+
+---
+
+## D-016 — Documents и Events остаются local в Phase 8
+
+- **Date:** 2026-04-21
+- **Context:** Phase 8 переводит на backend: workspaces, org_profiles, vehicle_profiles, trips, receipts. Но documents и events имеют особый характер.
+- **Options:**
+  1. Включить documents и events в Phase 8 backend scope
+  2. Оставить documents и events local (Zustand persist) в Phase 8; backend-бэкинг в следующей фазе
+- **Decision:** Вариант 2.
+  - **Documents** частично генерируются из workspace config (`documentHelp.ts`, rule engine) и не имеют standalone create flow в текущем MVP. Backend-backing без auth (D-014 Phase 9) означало бы хранение системных документов без user isolation — неправильно.
+  - **Events** — преимущественно system-generated (trip_logged, штрафы, напоминания) и ephemeral. Backend-backing events имеет смысл вместе с push-уведомлениями (F-019, draft), не отдельно.
+  - Оба entity продолжают жить в Zustand persist + localStorage. При Phase 9 (auth) они будут добавлены в schema вместе с RLS.
+- **Consequences:**
+  - `updateDocumentStatus` и `markEventRead` остаются synchronous (без backend call).
+  - После refresh documents и events берутся из localStorage (текущее поведение сохранено).
+  - Документация явно фиксирует это как known intentional limitation.
+- **Links:** T-070, D-004

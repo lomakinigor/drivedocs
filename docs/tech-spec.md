@@ -26,6 +26,9 @@ drivedocs — mobile-first subscription web app для ИП и ООО, кото�
 | Routing | React Router v7 (Data API) |
 | State | Zustand 5 with `persist` middleware |
 | Icons | Lucide React |
+| Backend | Supabase (PostgreSQL + `@supabase/supabase-js`) — Phase 8 |
+| Data fetching | `@tanstack/react-query` (in dependencies, used alongside Zustand) |
+| Validation | Zod |
 
 ---
 
@@ -34,9 +37,14 @@ drivedocs — mobile-first subscription web app для ИП и ООО, кото�
 ```
 src/
 ├── app/
-│   ├── App.tsx              # router root, protected route guard
+│   ├── App.tsx              # router root + backend hydration on mount
 │   └── store/
-│       └── workspaceStore.ts  # global Zustand store + selectors
+│       └── workspaceStore.ts  # global Zustand store + selectors + backend sync
+├── lib/
+│   ├── supabase.ts          # Supabase client singleton (null if env vars absent)
+│   └── db/
+│       ├── repository.ts    # typed data access layer (Workspace, Trip, Receipt, …)
+│       └── schema.sql       # Supabase SQL migration
 ├── entities/
 │   ├── types/
 │   │   └── domain.ts        # all domain types (Workspace, Trip, etc.)
@@ -154,11 +162,38 @@ Layout: flex column, `max-h-[X]dvh`, drag handle, sticky header, scrollable cont
 
 ---
 
+## Backend persistence (Phase 8)
+
+Architecture: `UI → workspaceStore actions/selectors → repository layer → Supabase`.
+
+**Env vars** (copy `.env.example` → `.env.local`):
+- `VITE_SUPABASE_URL` — Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` — anon/public key
+
+**Fallback**: when env vars are absent, `src/lib/supabase.ts` returns `null` and the app continues in localStorage-only mode (current mock behavior). No crash, a console warning in dev.
+
+**Persistence strategy**: optimistic local update first (Zustand `set` synchronously), async backend call after. On error: `syncError` set in store, no rollback. See D-015.
+
+**Backend-backed entities (Phase 8)**: workspaces, org_profiles, vehicle_profiles, trips, receipts.
+
+**Local-only entities (Phase 8)**: documents, events. These stay in Zustand persist. Rationale: D-016.
+
+**Hydration**: on `App` mount, `hydrateFromBackend()` fetches all user data and replaces store state. If backend has no records (first run), local/mock data is kept unchanged.
+
+**user_id**: hardcoded `'user-1'` (ANON_USER_ID) in Phase 8. Phase 9 replaces with `auth.uid()`.
+
+**Schema**: `src/lib/db/schema.sql`. Apply via Supabase SQL editor or `supabase db push`.
+
+**RLS**: not enabled in Phase 8. Phase 9 adds `enable row level security` + `auth.uid()` policies.
+
+---
+
 ## Constraints and trade-offs
 
-- **No backend yet:** all data is in-memory + localStorage via Zustand persist. Mock data is seeded on first load.
-- **No auth:** `isAuthenticated: true` is hardcoded. Protected route guard exists but is mock-only.
-- **No file uploads:** document status is user-managed (mark done/in-progress). No actual file attachment.
+- **Backend optional:** app runs in localStorage-only mode when Supabase env vars are absent. No crash.
+- **No auth:** `isAuthenticated: true` is hardcoded. Phase 9 wires real Supabase Auth.
+- **No file uploads:** document status is user-managed. Receipt `imageUrl` is object URL (ephemeral, D-009). Backend file storage is not in scope for Phase 8.
+- **No rollback on sync error:** optimistic update stays local on backend failure. User can refresh to re-sync.
 - **TailwindCSS v4:** no `tailwind.config.js`. All customization via CSS variables and `@theme` blocks.
 - **React 19 + Vite 8:** using latest, some ecosystem libraries may lag.
 

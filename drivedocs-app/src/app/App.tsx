@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { MobileLayout } from '@/shared/ui/layouts/MobileLayout'
 import { HomePage } from '@/pages/HomePage'
@@ -9,24 +10,30 @@ import { EventsPage } from '@/pages/EventsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard'
+import { useWorkspaceStore } from '@/app/store/workspaceStore'
 
-// Default workspace redirect — uses the first workspace from the mock
-const DEFAULT_WORKSPACE_ID = 'ws-1'
+// ─── Root redirect ────────────────────────────────────────────────────────────
+// Uses live store state so it works after backend hydration replaces mock IDs.
+
+function RootRedirect() {
+  const workspaces = useWorkspaceStore((s) => s.workspaces)
+  const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)
+  if (!workspaces.length) {
+    return <Navigate to="/onboarding" replace />
+  }
+  const id = currentWorkspaceId ?? workspaces[0].id
+  return <Navigate to={`/w/${id}/home`} replace />
+}
 
 const router = createBrowserRouter([
-  // Root redirect
   {
     path: '/',
-    element: <Navigate to={`/w/${DEFAULT_WORKSPACE_ID}/home`} replace />,
+    element: <RootRedirect />,
   },
-
-  // Onboarding (full-screen, outside shell)
   {
     path: '/onboarding',
     element: <OnboardingWizard />,
   },
-
-  // Main app shell with workspace routing
   {
     path: '/w/:workspaceId',
     element: <MobileLayout />,
@@ -41,8 +48,6 @@ const router = createBrowserRouter([
       { path: 'settings', element: <SettingsPage /> },
     ],
   },
-
-  // Catch-all
   {
     path: '*',
     element: <NotFoundPage />,
@@ -50,5 +55,11 @@ const router = createBrowserRouter([
 ])
 
 export function App() {
+  const hydrateFromBackend = useWorkspaceStore((s) => s.hydrateFromBackend)
+
+  useEffect(() => {
+    hydrateFromBackend()
+  }, [hydrateFromBackend])
+
   return <RouterProvider router={router} />
 }

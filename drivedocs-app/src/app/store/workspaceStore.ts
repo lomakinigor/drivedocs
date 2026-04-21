@@ -16,11 +16,21 @@ import type {
 import { mockWorkspaces, mockOrgProfiles, mockVehicleProfiles } from '@/entities/mocks/workspaces'
 import { mockUser } from '@/entities/mocks/user'
 import { mockTrips, mockDocuments, mockEvents } from '@/entities/mocks/events'
+import {
+  workspaceRepo,
+  orgProfileRepo,
+  vehicleProfileRepo,
+  tripRepo,
+  receiptRepo,
+  fetchAllUserData,
+  ANON_USER_ID,
+} from '@/lib/db/repository'
+import { isBackendConfigured } from '@/lib/supabase'
 
 // ─── Store interface ───────────────────────────────────────────────────────────
 
 interface WorkspaceStore {
-  // Auth (mock)
+  // Auth (mock — Phase 9 wires real auth)
   user: User
   isAuthenticated: boolean
 
@@ -37,10 +47,10 @@ interface WorkspaceStore {
   // Trips
   trips: Trip[]
 
-  // Documents
+  // Documents (local only — not backend-backed in Phase 8)
   documents: WorkspaceDocument[]
 
-  // Events
+  // Events (local only — not backend-backed in Phase 8)
   events: WorkspaceEvent[]
 
   // Receipts
@@ -49,29 +59,43 @@ interface WorkspaceStore {
   // Onboarding
   onboarding: OnboardingState | null
 
+  // Backend sync state
+  isSyncing: boolean
+  syncError: string | null
+
   // Actions
   setCurrentWorkspace: (id: string) => void
-  addWorkspace: (workspace: Workspace) => void
-  updateWorkspace: (id: string, patch: Partial<Workspace>) => void
-  addOrgProfile: (profile: OrganizationProfile) => void
-  addTrip: (trip: Trip) => void
-  deleteTrip: (id: string) => void
+  addWorkspace: (workspace: Workspace) => Promise<void>
+  updateWorkspace: (id: string, patch: Partial<Workspace>) => Promise<void>
+  addOrgProfile: (profile: OrganizationProfile) => Promise<void>
+  addVehicleProfile: (profile: VehicleProfile) => Promise<void>
+  updateVehicleProfile: (workspaceId: string, patch: Partial<VehicleProfile>) => Promise<void>
+  addTrip: (trip: Trip) => Promise<void>
+  deleteTrip: (id: string) => Promise<void>
   updateDocumentStatus: (documentId: string, status: DocumentStatus) => void
   addEvent: (event: WorkspaceEvent) => void
   markEventRead: (id: string) => void
-  addReceipt: (receipt: Receipt) => void
-  attachReceiptToTrip: (receiptId: string, tripId: string) => void
-  detachReceiptFromTrip: (receiptId: string) => void
+  addReceipt: (receipt: Receipt) => Promise<void>
+  attachReceiptToTrip: (receiptId: string, tripId: string) => Promise<void>
+  detachReceiptFromTrip: (receiptId: string) => Promise<void>
   resetWorkspaceConfig: (workspaceId: string) => void
   setOnboarding: (state: OnboardingState | null) => void
   clearOnboarding: () => void
+  hydrateFromBackend: () => Promise<void>
+  clearSyncError: () => void
+}
+
+// ─── Error helper ──────────────────────────────────────────────────────────────
+
+function syncErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Не удалось синхронизировать данные'
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useWorkspaceStore = create<WorkspaceStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: mockUser,
       isAuthenticated: true,
 
@@ -79,87 +103,123 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       currentWorkspaceId: mockWorkspaces[0]?.id ?? null,
 
       orgProfiles: mockOrgProfiles,
-
       vehicleProfiles: mockVehicleProfiles,
-
       trips: mockTrips,
-
       documents: mockDocuments,
-
       events: mockEvents,
-
       receipts: [],
-
       onboarding: null,
+
+      isSyncing: false,
+      syncError: null,
+
+      // ── Workspace actions ────────────────────────────────────────────────────
 
       setCurrentWorkspace: (id) => set({ currentWorkspaceId: id }),
 
-      addWorkspace: (workspace) =>
+      addWorkspace: async (workspace) => {
         set((state) => ({
           workspaces: [...state.workspaces, workspace],
           currentWorkspaceId: workspace.id,
-        })),
+        }))
+        if (isBackendConfigured) {
+          try {
+            await workspaceRepo.upsert(workspace)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
 
-      updateWorkspace: (id, patch) =>
+      updateWorkspace: async (id, patch) => {
         set((state) => ({
           workspaces: state.workspaces.map((ws) =>
             ws.id === id ? { ...ws, ...patch } : ws,
           ),
-        })),
+        }))
+        if (isBackendConfigured) {
+          try {
+            await workspaceRepo.update(id, patch)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
 
-      addOrgProfile: (profile) =>
+      // ── Profile actions ──────────────────────────────────────────────────────
+
+      addOrgProfile: async (profile) => {
         set((state) => ({
           orgProfiles: [
             ...state.orgProfiles.filter((p) => p.workspaceId !== profile.workspaceId),
             profile,
           ],
-        })),
+        }))
+        if (isBackendConfigured) {
+          try {
+            await orgProfileRepo.upsert(profile)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
 
-      addTrip: (trip) =>
-        set((state) => ({ trips: [trip, ...state.trips] })),
-
-      deleteTrip: (id) =>
-        set((state) => ({ trips: state.trips.filter((t) => t.id !== id) })),
-
-      addEvent: (event) =>
-        set((state) => ({ events: [event, ...state.events] })),
-
-      addReceipt: (receipt) =>
-        set((state) => ({ receipts: [receipt, ...state.receipts] })),
-
-      attachReceiptToTrip: (receiptId, tripId) =>
+      addVehicleProfile: async (profile) => {
         set((state) => ({
-          receipts: state.receipts.map((r) =>
-            r.id === receiptId ? { ...r, tripId } : r,
-          ),
-        })),
+          vehicleProfiles: [
+            ...state.vehicleProfiles.filter((p) => p.workspaceId !== profile.workspaceId),
+            profile,
+          ],
+        }))
+        if (isBackendConfigured) {
+          try {
+            await vehicleProfileRepo.upsert(profile)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
 
-      detachReceiptFromTrip: (receiptId) =>
+      updateVehicleProfile: async (workspaceId, patch) => {
         set((state) => ({
-          receipts: state.receipts.map((r) => {
-            if (r.id !== receiptId) return r
-            const { tripId: _, ...rest } = r
-            return rest
-          }),
-        })),
+          vehicleProfiles: state.vehicleProfiles.map((p) =>
+            p.workspaceId === workspaceId ? { ...p, ...patch } : p,
+          ),
+        }))
+        if (isBackendConfigured) {
+          try {
+            await vehicleProfileRepo.updatePartial(workspaceId, patch)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
 
-      markEventRead: (id) =>
-        set((state) => ({
-          events: state.events.map((e) =>
-            e.id === id ? { ...e, isRead: true } : e,
-          ),
-        })),
+      // ── Trip actions ─────────────────────────────────────────────────────────
 
-      resetWorkspaceConfig: (workspaceId) =>
-        set((state) => ({
-          workspaces: state.workspaces.map((ws) =>
-            ws.id === workspaceId ? { ...ws, isConfigured: false } : ws,
-          ),
-          // Remove org profile so it can be re-created during re-onboarding
-          orgProfiles: state.orgProfiles.filter(
-            (p) => p.workspaceId !== workspaceId,
-          ),
-        })),
+      addTrip: async (trip) => {
+        set((state) => ({ trips: [trip, ...state.trips] }))
+        if (isBackendConfigured) {
+          try {
+            await tripRepo.insert(trip)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
+
+      deleteTrip: async (id) => {
+        set((state) => ({ trips: state.trips.filter((t) => t.id !== id) }))
+        if (isBackendConfigured) {
+          try {
+            await tripRepo.delete(id)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
+
+      // ── Document actions (local only in Phase 8) ─────────────────────────────
 
       updateDocumentStatus: (documentId, status) =>
         set((state) => ({
@@ -174,8 +234,119 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
           ),
         })),
 
+      // ── Event actions (local only in Phase 8) ────────────────────────────────
+
+      addEvent: (event) =>
+        set((state) => ({ events: [event, ...state.events] })),
+
+      markEventRead: (id) =>
+        set((state) => ({
+          events: state.events.map((e) =>
+            e.id === id ? { ...e, isRead: true } : e,
+          ),
+        })),
+
+      // ── Receipt actions ──────────────────────────────────────────────────────
+
+      addReceipt: async (receipt) => {
+        set((state) => ({ receipts: [receipt, ...state.receipts] }))
+        if (isBackendConfigured) {
+          try {
+            await receiptRepo.insert(receipt)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
+
+      attachReceiptToTrip: async (receiptId, tripId) => {
+        set((state) => ({
+          receipts: state.receipts.map((r) =>
+            r.id === receiptId ? { ...r, tripId } : r,
+          ),
+        }))
+        if (isBackendConfigured) {
+          try {
+            await receiptRepo.updateTripLink(receiptId, tripId)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
+
+      detachReceiptFromTrip: async (receiptId) => {
+        set((state) => ({
+          receipts: state.receipts.map((r) => {
+            if (r.id !== receiptId) return r
+            const { tripId: _, ...rest } = r
+            return rest
+          }),
+        }))
+        if (isBackendConfigured) {
+          try {
+            await receiptRepo.updateTripLink(receiptId, null)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
+
+      // ── Config reset ─────────────────────────────────────────────────────────
+
+      resetWorkspaceConfig: (workspaceId) => {
+        set((state) => ({
+          workspaces: state.workspaces.map((ws) =>
+            ws.id === workspaceId ? { ...ws, isConfigured: false } : ws,
+          ),
+          orgProfiles: state.orgProfiles.filter(
+            (p) => p.workspaceId !== workspaceId,
+          ),
+        }))
+        if (isBackendConfigured) {
+          // Fire-and-forget update; no critical data loss if this fails
+          workspaceRepo.update(workspaceId, { isConfigured: false }).catch((err) =>
+            set({ syncError: syncErrorMessage(err) }),
+          )
+        }
+      },
+
+      // ── Onboarding ───────────────────────────────────────────────────────────
+
       setOnboarding: (onboarding) => set({ onboarding }),
       clearOnboarding: () => set({ onboarding: null }),
+
+      // ── Backend hydration ────────────────────────────────────────────────────
+
+      hydrateFromBackend: async () => {
+        if (!isBackendConfigured) return
+        set({ isSyncing: true, syncError: null })
+        try {
+          const data = await fetchAllUserData(ANON_USER_ID)
+          if (data.workspaces.length > 0) {
+            const currentId = get().currentWorkspaceId
+            const stillValid = data.workspaces.some((ws) => ws.id === currentId)
+            set({
+              workspaces: data.workspaces,
+              orgProfiles: data.orgProfiles,
+              vehicleProfiles: data.vehicleProfiles,
+              trips: data.trips,
+              receipts: data.receipts,
+              // Keep currentWorkspaceId if still valid; otherwise use first from backend
+              currentWorkspaceId: stillValid
+                ? currentId
+                : (data.workspaces[0]?.id ?? null),
+            })
+          }
+          // If backend has no workspaces yet, keep local/mock data as-is.
+          // This covers first-run before any data has been synced to backend.
+        } catch (err) {
+          set({ syncError: syncErrorMessage(err) })
+        } finally {
+          set({ isSyncing: false })
+        }
+      },
+
+      clearSyncError: () => set({ syncError: null }),
     }),
     {
       name: 'drivedocs-workspace',
@@ -309,6 +480,9 @@ export const useReceiptsForPeriod = (workspaceId: string, fromDate: string, toDa
         .sort((a, b) => b.date.localeCompare(a.date)),
     ),
   )
+
+export const useSyncError = () => useWorkspaceStore((s) => s.syncError)
+export const useIsSyncing = () => useWorkspaceStore((s) => s.isSyncing)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
