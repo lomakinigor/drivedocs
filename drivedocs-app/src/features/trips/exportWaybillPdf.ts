@@ -2,6 +2,20 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { MonthlyWaybillData } from './waybillData'
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const MARGIN_L = 20
+const MARGIN_R = 20
+const PAGE_W = 210  // A4 mm
+
+const COLOR_BLACK: [number, number, number] = [20, 20, 20]
+const COLOR_DARK: [number, number, number] = [50, 50, 50]
+const COLOR_MID: [number, number, number] = [100, 100, 100]
+const COLOR_LIGHT: [number, number, number] = [160, 160, 160]
+const COLOR_RULE: [number, number, number] = [190, 190, 190]
+const COLOR_TABLE_HEAD_BG: [number, number, number] = [240, 242, 245]
+const COLOR_TABLE_ALT: [number, number, number] = [251, 252, 253]
+
 // ─── Font loading ─────────────────────────────────────────────────────────────
 
 let cachedFontBase64: string | null = null
@@ -13,7 +27,6 @@ async function loadCyrillicFont(): Promise<string> {
   const buffer = await response.arrayBuffer()
   const bytes = new Uint8Array(buffer)
   let binary = ''
-  // Convert in chunks to avoid stack overflow on large fonts
   const chunkSize = 8192
   for (let i = 0; i < bytes.byteLength; i += chunkSize) {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
@@ -22,11 +35,66 @@ async function loadCyrillicFont(): Promise<string> {
   return cachedFontBase64
 }
 
-// ─── File name helper ─────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function buildFileName(fromDate: string): string {
   const [year, month] = fromDate.split('-')
   return `putevoy-list-${year}-${month}.pdf`
+}
+
+function todayRu(): string {
+  return new Date().toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+/** Draws a thin horizontal rule across the content area */
+function drawRule(doc: jsPDF, y: number): void {
+  doc.setDrawColor(...COLOR_RULE)
+  doc.setLineWidth(0.2)
+  doc.line(MARGIN_L, y, PAGE_W - MARGIN_R, y)
+}
+
+/** Draws a meta row: grey label left, black value after fixed indent */
+function drawMetaRow(doc: jsPDF, label: string, value: string, y: number): void {
+  const LABEL_W = 52
+  doc.setFontSize(9)
+  doc.setTextColor(...COLOR_MID)
+  doc.text(label, MARGIN_L, y)
+  doc.setTextColor(...COLOR_DARK)
+  doc.text(value, MARGIN_L + LABEL_W, y, { maxWidth: PAGE_W - MARGIN_R - MARGIN_L - LABEL_W })
+}
+
+/** Draws a signature line: label, underline, then optional name hint in grey */
+function drawSignatureLine(
+  doc: jsPDF,
+  label: string,
+  nameHint: string,
+  y: number,
+): void {
+  const lineStart = MARGIN_L + 52
+  const lineEnd = MARGIN_L + 110
+
+  doc.setFontSize(9)
+  doc.setTextColor(...COLOR_MID)
+  doc.text(label, MARGIN_L, y)
+
+  doc.setDrawColor(...COLOR_RULE)
+  doc.setLineWidth(0.25)
+  doc.line(lineStart, y, lineEnd, y)
+
+  if (nameHint) {
+    doc.setFontSize(7.5)
+    doc.setTextColor(...COLOR_LIGHT)
+    const cx = (lineStart + lineEnd) / 2
+    doc.text(nameHint, cx, y + 3.5, { align: 'center' })
+  }
 }
 
 // ─── Main export function ─────────────────────────────────────────────────────
@@ -36,69 +104,77 @@ export async function exportWaybillPdf(data: MonthlyWaybillData): Promise<void> 
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-  // Register Cyrillic font
   doc.addFileToVFS('Roboto-Regular.ttf', fontBase64)
   doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
   doc.setFont('Roboto', 'normal')
 
-  const pageW = doc.internal.pageSize.getWidth()
-  const marginL = 20
-  const marginR = 20
-  const contentW = pageW - marginL - marginR
-  let y = 20
+  let y = 18
 
-  // ── Title block ──────────────────────────────────────────────────────────────
+  // ── Title ────────────────────────────────────────────────────────────────────
 
-  doc.setFontSize(16)
-  doc.setTextColor(30, 30, 30)
-  doc.text('Путевой лист', pageW / 2, y, { align: 'center' })
-  y += 7
-
-  doc.setFontSize(10)
-  doc.setTextColor(100, 100, 100)
-  // Capitalize first letter for display
-  const periodDisplay = data.periodLabel.charAt(0).toUpperCase() + data.periodLabel.slice(1)
-  doc.text(periodDisplay, pageW / 2, y, { align: 'center' })
-  y += 10
-
-  // Horizontal rule
-  doc.setDrawColor(200, 200, 200)
-  doc.line(marginL, y, pageW - marginR, y)
+  doc.setFontSize(15)
+  doc.setTextColor(...COLOR_BLACK)
+  doc.text('ПУТЕВОЙ ЛИСТ', PAGE_W / 2, y, { align: 'center' })
   y += 6
 
-  // ── Meta block ───────────────────────────────────────────────────────────────
+  const entityLabel = data.entityType === 'IP' ? 'Индивидуальный предприниматель' : 'Организация'
+  const periodDisplay = capitalize(data.periodLabel)
+  doc.setFontSize(8.5)
+  doc.setTextColor(...COLOR_MID)
+  doc.text(`${entityLabel}  ·  ${periodDisplay}`, PAGE_W / 2, y, { align: 'center' })
+  y += 5
 
-  const metaRows: [string, string][] = [
-    ['Организация:', data.organizationName],
-  ]
+  doc.setFontSize(8)
+  doc.setTextColor(...COLOR_LIGHT)
+  doc.text(`Дата составления: ${todayRu()}`, PAGE_W / 2, y, { align: 'center' })
+  y += 5
+
+  drawRule(doc, y)
+  y += 7
+
+  // ── Реквизиты ────────────────────────────────────────────────────────────────
+
+  doc.setFontSize(8)
+  doc.setTextColor(...COLOR_LIGHT)
+  doc.text('РЕКВИЗИТЫ', MARGIN_L, y)
+  y += 4.5
+
+  drawMetaRow(doc, 'Организация:', data.organizationName, y)
+  y += 5.5
+
   if (data.organizationInn) {
-    metaRows.push(['ИНН:', data.organizationInn])
-  }
-  metaRows.push(
-    ['Транспортное средство:', data.vehicleLabel],
-    ['Водитель:', data.driverLabel],
-  )
-
-  doc.setFontSize(9)
-  const labelX = marginL
-  const valueX = marginL + 58
-
-  for (const [label, value] of metaRows) {
-    doc.setTextColor(120, 120, 120)
-    doc.text(label, labelX, y)
-    doc.setTextColor(30, 30, 30)
-    doc.text(value, valueX, y)
+    drawMetaRow(doc, 'ИНН:', data.organizationInn, y)
     y += 5.5
   }
 
-  y += 5
+  if (data.organizationOgrn) {
+    const ogrnLabel = data.entityType === 'IP' ? 'ОГРНИП:' : 'ОГРН:'
+    drawMetaRow(doc, ogrnLabel, data.organizationOgrn, y)
+    y += 5.5
+  }
+
+  drawMetaRow(doc, 'Транспортное средство:', data.vehicleLabel, y)
+  y += 5.5
+
+  drawMetaRow(doc, 'Водитель:', data.driverLabel, y)
+  y += 7
+
+  drawRule(doc, y)
+  y += 6
 
   // ── Trips table ──────────────────────────────────────────────────────────────
 
-  doc.setFontSize(10)
-  doc.setTextColor(30, 30, 30)
-  doc.text('Поездки', marginL, y)
+  doc.setFontSize(8)
+  doc.setTextColor(...COLOR_LIGHT)
+  doc.text('СЛУЖЕБНЫЕ ПОЕЗДКИ ЗА ПЕРИОД', MARGIN_L, y)
   y += 4
+
+  const contentW = PAGE_W - MARGIN_L - MARGIN_R
+  // Column widths: date=22, route=dynamic, purpose=48, km=15
+  const kmW = 15
+  const dateW = 22
+  const purposeW = 48
+  const routeW = contentW - dateW - purposeW - kmW
 
   const tableRows = data.rows.map((row) => {
     const dateStr = new Date(row.date + 'T00:00:00').toLocaleDateString('ru-RU', {
@@ -106,65 +182,106 @@ export async function exportWaybillPdf(data: MonthlyWaybillData): Promise<void> 
       month: '2-digit',
       year: 'numeric',
     })
-    const km = row.distanceKm != null ? `${row.distanceKm} км` : '—'
+    const km = row.distanceKm != null ? String(row.distanceKm) : '—'
     return [dateStr, row.route, row.purpose, km]
   })
 
   autoTable(doc, {
     startY: y,
-    margin: { left: marginL, right: marginR },
-    head: [['Дата', 'Маршрут', 'Цель', 'Км']],
+    margin: { left: MARGIN_L, right: MARGIN_R },
+    head: [['Дата', 'Маршрут следования', 'Цель поездки', 'Пробег, км']],
     body: tableRows,
     styles: {
       font: 'Roboto',
       fontSize: 8.5,
-      cellPadding: 2.5,
-      textColor: [30, 30, 30],
-      lineColor: [210, 210, 210],
+      cellPadding: { top: 2.5, bottom: 2.5, left: 2.5, right: 2.5 },
+      textColor: COLOR_DARK,
+      lineColor: [215, 215, 215],
       lineWidth: 0.2,
+      overflow: 'linebreak',
     },
     headStyles: {
-      fillColor: [245, 247, 250],
-      textColor: [80, 80, 80],
+      fillColor: COLOR_TABLE_HEAD_BG,
+      textColor: COLOR_MID,
       fontStyle: 'normal',
-      fontSize: 8,
+      fontSize: 7.5,
+      cellPadding: { top: 2, bottom: 2, left: 2.5, right: 2.5 },
     },
     columnStyles: {
-      0: { cellWidth: 22 },
-      1: { cellWidth: contentW - 22 - 45 - 16 },
-      2: { cellWidth: 45 },
-      3: { cellWidth: 16, halign: 'right' },
+      0: { cellWidth: dateW },
+      1: { cellWidth: routeW },
+      2: { cellWidth: purposeW },
+      3: { cellWidth: kmW, halign: 'right' },
     },
-    alternateRowStyles: { fillColor: [252, 252, 253] },
+    alternateRowStyles: { fillColor: COLOR_TABLE_ALT },
   })
 
-  // ── Totals block ─────────────────────────────────────────────────────────────
+  // ── Итоги ────────────────────────────────────────────────────────────────────
 
   const lastTable = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
-  const finalY = (lastTable?.finalY ?? 180) + 6
+  let afterTable = (lastTable?.finalY ?? 180) + 5
 
-  doc.setDrawColor(200, 200, 200)
-  doc.line(marginL, finalY, pageW - marginR, finalY)
-
-  const totalY = finalY + 5
-  doc.setFontSize(9)
-  doc.setTextColor(100, 100, 100)
-  doc.text(`Итого поездок: `, marginL, totalY)
-  doc.setTextColor(30, 30, 30)
-  doc.text(`${data.totals.tripsCount}`, marginL + 33, totalY)
+  drawRule(doc, afterTable)
+  afterTable += 5
 
   const kmFormatted =
     data.totals.totalDistanceKm % 1 === 0
       ? `${data.totals.totalDistanceKm} км`
       : `${data.totals.totalDistanceKm.toFixed(1)} км`
-  doc.setTextColor(100, 100, 100)
-  doc.text('Общий пробег: ', marginL + 45, totalY)
-  doc.setTextColor(30, 30, 30)
-  doc.text(kmFormatted, marginL + 45 + 31, totalY)
 
-  // ── Save ─────────────────────────────────────────────────────────────────────
+  doc.setFontSize(9)
+  doc.setTextColor(...COLOR_MID)
+  doc.text('Итого поездок:', MARGIN_L, afterTable)
+  doc.setTextColor(...COLOR_BLACK)
+  doc.text(String(data.totals.tripsCount), MARGIN_L + 34, afterTable)
 
-  // Derive fromDate from the first row or use a fallback
-  const fromDate = data.rows[0]?.date ?? new Date().toISOString().slice(0, 7) + '-01'
-  doc.save(buildFileName(fromDate))
+  doc.setTextColor(...COLOR_MID)
+  doc.text('Общий пробег:', MARGIN_L + 48, afterTable)
+  doc.setTextColor(...COLOR_BLACK)
+  doc.text(kmFormatted, MARGIN_L + 48 + 32, afterTable)
+
+  afterTable += 10
+
+  drawRule(doc, afterTable)
+  afterTable += 8
+
+  // ── Подписи ──────────────────────────────────────────────────────────────────
+
+  doc.setFontSize(8)
+  doc.setTextColor(...COLOR_LIGHT)
+  doc.text('ПОДПИСИ', MARGIN_L, afterTable)
+  afterTable += 5.5
+
+  drawSignatureLine(doc, 'Водитель:', data.driverLabel, afterTable)
+  afterTable += 10
+
+  const responsibleLabel =
+    data.entityType === 'IP'
+      ? 'Индивидуальный предприниматель:'
+      : 'Руководитель организации:'
+  drawSignatureLine(doc, responsibleLabel, data.driverLabel, afterTable)
+  afterTable += 10
+
+  // Date of signing + М.П.
+  doc.setFontSize(9)
+  doc.setTextColor(...COLOR_MID)
+  doc.text('Дата подписания:', MARGIN_L, afterTable)
+
+  doc.setDrawColor(...COLOR_RULE)
+  doc.setLineWidth(0.25)
+  doc.line(MARGIN_L + 40, afterTable, MARGIN_L + 75, afterTable)
+
+  // М.П. box
+  const mpX = PAGE_W - MARGIN_R - 28
+  const mpY = afterTable - 10
+  doc.setDrawColor(...COLOR_RULE)
+  doc.setLineWidth(0.2)
+  doc.rect(mpX, mpY, 28, 14)
+  doc.setFontSize(7.5)
+  doc.setTextColor(...COLOR_LIGHT)
+  doc.text('М.П.', mpX + 14, mpY + 7.5, { align: 'center' })
+
+  // ── Сохранить ────────────────────────────────────────────────────────────────
+
+  doc.save(buildFileName(data.fromDate))
 }

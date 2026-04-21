@@ -109,6 +109,12 @@ export function WaybillPreviewSheet({
             {data.organizationInn && (
               <SummaryRow label="ИНН" value={data.organizationInn} />
             )}
+            {data.organizationOgrn && (
+              <SummaryRow
+                label={data.entityType === 'IP' ? 'ОГРНИП' : 'ОГРН'}
+                value={data.organizationOgrn}
+              />
+            )}
             <SummaryRow label="Транспортное средство" value={data.vehicleLabel} />
             <SummaryRow label="Водитель" value={data.driverLabel} />
           </div>

@@ -1,4 +1,4 @@
-import type { Trip, Workspace, OrganizationProfile, VehicleProfile } from '@/entities/types/domain'
+import type { Trip, Workspace, OrganizationProfile, VehicleProfile, EntityType } from '@/entities/types/domain'
 
 // ─── Derived export types (D-011) ────────────────────────────────────────────
 
@@ -17,15 +17,18 @@ export interface MonthlyWaybillTotals {
 
 export interface MonthlyWaybillData {
   workspaceId: string
-  periodLabel: string         // "апрель 2026"
-  organizationName: string    // resolved or fallback to workspace.name
+  entityType: EntityType       // 'IP' | 'OOO' — for signature block wording
+  fromDate: string             // ISO date — period start, for filename + doc date
+  periodLabel: string          // "апрель 2026"
+  organizationName: string     // resolved or fallback to workspace.name
   organizationInn: string | null
-  vehicleLabel: string        // "Toyota Camry А123ВГ77" or fallback
-  driverLabel: string         // owner full name or fallback
+  organizationOgrn: string | null  // ОГРН (ООО) or ОГРНИП (ИП), gracefully null
+  vehicleLabel: string         // "Toyota Camry А123ВГ77" or fallback
+  driverLabel: string          // owner full name or fallback
   rows: WaybillExportRow[]
   totals: MonthlyWaybillTotals
   warnings: string[]
-  isExportReady: boolean      // false if trips === 0 or critical fields missing
+  isExportReady: boolean       // false if trips === 0 or critical fields missing
 }
 
 export interface MonthlyWaybillInput {
@@ -113,9 +116,12 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
 
   return {
     workspaceId: workspace.id,
+    entityType: workspace.entityType,
+    fromDate,
     periodLabel,
     organizationName,
     organizationInn: orgProfile?.inn ?? null,
+    organizationOgrn: orgProfile?.ogrn ?? null,
     vehicleLabel,
     driverLabel,
     rows,
