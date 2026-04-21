@@ -437,11 +437,34 @@ workspaceStore: добавлены `isSyncing`, `syncError`, `hydrateFromBackend
 **Files/Areas:** `src/app/store/workspaceStore.ts`, `src/app/App.tsx`
 **Links:** T-070, D-014, D-015, D-016
 
-### T-071 — Real auth
-**Type:** impl | **Status:** todo | **Owner:** shared
-Заменить `isAuthenticated: true` на реальный auth flow.
-**Links:** PRD (Phase 9), F-001
-**Acceptance:** Неавторизованный пользователь перенаправляется на login. После входа попадает в свой workspace. Session сохраняется между перезагрузками.
+### T-071 — Real auth (Phase 9 — DONE)
+**Type:** impl | **Status:** done | **Owner:** AI
+Supabase email/password auth. Замена `ANON_USER_ID` хардкода на `auth.uid()`. RLS на 5 таблицах. ProtectedRoute. AuthPage. Logout в SettingsPage.
+**Files/Areas:** `src/lib/supabase.ts`, `src/lib/db/repository.ts`, `src/lib/db/rls-policies.sql`, `src/app/store/workspaceStore.ts`, `src/app/App.tsx`, `src/features/auth/AuthPage.tsx`, `src/pages/SettingsPage.tsx`
+**Links:** D-017, D-018, D-019, T-109, T-110, T-111
+**Acceptance:**
+- Без env vars: app работает в localStorage-only mode, авторизация не требуется.
+- С env vars: неавторизованный пользователь → /auth. После signIn → workspace.
+- signOut: очищает workspace данные, редиректит на /auth.
+- TypeScript noEmit — 0 ошибок.
+
+### T-109 — Auth store actions + error mapping
+**Type:** impl | **Status:** done | **Owner:** AI
+`signIn`, `signUp`, `signOut`, `setAuthUser` в workspaceStore. `mapAuthErrorMessage()` переводит Supabase errors на русский. `authUserId`, `authChecked` state. `EMPTY_WORKSPACE_STATE` при logout.
+**Files/Areas:** `src/app/store/workspaceStore.ts`
+**Links:** T-071, D-017, D-018, D-019
+
+### T-110 — AuthPage + ProtectedRoute
+**Type:** impl | **Status:** done | **Owner:** AI
+`src/features/auth/AuthPage.tsx` — mobile-first, две вкладки (Войти / Создать аккаунт), email + password. `ProtectedRoute` в App.tsx: spinner пока `!authChecked`, redirect на /auth если `!isAuthenticated`. `subscribeToAuthChanges` в App.useEffect вместо `hydrateFromBackend`.
+**Files/Areas:** `src/features/auth/AuthPage.tsx`, `src/app/App.tsx`
+**Links:** T-071, D-017, D-018
+
+### T-111 — RLS policies + logout in SettingsPage
+**Type:** impl | **Status:** done | **Owner:** AI
+`src/lib/db/rls-policies.sql` — owner-only RLS для workspaces (user_id = auth.uid()) и child tables via EXISTS. Кнопка "Выйти из аккаунта" в SettingsPage, только если `isBackendConfigured`.
+**Files/Areas:** `src/lib/db/rls-policies.sql`, `src/pages/SettingsPage.tsx`
+**Links:** T-071, D-017, D-019
 
 ### T-072 — Billing / subscription
 **Type:** impl | **Status:** todo | **Owner:** shared

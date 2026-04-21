@@ -430,3 +430,55 @@ Format:
   - После refresh documents и events берутся из localStorage (текущее поведение сохранено).
   - Документация явно фиксирует это как known intentional limitation.
 - **Links:** T-070, D-004
+
+---
+
+## D-017 — Supabase email/password auth, no social login in Phase 9
+
+- **Date:** 2026-04-21
+- **Context:** Phase 9 заменяет хардкод `isAuthenticated: true` реальным auth. Нужно выбрать flow: email/password, magic link, social OAuth.
+- **Options:**
+  1. Email/password — простая форма, нет зависимости от третьих сервисов
+  2. Magic link — беспарольный UX, зависит от email delivery
+  3. Google/Apple OAuth — быстрый onboarding, но требует OAuth app registration
+- **Decision:** Email/password (Supabase `signInWithPassword` / `signUp`). Минимальное количество внешних зависимостей для MVP. Social login — не Non-goal, но Phase 10+.
+- **Consequences:**
+  - Auth UX — две вкладки: "Войти" / "Создать аккаунт". Без confirm-password.
+  - Supabase может отправить confirmation email при регистрации (зависит от project settings).
+  - Russian-mapped error messages через `mapAuthErrorMessage()`.
+  - Пароль ≥ 6 символов (Supabase default).
+- **Links:** T-071, T-109, T-110, T-111
+
+---
+
+## D-018 — `authChecked` flag для предотвращения flash неавторизованного контента
+
+- **Date:** 2026-04-21
+- **Context:** `supabase.auth.onAuthStateChange` — асинхронный. До первого события store не знает, авторизован ли пользователь. ProtectedRoute должен отличать "ещё не знаем" от "точно не авторизован".
+- **Options:**
+  1. Начинать с `isAuthenticated: true` → flash защищённого контента если не авторизован
+  2. Начинать с `isAuthenticated: false` → flash redirect на /auth если авторизован
+  3. Флаг `authChecked: boolean` → показывать spinner пока не придёт первое событие
+- **Decision:** Вариант 3. `authChecked: boolean`. Начальные значения зависят от режима: в localStorage-only mode — `authChecked: true, isAuthenticated: true` (всегда аутентифицирован, без ожидания). В backend mode — `authChecked: false` до первого `onAuthStateChange` события.
+- **Consequences:**
+  - ProtectedRoute показывает spinner `border-t-transparent animate-spin` пока `!authChecked`.
+  - В localStorage mode spinner не показывается — `authChecked` сразу `true`.
+  - `authChecked` не персистируется — всегда вычисляется из auth state при загрузке.
+- **Links:** T-071, T-110
+
+---
+
+## D-019 — `EMPTY_WORKSPACE_STATE` при signOut для предотвращения межпользовательской утечки данных
+
+- **Date:** 2026-04-21
+- **Context:** При signOut нужно очистить все workspace данные из store. Если не очистить — данные предыдущего пользователя видны следующему (особенно в shared device scenarios).
+- **Options:**
+  1. Reload страницы при signOut — очищает всё, но грубо
+  2. Явный сброс всех полей через константу `EMPTY_WORKSPACE_STATE`
+  3. Полная инициализация store до initial state
+- **Decision:** Вариант 2. `EMPTY_WORKSPACE_STATE` — константа с пустыми массивами для workspaces, orgProfiles, vehicleProfiles, trips, receipts, documents, events и `currentWorkspaceId: null`. Spread при вызове `signOut()`.
+- **Consequences:**
+  - Данные предыдущего пользователя не просачиваются при смене аккаунта на том же устройстве.
+  - Zustand persist (localStorage) при следующем входе перезаписывается hydration из backend.
+  - Mock данные не возвращаются при signOut — store чист.
+- **Links:** T-071, T-111

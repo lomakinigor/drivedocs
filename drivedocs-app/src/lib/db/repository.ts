@@ -6,8 +6,9 @@
  * handle the backend persistence side. Errors are surfaced to the caller as thrown
  * Error instances — callers decide how to handle (store sets syncError).
  *
- * user_id is hardcoded to ANON_USER_ID for Phase 8.
- * Phase 9 replaces it with supabase.auth.getUser().id.
+ * Phase 9: user_id is obtained from supabase.auth session.
+ * The listByUser(userId) functions accept userId from the store, which gets it
+ * from the Supabase auth user after setAuthUser() is called.
  */
 
 import { supabase } from '../supabase'
@@ -18,9 +19,6 @@ import type {
   Trip,
   Receipt,
 } from '@/entities/types/domain'
-
-// Phase 9: replace with auth.uid()
-export const ANON_USER_ID = 'user-1'
 
 // ─── Row types (snake_case DB columns) ────────────────────────────────────────
 
@@ -208,6 +206,27 @@ function receiptToRow(r: Receipt): ReceiptRow {
   }
 }
 
+// ─── Auth error guard ─────────────────────────────────────────────────────────
+
+/** Throws an auth error if Supabase error indicates 401/403. */
+function throwIfAuthError(message: string): void {
+  if (
+    message.includes('JWT') ||
+    message.includes('Not Authenticated') ||
+    message.includes('permission denied') ||
+    message.includes('row-level security')
+  ) {
+    throw new AuthError(message)
+  }
+}
+
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AuthError'
+  }
+}
+
 // ─── Workspace repo ───────────────────────────────────────────────────────────
 
 export const workspaceRepo = {
@@ -218,7 +237,10 @@ export const workspaceRepo = {
       .select('*')
       .eq('user_id', userId)
       .order('created_at')
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
     return (data as WorkspaceRow[]).map(rowToWorkspace)
   },
 
@@ -227,7 +249,10 @@ export const workspaceRepo = {
     const { error } = await supabase
       .from('workspaces')
       .upsert(workspaceToRow(workspace))
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 
   async update(id: string, patch: Partial<Workspace>): Promise<void> {
@@ -239,7 +264,10 @@ export const workspaceRepo = {
     if (patch.vehicleUsageModel !== undefined) row.vehicle_usage_model = patch.vehicleUsageModel
     if (patch.isConfigured !== undefined) row.is_configured = patch.isConfigured
     const { error } = await supabase.from('workspaces').update(row).eq('id', id)
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 }
 
@@ -252,7 +280,10 @@ export const orgProfileRepo = {
       .from('org_profiles')
       .select('*, workspaces!inner(user_id)')
       .eq('workspaces.user_id', userId)
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
     return (data as OrgProfileRow[]).map(rowToOrgProfile)
   },
 
@@ -261,7 +292,10 @@ export const orgProfileRepo = {
     const { error } = await supabase
       .from('org_profiles')
       .upsert(orgProfileToRow(profile))
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 }
 
@@ -274,7 +308,10 @@ export const vehicleProfileRepo = {
       .from('vehicle_profiles')
       .select('*, workspaces!inner(user_id)')
       .eq('workspaces.user_id', userId)
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
     return (data as VehicleProfileRow[]).map(rowToVehicleProfile)
   },
 
@@ -283,7 +320,10 @@ export const vehicleProfileRepo = {
     const { error } = await supabase
       .from('vehicle_profiles')
       .upsert(vehicleProfileToRow(profile))
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 
   async updatePartial(workspaceId: string, patch: Partial<VehicleProfile>): Promise<void> {
@@ -300,7 +340,10 @@ export const vehicleProfileRepo = {
       .from('vehicle_profiles')
       .update(row)
       .eq('workspace_id', workspaceId)
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 }
 
@@ -314,20 +357,29 @@ export const tripRepo = {
       .select('*, workspaces!inner(user_id)')
       .eq('workspaces.user_id', userId)
       .order('date', { ascending: false })
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
     return (data as TripRow[]).map(rowToTrip)
   },
 
   async insert(trip: Trip): Promise<void> {
     if (!supabase) return
     const { error } = await supabase.from('trips').insert(tripToRow(trip))
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 
   async delete(id: string): Promise<void> {
     if (!supabase) return
     const { error } = await supabase.from('trips').delete().eq('id', id)
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 }
 
@@ -341,14 +393,20 @@ export const receiptRepo = {
       .select('*, workspaces!inner(user_id)')
       .eq('workspaces.user_id', userId)
       .order('date', { ascending: false })
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
     return (data as ReceiptRow[]).map(rowToReceipt)
   },
 
   async insert(receipt: Receipt): Promise<void> {
     if (!supabase) return
     const { error } = await supabase.from('receipts').insert(receiptToRow(receipt))
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 
   async updateTripLink(receiptId: string, tripId: string | null): Promise<void> {
@@ -357,7 +415,10 @@ export const receiptRepo = {
       .from('receipts')
       .update({ trip_id: tripId })
       .eq('id', receiptId)
-    if (error) throw new Error(error.message)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
   },
 }
 

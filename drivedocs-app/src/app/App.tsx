@@ -10,10 +10,12 @@ import { EventsPage } from '@/pages/EventsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard'
+import { AuthPage } from '@/features/auth/AuthPage'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
+import { subscribeToAuthChanges } from '@/lib/supabase'
+import { isBackendConfigured } from '@/lib/supabase'
 
 // ─── Root redirect ────────────────────────────────────────────────────────────
-// Uses live store state so it works after backend hydration replaces mock IDs.
 
 function RootRedirect() {
   const workspaces = useWorkspaceStore((s) => s.workspaces)
@@ -25,18 +27,61 @@ function RootRedirect() {
   return <Navigate to={`/w/${id}/home`} replace />
 }
 
+// ─── Protected route ──────────────────────────────────────────────────────────
+// Guards all workspace routes. In localStorage mode (no backend), always passes through.
+// In backend mode: waits for first onAuthStateChange event, then redirects to /auth if not signed in.
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
+  const authChecked = useWorkspaceStore((s) => s.authChecked)
+
+  // localStorage mode: backend not configured → always authenticated, skip guard
+  if (!isBackendConfigured) return <>{children}</>
+
+  // Backend mode: wait for auth check before rendering or redirecting
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />
+  }
+
+  return <>{children}</>
+}
+
 const router = createBrowserRouter([
   {
+    path: '/auth',
+    element: <AuthPage />,
+  },
+  {
     path: '/',
-    element: <RootRedirect />,
+    element: (
+      <ProtectedRoute>
+        <RootRedirect />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/onboarding',
-    element: <OnboardingWizard />,
+    element: (
+      <ProtectedRoute>
+        <OnboardingWizard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/w/:workspaceId',
-    element: <MobileLayout />,
+    element: (
+      <ProtectedRoute>
+        <MobileLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="home" replace /> },
       { path: 'home', element: <HomePage /> },
@@ -55,11 +100,15 @@ const router = createBrowserRouter([
 ])
 
 export function App() {
-  const hydrateFromBackend = useWorkspaceStore((s) => s.hydrateFromBackend)
+  const setAuthUser = useWorkspaceStore((s) => s.setAuthUser)
 
   useEffect(() => {
-    hydrateFromBackend()
-  }, [hydrateFromBackend])
+    // Subscribe to Supabase auth state changes.
+    // In localStorage mode, subscribeToAuthChanges fires callback(null, null) once
+    // and returns — which is a no-op because isBackendConfigured=false means store
+    // starts as isAuthenticated=true and ProtectedRoute skips the guard entirely.
+    return subscribeToAuthChanges(setAuthUser)
+  }, [setAuthUser])
 
   return <RouterProvider router={router} />
 }

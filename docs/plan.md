@@ -20,7 +20,7 @@
 | 6 | Monthly report + clipboard export | done |
 | 7 | Receipt capture | done |
 | 8 | Backend foundation (Supabase) | done |
-| 9 | Real auth + subscription enforcement | draft |
+| 9 | Real auth + subscription enforcement | done |
 
 ---
 

@@ -263,6 +263,22 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-AUTH — Real auth (Phase 9)
+
+**Description:** Supabase email/password аутентификация. Замена хардкодированного `isAuthenticated: true` реальным auth flow. AuthPage (login + signup tabs), ProtectedRoute guard, logout в SettingsPage. RLS на 5 таблицах (workspaces, org_profiles, vehicle_profiles, trips, receipts). В localStorage-only mode (без env vars) auth по-прежнему не требуется.
+
+**Screens/Flows:** `/auth` (AuthPage), ProtectedRoute wrapper, SettingsPage (logout button)
+**User Stories:** US-001 (implied)
+**Tasks:** T-071, T-109, T-110, T-111
+**Status:** done
+
+**Known limitations:**
+- Нет email confirmation UI (пользователь видит сообщение "Проверьте почту", дальнейший flow зависит от Supabase project settings).
+- Social login (Google/Apple) — Phase 10+.
+- Subscription enforcement — T-072, Phase 10.
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |

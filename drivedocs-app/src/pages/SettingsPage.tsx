@@ -9,6 +9,7 @@ import {
   Plus,
   X,
   TriangleAlert,
+  LogOut,
 } from 'lucide-react'
 import { Card } from '@/shared/ui/components/Card'
 import { Badge } from '@/shared/ui/components/Badge'
@@ -17,6 +18,7 @@ import {
   useCurrentWorkspace,
   useOrgProfile,
 } from '@/app/store/workspaceStore'
+import { isBackendConfigured } from '@/lib/supabase'
 import {
   ENTITY_TYPE_LABELS,
   TAX_MODE_LABELS,
@@ -135,6 +137,8 @@ export function SettingsPage() {
   const allWorkspaces = useWorkspaceStore((s) => s.workspaces)
   const user = useWorkspaceStore((s) => s.user)
   const { setCurrentWorkspace, updateWorkspace, resetWorkspaceConfig } = useWorkspaceStore()
+
+  const signOut = useWorkspaceStore((s) => s.signOut)
 
   const [renameOpen, setRenameOpen] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -289,6 +293,15 @@ export function SettingsPage() {
                 year: 'numeric',
               })}
             </p>
+          )}
+          {isBackendConfigured && (
+            <button
+              onClick={() => signOut()}
+              className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 w-full text-left text-sm font-medium text-red-500 active:text-red-700"
+            >
+              <LogOut size={15} />
+              Выйти из аккаунта
+            </button>
           )}
         </Card>
       </section>

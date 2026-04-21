@@ -23,16 +23,38 @@ import {
   tripRepo,
   receiptRepo,
   fetchAllUserData,
-  ANON_USER_ID,
+  AuthError,
 } from '@/lib/db/repository'
-import { isBackendConfigured } from '@/lib/supabase'
+import { supabase, isBackendConfigured, type SupabaseUser } from '@/lib/supabase'
+
+// ─── Auth result type ─────────────────────────────────────────────────────────
+
+export interface AuthResult {
+  error: string | null
+}
+
+// ─── Supabase auth error → Russian message ────────────────────────────────────
+
+function mapAuthErrorMessage(msg: string): string {
+  if (msg.includes('Invalid login credentials')) return 'Неверный email или пароль'
+  if (msg.includes('Email not confirmed')) return 'Подтвердите email — проверьте входящие письма'
+  if (msg.includes('User already registered')) return 'Этот email уже зарегистрирован. Войдите в аккаунт.'
+  if (msg.includes('Password should be at least')) return 'Пароль должен содержать не менее 6 символов'
+  if (msg.includes('invalid format')) return 'Неверный формат email'
+  if (msg.includes('Signup is disabled')) return 'Регистрация временно недоступна'
+  if (msg.includes('rate limit')) return 'Слишком много попыток. Подождите немного.'
+  if (msg.includes('Email rate limit')) return 'Слишком много попыток. Подождите немного.'
+  return msg
+}
 
 // ─── Store interface ───────────────────────────────────────────────────────────
 
 interface WorkspaceStore {
-  // Auth (mock — Phase 9 wires real auth)
+  // Auth
   user: User
   isAuthenticated: boolean
+  authUserId: string | null    // Supabase auth.uid(); null = not signed in
+  authChecked: boolean         // true once onAuthStateChange has fired at least once
 
   // Workspaces
   workspaces: Workspace[]
@@ -47,10 +69,10 @@ interface WorkspaceStore {
   // Trips
   trips: Trip[]
 
-  // Documents (local only — not backend-backed in Phase 8)
+  // Documents (local only — not backend-backed in Phase 9)
   documents: WorkspaceDocument[]
 
-  // Events (local only — not backend-backed in Phase 8)
+  // Events (local only — not backend-backed in Phase 9)
   events: WorkspaceEvent[]
 
   // Receipts
@@ -63,7 +85,13 @@ interface WorkspaceStore {
   isSyncing: boolean
   syncError: string | null
 
-  // Actions
+  // Auth actions
+  signIn: (email: string, password: string) => Promise<AuthResult>
+  signUp: (email: string, password: string) => Promise<AuthResult>
+  signOut: () => Promise<void>
+  setAuthUser: (userId: string | null, supabaseUser: SupabaseUser | null) => Promise<void>
+
+  // Workspace / data actions
   setCurrentWorkspace: (id: string) => void
   addWorkspace: (workspace: Workspace) => Promise<void>
   updateWorkspace: (id: string, patch: Partial<Workspace>) => Promise<void>
@@ -85,10 +113,27 @@ interface WorkspaceStore {
   clearSyncError: () => void
 }
 
-// ─── Error helper ──────────────────────────────────────────────────────────────
+// ─── Error helpers ────────────────────────────────────────────────────────────
 
 function syncErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Не удалось синхронизировать данные'
+}
+
+function isAuthError(err: unknown): boolean {
+  return err instanceof AuthError
+}
+
+// ─── Empty workspace state (used on logout) ───────────────────────────────────
+
+const EMPTY_WORKSPACE_STATE = {
+  workspaces: [] as Workspace[],
+  currentWorkspaceId: null,
+  orgProfiles: [] as OrganizationProfile[],
+  vehicleProfiles: [] as VehicleProfile[],
+  trips: [] as Trip[],
+  receipts: [] as Receipt[],
+  documents: [] as WorkspaceDocument[],
+  events: [] as WorkspaceEvent[],
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -96,8 +141,13 @@ function syncErrorMessage(err: unknown): string {
 export const useWorkspaceStore = create<WorkspaceStore>()(
   persist(
     (set, get) => ({
+      // Auth — initial values depend on whether backend is configured:
+      // - no backend: permanently authenticated with mock user (Phase 8 behavior preserved)
+      // - backend: unknown until onAuthStateChange fires (authChecked = false)
       user: mockUser,
-      isAuthenticated: true,
+      isAuthenticated: !isBackendConfigured,
+      authUserId: null,
+      authChecked: !isBackendConfigured,
 
       workspaces: mockWorkspaces,
       currentWorkspaceId: mockWorkspaces[0]?.id ?? null,
@@ -113,18 +163,135 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       isSyncing: false,
       syncError: null,
 
+      // ── Auth actions ─────────────────────────────────────────────────────────
+
+      signIn: async (email, password) => {
+        if (!supabase) return { error: 'Backend не подключён' }
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) return { error: mapAuthErrorMessage(error.message) }
+        // onAuthStateChange will fire → setAuthUser → hydrateFromBackend
+        return { error: null }
+      },
+
+      signUp: async (email, password) => {
+        if (!supabase) return { error: 'Backend не подключён' }
+        const { error } = await supabase.auth.signUp({ email, password })
+        if (error) return { error: mapAuthErrorMessage(error.message) }
+        // Supabase sends confirmation email; session may be active immediately
+        // depending on project email confirmation settings.
+        return { error: null }
+      },
+
+      signOut: async () => {
+        if (supabase) {
+          await supabase.auth.signOut()
+        }
+        set({
+          authUserId: null,
+          authChecked: true,
+          isAuthenticated: false,
+          user: mockUser,
+          ...EMPTY_WORKSPACE_STATE,
+        })
+      },
+
+      /**
+       * Called by App.tsx onAuthStateChange subscription.
+       * Updates auth state and triggers hydration (or reset) accordingly.
+       */
+      setAuthUser: async (userId, supabaseUser) => {
+        if (!userId) {
+          // Signed out or no session
+          set({
+            authUserId: null,
+            authChecked: true,
+            isAuthenticated: false,
+          })
+          return
+        }
+
+        // Map Supabase user to domain User (email from auth, name from metadata or email prefix)
+        const email = supabaseUser?.email ?? ''
+        const name =
+          (supabaseUser?.user_metadata?.['name'] as string | undefined) ??
+          email.split('@')[0] ??
+          'Пользователь'
+
+        const authUser: User = {
+          id: userId,
+          email,
+          name,
+          subscriptionStatus: 'trial',   // Phase 10: replace with real billing status
+          subscriptionExpiresAt: undefined,
+          createdAt: supabaseUser?.created_at ?? new Date().toISOString(),
+        }
+
+        set({
+          authUserId: userId,
+          authChecked: true,
+          isAuthenticated: true,
+          user: authUser,
+        })
+
+        // Hydrate workspace data for this user
+        await get().hydrateFromBackend()
+      },
+
+      // ── Backend hydration ────────────────────────────────────────────────────
+
+      hydrateFromBackend: async () => {
+        if (!isBackendConfigured) return
+        const userId = get().authUserId
+        if (!userId) return   // not authenticated; nothing to load
+
+        set({ isSyncing: true, syncError: null })
+        try {
+          const data = await fetchAllUserData(userId)
+          if (data.workspaces.length > 0) {
+            const currentId = get().currentWorkspaceId
+            const stillValid = data.workspaces.some((ws) => ws.id === currentId)
+            set({
+              workspaces: data.workspaces,
+              orgProfiles: data.orgProfiles,
+              vehicleProfiles: data.vehicleProfiles,
+              trips: data.trips,
+              receipts: data.receipts,
+              currentWorkspaceId: stillValid
+                ? currentId
+                : (data.workspaces[0]?.id ?? null),
+            })
+          }
+          // If backend has no workspaces yet, keep local/mock data as-is (first-run).
+        } catch (err) {
+          if (isAuthError(err)) {
+            // Auth error during hydration → force sign-out
+            console.error('[drivedocs] Auth error during hydration — signing out', err)
+            await get().signOut()
+          } else {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        } finally {
+          set({ isSyncing: false })
+        }
+      },
+
       // ── Workspace actions ────────────────────────────────────────────────────
 
       setCurrentWorkspace: (id) => set({ currentWorkspaceId: id }),
 
       addWorkspace: async (workspace) => {
+        // Ensure workspace.userId reflects the authenticated user, not mock
+        const authUserId = get().authUserId
+        const workspaceWithAuth = authUserId
+          ? { ...workspace, userId: authUserId }
+          : workspace
         set((state) => ({
-          workspaces: [...state.workspaces, workspace],
-          currentWorkspaceId: workspace.id,
+          workspaces: [...state.workspaces, workspaceWithAuth],
+          currentWorkspaceId: workspaceWithAuth.id,
         }))
         if (isBackendConfigured) {
           try {
-            await workspaceRepo.upsert(workspace)
+            await workspaceRepo.upsert(workspaceWithAuth)
           } catch (err) {
             set({ syncError: syncErrorMessage(err) })
           }
@@ -219,7 +386,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         }
       },
 
-      // ── Document actions (local only in Phase 8) ─────────────────────────────
+      // ── Document actions (local only in Phase 9) ─────────────────────────────
 
       updateDocumentStatus: (documentId, status) =>
         set((state) => ({
@@ -234,7 +401,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
           ),
         })),
 
-      // ── Event actions (local only in Phase 8) ────────────────────────────────
+      // ── Event actions (local only in Phase 9) ────────────────────────────────
 
       addEvent: (event) =>
         set((state) => ({ events: [event, ...state.events] })),
@@ -303,7 +470,6 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
           ),
         }))
         if (isBackendConfigured) {
-          // Fire-and-forget update; no critical data loss if this fails
           workspaceRepo.update(workspaceId, { isConfigured: false }).catch((err) =>
             set({ syncError: syncErrorMessage(err) }),
           )
@@ -315,42 +481,13 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       setOnboarding: (onboarding) => set({ onboarding }),
       clearOnboarding: () => set({ onboarding: null }),
 
-      // ── Backend hydration ────────────────────────────────────────────────────
-
-      hydrateFromBackend: async () => {
-        if (!isBackendConfigured) return
-        set({ isSyncing: true, syncError: null })
-        try {
-          const data = await fetchAllUserData(ANON_USER_ID)
-          if (data.workspaces.length > 0) {
-            const currentId = get().currentWorkspaceId
-            const stillValid = data.workspaces.some((ws) => ws.id === currentId)
-            set({
-              workspaces: data.workspaces,
-              orgProfiles: data.orgProfiles,
-              vehicleProfiles: data.vehicleProfiles,
-              trips: data.trips,
-              receipts: data.receipts,
-              // Keep currentWorkspaceId if still valid; otherwise use first from backend
-              currentWorkspaceId: stillValid
-                ? currentId
-                : (data.workspaces[0]?.id ?? null),
-            })
-          }
-          // If backend has no workspaces yet, keep local/mock data as-is.
-          // This covers first-run before any data has been synced to backend.
-        } catch (err) {
-          set({ syncError: syncErrorMessage(err) })
-        } finally {
-          set({ isSyncing: false })
-        }
-      },
-
       clearSyncError: () => set({ syncError: null }),
     }),
     {
       name: 'drivedocs-workspace',
       partialize: (state) => ({
+        // Auth state is NOT persisted — Supabase manages its own session in localStorage.
+        // isAuthenticated, authUserId, authChecked are always recomputed from auth events.
         currentWorkspaceId: state.currentWorkspaceId,
         workspaces: state.workspaces,
         orgProfiles: state.orgProfiles,
