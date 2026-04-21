@@ -193,6 +193,7 @@
 | 8.1 — Waybill derivation | F-018 | T-102 | US-018, US-019 |
 | 8.2 — Waybill preview | F-018 | T-103 | US-018, US-019 |
 | 8.3 — PDF export | F-018 | T-104 | US-018 |
+| 8.4 — PDF template enhancement | F-018 | T-105 | US-018, US-019 |
 | 9 — Backend | — | T-070 | all |
 | 10 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
 

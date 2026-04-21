@@ -223,8 +223,8 @@ interface VehicleProfile {
 ```
 
 **Relations:** один-к-одному с Workspace (по workspaceId)
-**Used by Features:** F-002, F-013
-**Note:** Существует как тип в коде. В текущем MVP данные об автомобиле вводятся в OnboardingWizard, но не сохраняются в отдельную сущность — хранятся в store как часть конфигурации. Полное использование запланировано в будущих итерациях.
+**Used by Features:** F-002, F-013, F-018
+**Note:** Хранится в Zustand store в `vehicleProfiles[]`. Доступен через `useVehicleProfile(workspaceId)` selector. Данные вводятся в OnboardingWizard и используются в `buildMonthlyWaybillData` (F-018) для формирования строки "Транспортное средство" в путевом листе.
 
 ---
 
@@ -295,6 +295,41 @@ interface AttentionItem {
 **Used in:** `attentionRules.ts`, `useHomeData`, `HomePage/AttentionSection`
 **Used by Features:** F-AT01, F-012
 **Used by User Stories:** US-AT01
+
+---
+
+## MonthlyWaybillData (derived view, F-018)
+
+```typescript
+interface WaybillExportRow {
+  id: string
+  date: string        // ISO date 'YYYY-MM-DD'
+  route: string       // "Откуда → Куда"
+  purpose: string
+  distanceKm: number | null
+}
+
+interface MonthlyWaybillData {
+  workspaceId: string
+  entityType: EntityType
+  fromDate: string             // ISO date — period start, used for filename
+  periodLabel: string          // "апрель 2026"
+  organizationName: string     // orgProfile.organizationName ?? orgProfile.ownerFullName ?? workspace.name
+  organizationInn: string | null
+  organizationOgrn: string | null  // ОГРН (ООО) or ОГРНИП (ИП); null if not filled
+  vehicleLabel: string         // "Toyota Camry А123ВГ77" or fallback
+  driverLabel: string          // ownerFullName from orgProfile or vehicleProfile, or workspace.name
+  rows: WaybillExportRow[]
+  totals: { tripsCount: number; totalDistanceKm: number }
+  warnings: string[]
+  isExportReady: boolean       // false if trips === 0 or vehicleProfile/orgProfile missing
+}
+```
+
+**Relations:** виртуальная — создаётся чистой функцией `buildMonthlyWaybillData()` из `Workspace`, `OrganizationProfile`, `VehicleProfile` и `Trip[]`; не персистируется
+**Used in:** `src/features/trips/waybillData.ts` (derivation), `WaybillPreviewSheet` (preview), `exportWaybillPdf` (PDF generation)
+**Used by Features:** F-018
+**Used by User Stories:** US-018, US-019
 
 ---
 

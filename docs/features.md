@@ -249,12 +249,17 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ## F-018 — PDF путевого листа из месячного отчёта
 
-**Description:** Генерация PDF путевого листа за выбранный месяц на основе данных workspace и списка поездок. Derivation layer (`buildMonthlyWaybillData`) подготавливает типизированную структуру для будущего preview sheet и PDF export. Включает warnings о неполных данных (нет автомобиля, нет ФИО водителя, нет поездок). PDF-генерация — клиентская, без backend.
+**Description:** Генерация PDF путевого листа за выбранный месяц на основе данных workspace и списка поездок. Derivation layer (`buildMonthlyWaybillData`) подготавливает типизированную структуру для preview и PDF export. `WaybillPreviewSheet` показывает сводку: организация, ИНН, ОГРН/ОГРНИП (если заполнен), автомобиль, водитель, список поездок за период, итоговый пробег и предупреждения о неполных данных. Кнопка "Скачать PDF" активна только при `isExportReady`. PDF формируется на клиенте (jsPDF + jspdf-autotable, Roboto TTF для кириллицы) без обращения к серверу. Шаблон включает реквизиты, таблицу поездок, итоги, блок подписей с М.П.
 
-**Screens/Flows:** TripsPage (будущая кнопка "Путевой лист"), WaybillPreviewSheet (planned), PDF download (planned)
+**Screens/Flows:** TripsPage (кнопка "Путевой лист" в шапке), WaybillPreviewSheet (bottom sheet), PDF download (client-side, `putevoy-list-YYYY-MM.pdf`)
 **User Stories:** US-018, US-019
-**Tasks:** T-102, T-103, T-104
-**Status:** planned
+**Tasks:** T-102, T-103, T-104, T-105
+**Status:** done
+
+**Known limitations:**
+- ОГРНИП для ИП показывается только если `orgProfile.ogrn` заполнен; онбординг не собирает это поле в текущем MVP.
+- Фото чеков в путевой лист не включаются.
+- PDF сохраняется только на устройство — backend-хранение не реализовано.
 
 ---
 

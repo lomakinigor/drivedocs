@@ -427,7 +427,7 @@ Status per story is derived from linked feature status.
 - Если данных недостаточно для полноценного документа — пользователь видит список предупреждений до экспорта.
 
 **Features:** F-018
-**Tasks:** T-102, T-103, T-104
+**Tasks:** T-102, T-103, T-104, T-105
 
 ---
 
@@ -445,4 +445,4 @@ Status per story is derived from linked feature status.
 - Некритичные предупреждения показываются, но не блокируют экспорт.
 
 **Features:** F-018
-**Tasks:** T-102, T-103
+**Tasks:** T-102, T-103, T-104, T-105
