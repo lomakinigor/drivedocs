@@ -158,7 +158,7 @@
 
 **Mini-cycle 8.2 (done):** WaybillPreviewSheet — preview данных, warnings, кнопка экспорта (disabled до isExportReady). VehicleProfile подключён в store.
 
-**Mini-cycle 8.3 (planned):** PDF generator — выбор библиотеки (T-104), шаблон путевого листа, download.
+**Mini-cycle 8.3 (done):** PDF generator — jsPDF + jspdf-autotable (D-013), A4 шаблон с Roboto TTF, download trigger.
 
 **Задачи:** T-102, T-103, T-104
 
@@ -192,7 +192,7 @@
 | 7 — Receipt photo | F-017 | T-061, T-100, T-101 | US-017 |
 | 8.1 — Waybill derivation | F-018 | T-102 | US-018, US-019 |
 | 8.2 — Waybill preview | F-018 | T-103 | US-018, US-019 |
-| 8.3 — PDF export (planned) | F-018 | T-104 | US-018 |
+| 8.3 — PDF export | F-018 | T-104 | US-018 |
 | 9 — Backend | — | T-070 | all |
 | 10 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
 

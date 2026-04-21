@@ -320,6 +320,23 @@ Format:
 
 ---
 
+## D-013 — jsPDF + jspdf-autotable для client-only PDF export (F-018)
+
+- **Date:** 2026-04-21
+- **Context:** T-104 требует client-side PDF генерации из `MonthlyWaybillData`. Два кандидата: `@react-pdf/renderer` и `jsPDF`.
+- **Options:**
+  1. `@react-pdf/renderer` — JSX-компонент как PDF-шаблон, React-based rendering, хорош для rich layout
+  2. `jsPDF` + `jspdf-autotable` — императивный API, чистая TS-функция, без React context в export layer
+- **Decision:** `jsPDF` + `jspdf-autotable`. Причины: (1) export layer уже изолирован от React (D-011), императивный API лучше подходит для чистой TS-функции без JSX; (2) `jspdf-autotable` даёт готовую таблицу с заголовком, чередованием строк, column widths без доп. layout кода; (3) меньше абстракций — функция принимает `MonthlyWaybillData` и вызывает `doc.save()`; (4) совместимость с Vite/ESM без дополнительных плагинов. Шрифт Roboto-Regular.ttf в `public/fonts/` — один fetch при первом экспорте, затем кеш в памяти.
+- **Consequences:**
+  - Bundle size: `jsPDF` ~280 KB + `jspdf-autotable` ~80 KB (lazy-loaded только при вызове экспорта в будущем).
+  - Русский текст требует явного embedding Cyrillic TTF — стандартный паттерн для jsPDF.
+  - При смене шаблона меняется только `exportWaybillPdf.ts` — derivation layer (D-011) не затронут.
+  - `@react-pdf/renderer` остаётся вариантом для будущих rich PDF форматов.
+- **Links:** F-018, T-104, D-010, D-011
+
+---
+
 ## D-012 — WaybillPreviewSheet открывается из TripsPage (не из MonthlyReportSheet)
 
 - **Date:** 2026-04-20

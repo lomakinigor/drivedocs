@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { X, FileText, AlertTriangle, Download } from 'lucide-react'
+import { X, FileText, AlertTriangle, Download, Loader } from 'lucide-react'
 import {
   useWorkspaceStore,
   useOrgProfile,
@@ -7,6 +7,7 @@ import {
   useWorkspaceTrips,
 } from '@/app/store/workspaceStore'
 import { buildMonthlyWaybillData } from './waybillData'
+import { exportWaybillPdf } from './exportWaybillPdf'
 import type { WaybillExportRow } from './waybillData'
 
 interface WaybillPreviewSheetProps {
@@ -29,7 +30,8 @@ export function WaybillPreviewSheet({
   const vehicleProfile = useVehicleProfile(workspaceId)
   const allTrips = useWorkspaceTrips(workspaceId)
 
-  const [exportHintVisible, setExportHintVisible] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   const periodTrips = useMemo(
     () => allTrips.filter((t) => t.date >= fromDate && t.date <= toDate),
@@ -50,9 +52,17 @@ export function WaybillPreviewSheet({
 
   if (!data) return null
 
-  const handleExportPress = () => {
-    setExportHintVisible(true)
-    setTimeout(() => setExportHintVisible(false), 3000)
+  const handleExportPress = async () => {
+    if (isExporting || !data) return
+    setIsExporting(true)
+    setExportError(null)
+    try {
+      await exportWaybillPdf(data)
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Не удалось создать PDF. Попробуйте ещё раз.')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -162,12 +172,10 @@ export function WaybillPreviewSheet({
             </div>
           )}
 
-          {/* Export hint (placeholder feedback) */}
-          {exportHintVisible && (
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
-              <p className="text-xs text-indigo-700">
-                PDF-экспорт будет доступен в следующем обновлении.
-              </p>
+          {/* Export error */}
+          {exportError && (
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
+              <p className="text-xs text-red-700">{exportError}</p>
             </div>
           )}
         </div>
@@ -176,15 +184,24 @@ export function WaybillPreviewSheet({
         <div className="px-5 pb-6 pt-3 border-t border-slate-100 shrink-0 space-y-2.5">
           <button
             onClick={handleExportPress}
-            disabled={!data.isExportReady}
+            disabled={!data.isExportReady || isExporting}
             className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
-              data.isExportReady
+              data.isExportReady && !isExporting
                 ? 'bg-indigo-600 text-white active:bg-indigo-700'
                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'
             }`}
           >
-            <Download size={16} />
-            Скачать PDF
+            {isExporting ? (
+              <>
+                <Loader size={16} className="animate-spin" />
+                Создание PDF…
+              </>
+            ) : (
+              <>
+                <Download size={16} />
+                Скачать PDF
+              </>
+            )}
           </button>
           <button
             onClick={onClose}
