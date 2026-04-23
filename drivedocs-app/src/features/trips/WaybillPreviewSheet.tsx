@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
-import { X, FileText, AlertTriangle, Download, Loader } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { X, FileText, AlertTriangle, Download, Loader, Lock } from 'lucide-react'
 import {
   useWorkspaceStore,
   useOrgProfile,
   useVehicleProfile,
   useWorkspaceTrips,
+  useIsProWorkspace,
 } from '@/app/store/workspaceStore'
 import { buildMonthlyWaybillData } from './waybillData'
 import { exportWaybillPdf } from './exportWaybillPdf'
@@ -29,6 +31,8 @@ export function WaybillPreviewSheet({
   const orgProfile = useOrgProfile(workspaceId)
   const vehicleProfile = useVehicleProfile(workspaceId)
   const allTrips = useWorkspaceTrips(workspaceId)
+  const isPro = useIsProWorkspace(workspaceId)
+  const navigate = useNavigate()
 
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
@@ -63,6 +67,11 @@ export function WaybillPreviewSheet({
     } finally {
       setIsExporting(false)
     }
+  }
+
+  const handleUpgradePress = () => {
+    onClose()
+    navigate(`/w/${workspaceId}/settings?upgrade=1`)
   }
 
   return (
@@ -188,27 +197,31 @@ export function WaybillPreviewSheet({
 
         {/* Sticky footer */}
         <div className="px-5 pb-6 pt-3 border-t border-slate-100 shrink-0 space-y-2.5">
-          <button
-            onClick={handleExportPress}
-            disabled={!data.isExportReady || isExporting}
-            className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
-              data.isExportReady && !isExporting
-                ? 'bg-indigo-600 text-white active:bg-indigo-700'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-            }`}
-          >
-            {isExporting ? (
-              <>
-                <Loader size={16} className="animate-spin" />
-                Создание PDF…
-              </>
-            ) : (
-              <>
-                <Download size={16} />
-                Скачать PDF
-              </>
-            )}
-          </button>
+          {isPro ? (
+            <button
+              onClick={handleExportPress}
+              disabled={!data.isExportReady || isExporting}
+              className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
+                data.isExportReady && !isExporting
+                  ? 'bg-indigo-600 text-white active:bg-indigo-700'
+                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              {isExporting ? (
+                <>
+                  <Loader size={16} className="animate-spin" />
+                  Создание PDF…
+                </>
+              ) : (
+                <>
+                  <Download size={16} />
+                  Скачать PDF
+                </>
+              )}
+            </button>
+          ) : (
+            <PdfPaywall onUpgrade={handleUpgradePress} />
+          )}
           <button
             onClick={onClose}
             className="w-full py-3 rounded-2xl text-sm font-semibold text-slate-600 border border-slate-200 bg-white active:bg-slate-50"
@@ -218,6 +231,33 @@ export function WaybillPreviewSheet({
         </div>
       </div>
     </>
+  )
+}
+
+// ─── Paywall block ────────────────────────────────────────────────────────────
+
+function PdfPaywall({ onUpgrade }: { onUpgrade: () => void }) {
+  return (
+    <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="p-1.5 bg-indigo-100 rounded-lg shrink-0">
+          <Lock size={15} className="text-indigo-600" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-indigo-900">Функция доступна на тарифе Pro</p>
+          <p className="text-xs text-indigo-700 mt-0.5 leading-relaxed">
+            Скачивание путевого листа в PDF доступно на платном тарифе.
+            Просмотр и сводка — бесплатно.
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onUpgrade}
+        className="w-full py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white active:bg-indigo-700 transition-colors"
+      >
+        Перейти на Pro
+      </button>
+    </div>
   )
 }
 

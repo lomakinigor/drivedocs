@@ -483,3 +483,53 @@ Supabase email/password auth. Замена `ANON_USER_ID` хардкода на 
 Добавлены `documentRepo` (listByUser, upsert, updateStatus, bulkUpsert) и `eventRepo` (listByUser, insert, markRead) в `repository.ts`. `fetchAllUserData` расширён — включает documents + events. Store: hydration, `updateDocumentStatus`, `addEvent`, `markEventRead` теперь синхронизируются с backend.
 **Files/Areas:** `src/lib/db/repository.ts`, `src/app/store/workspaceStore.ts`
 **Links:** F-006, F-007, F-008, T-112
+
+### T-114 — Subscriptions table + RLS (schema)
+**Type:** impl | **Status:** done | **Owner:** AI
+`schema.sql`: таблица `subscriptions` (id, workspace_id FK unique, plan_code, status, stripe_customer_id, stripe_subscription_id, current_period_end, timestamps). `rls-policies.sql`: owner-only RLS via workspaces join.
+**Files/Areas:** `src/lib/db/schema.sql`, `src/lib/db/rls-policies.sql`
+**Links:** F-020, D-020, D-021
+**Acceptance:** таблица создаётся без ошибок в Supabase. RLS запрещает доступ к чужим записям.
+
+### T-115 — WorkspaceSubscription domain type
+**Type:** impl | **Status:** done | **Owner:** AI
+`domain.ts`: добавлены `PlanCode` ('free' | 'pro'), `SubscriptionPaymentStatus`, `WorkspaceSubscription` interface.
+**Files/Areas:** `src/entities/types/domain.ts`
+**Links:** F-020, T-114
+
+### T-116 — subscriptionRepo + fetchAllUserData extension
+**Type:** impl | **Status:** done | **Owner:** AI
+`repository.ts`: `SubscriptionRow`, mappers, `subscriptionRepo` (getByWorkspace, listByUser, upsert). `HydratedUserData` расширён полем `subscriptions`. `fetchAllUserData` загружает подписки параллельно.
+**Files/Areas:** `src/lib/db/repository.ts`
+**Links:** F-020, T-114, T-115
+
+### T-117 — billingService.ts (Stripe Checkout facade)
+**Type:** impl | **Status:** done | **Owner:** AI
+`src/lib/billing/billingService.ts`: `createCheckoutSession(workspaceId, returnBaseUrl)`. В backend-режиме вызывает Supabase Edge Function `create-checkout-session`. В mock-режиме возвращает `{ isMockMode: true }`. Все ошибки маппятся в русскоязычные строки.
+**Files/Areas:** `src/lib/billing/billingService.ts`
+**Links:** F-020, D-020
+**Acceptance:** Stripe secret key не присутствует в клиентском коде. В mock-режиме UI симулирует активацию.
+
+### T-118 — workspaceStore: subscriptions state + billing actions + selectors
+**Type:** impl | **Status:** done | **Owner:** AI
+`workspaceStore.ts`: `subscriptions: WorkspaceSubscription[]` в state, EMPTY_WORKSPACE_STATE, initial state, hydration, persist. Actions: `setSubscription`, `refreshSubscription`, `activateDevProSubscription`. Selectors: `useWorkspaceSubscription`, `useIsProWorkspace`.
+**Files/Areas:** `src/app/store/workspaceStore.ts`
+**Links:** F-020, T-116
+
+### T-119 — BillingSection в SettingsPage
+**Type:** impl | **Status:** done | **Owner:** AI
+SettingsPage: новый `BillingSection` компонент. Показывает тариф, статус, список Pro-функций (для Free), CTA «Перейти на Pro» / «Управлять подпиской». Обрабатывает `?billing=success/cancel` URL params. В dev-режиме — кнопка симуляции. Все тексты на русском.
+**Files/Areas:** `src/pages/SettingsPage.tsx`
+**Links:** F-020, US-B01, T-117, T-118
+
+### T-120 — Feature gate: PDF export (WaybillPreviewSheet)
+**Type:** impl | **Status:** done | **Owner:** AI
+`WaybillPreviewSheet.tsx`: проверяет `useIsProWorkspace(workspaceId)`. Для Free-workspace — показывает `PdfPaywall` компонент вместо кнопки «Скачать PDF». Paywall: иконка замка, объяснение, CTA «Перейти на Pro» → navigate к SettingsPage с `?upgrade=1`.
+**Files/Areas:** `src/features/trips/WaybillPreviewSheet.tsx`
+**Links:** F-020, F-018, US-B02
+
+### T-121 — Billing return URL handling + Stripe redirect flow
+**Type:** impl | **Status:** done | **Owner:** AI
+SettingsPage читает `?billing=success` → вызывает `refreshSubscription`, показывает success banner. `?billing=cancel` → показывает cancel notice. `?upgrade=1` → scroll к billing-section. URL params очищаются через `setSearchParams` (no history push).
+**Files/Areas:** `src/pages/SettingsPage.tsx`
+**Links:** F-020, US-B01, T-117

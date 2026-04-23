@@ -110,3 +110,23 @@ create table if not exists events (
 );
 
 create index if not exists events_workspace_date on events(workspace_id, date desc);
+
+-- ─── subscriptions ────────────────────────────────────────────────────────────
+-- One row per workspace. Created by Stripe webhook (Edge Function) on first payment.
+-- plan_code defaults to 'free' so absence of row = Free tier (handled in selectors).
+-- stripe_customer_id / stripe_subscription_id written by webhook only (server-side).
+-- RLS in rls-policies.sql.
+
+create table if not exists subscriptions (
+  id                     text        primary key,
+  workspace_id           text        not null unique references workspaces(id) on delete cascade,
+  plan_code              text        not null default 'free',    -- 'free' | 'pro'
+  status                 text        not null default 'active',  -- 'active' | 'canceled' | 'past_due' | 'incomplete'
+  stripe_customer_id     text,
+  stripe_subscription_id text,
+  current_period_end     timestamptz,
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now()
+);
+
+create index if not exists subscriptions_workspace on subscriptions(workspace_id);

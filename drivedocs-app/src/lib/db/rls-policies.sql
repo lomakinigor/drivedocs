@@ -145,3 +145,25 @@ create policy "owner access events"
         and w.user_id = auth.uid()::text
     )
   );
+
+-- ─── subscriptions ────────────────────────────────────────────────────────────
+
+alter table subscriptions enable row level security;
+
+create policy "owner access subscriptions"
+  on subscriptions
+  for all
+  using (
+    exists (
+      select 1 from workspaces w
+      where w.id = workspace_id
+        and w.user_id = auth.uid()::text
+    )
+  )
+  with check (
+    exists (
+      select 1 from workspaces w
+      where w.id = workspace_id
+        and w.user_id = auth.uid()::text
+    )
+  );

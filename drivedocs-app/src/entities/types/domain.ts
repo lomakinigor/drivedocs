@@ -27,6 +27,25 @@ export interface User {
   createdAt: string
 }
 
+// ─── Workspace subscription (billing, F-020) ──────────────────────────────────
+
+export type PlanCode = 'free' | 'pro'
+
+// Stripe-originated status values
+export type SubscriptionPaymentStatus = 'active' | 'canceled' | 'past_due' | 'incomplete'
+
+export interface WorkspaceSubscription {
+  id: string
+  workspaceId: string
+  planCode: PlanCode
+  status: SubscriptionPaymentStatus
+  stripeCustomerId?: string
+  stripeSubscriptionId?: string
+  currentPeriodEnd?: string  // ISO timestamptz
+  createdAt: string
+  updatedAt: string
+}
+
 // ─── Workspace (enterprise context) ─────────────────────────────────────────
 
 export interface Workspace {

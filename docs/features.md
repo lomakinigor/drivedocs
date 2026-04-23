@@ -279,9 +279,34 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+---
+
+## F-020 — Биллинг и управление подпиской
+
+**Description:** Workspace-scoped подписка Free / Pro. Stripe Checkout для оплаты. BillingSection в SettingsPage: текущий тариф, статус, кнопка «Перейти на Pro» (→ Stripe Checkout) или «Управлять подпиской» (→ обновить данные из backend). Минимум один реальный Pro gate: экспорт PDF путевого листа. В dev/mock-режиме — симуляция активации Pro без оплаты.
+
+**Screens/Flows:** SettingsPage (BillingSection), WaybillPreviewSheet (PDF gate + paywall), `?billing=success/cancel` return URLs
+**User Stories:** US-B01, US-B02
+**Tasks:** T-072, T-114, T-115, T-116, T-117, T-118, T-119, T-120, T-121
+**Status:** in-dev
+
+**Architecture (D-020, D-021):**
+- Stripe secret key — только на сервере (Supabase Edge Function `create-checkout-session`)
+- Клиент вызывает Edge Function → получает Checkout URL → редиректит пользователя
+- Stripe webhook → Edge Function `stripe-webhook` → обновляет `subscriptions` таблицу
+- Клиент читает состояние через `subscriptionRepo.listByUser()` при hydration
+
+**Pro gates (Phase 11):**
+- PDF-экспорт путевого листа (WaybillPreviewSheet)
+
+**Planned Pro gates (следующие итерации):**
+- Продвинутая аналитика расходов
+- Push / email напоминания (F-019)
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |
 |----|----------|--------|
 | F-019 | Push / email напоминания | draft |
-| F-020 | Биллинг и управление подпиской | draft |

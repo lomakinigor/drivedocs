@@ -1,11 +1,11 @@
 # Data Model
 
-**Версия:** 4.0 — Phase 8 backend (Supabase) добавлен.
-**Дата:** 21 апреля 2026 г.
+**Версия:** 5.0 — Phase 11 billing (subscriptions) добавлен.
+**Дата:** 23 апреля 2026 г.
 
 Сущности, которые не реализованы в коде, отмечены как `[planned]`.
 
-**Backend persistence status (Phase 8):**
+**Backend persistence status:**
 
 | Entity | Backend-backed | Notes |
 |--------|---------------|-------|
@@ -14,8 +14,9 @@
 | VehicleProfile | ✅ | `vehicle_profiles` table |
 | Trip | ✅ | `trips` table |
 | Receipt | ✅ | `receipts` table (no image_url — D-009) |
-| WorkspaceDocument | ❌ local | Added in Phase 9 with RLS |
-| WorkspaceEvent | ❌ local | Added in Phase 9 with push notifications |
+| WorkspaceDocument | ✅ | `documents` table, Phase 10 |
+| WorkspaceEvent | ✅ | `events` table, Phase 10 |
+| WorkspaceSubscription | ✅ | `subscriptions` table, Phase 11 |
 
 ---
 
@@ -36,7 +37,35 @@ interface User {
 **Used in:** auth guard, MobileHeader (имя пользователя)
 **Used by Features:** F-001
 **Used by User Stories:** US-001, US-002, US-011
-**Note:** В MVP `isAuthenticated: true` — хардкод. `subscriptionStatus` присутствует в типе, но биллинг не реализован (F-020, planned).
+**Note:** `subscriptionStatus` на User — legacy-поле для обратной совместимости. Основная истина о подписке — в `WorkspaceSubscription` (Phase 11).
+
+---
+
+## WorkspaceSubscription
+
+```typescript
+type PlanCode = 'free' | 'pro'
+type SubscriptionPaymentStatus = 'active' | 'canceled' | 'past_due' | 'incomplete'
+
+interface WorkspaceSubscription {
+  id: string
+  workspaceId: string
+  planCode: PlanCode              // 'free' | 'pro'
+  status: SubscriptionPaymentStatus
+  stripeCustomerId?: string       // написан webhook'ом, никогда клиентом
+  stripeSubscriptionId?: string   // написан webhook'ом, никогда клиентом
+  currentPeriodEnd?: string       // ISO timestamptz
+  createdAt: string
+  updatedAt: string
+}
+```
+
+**Relations:** один Workspace → один WorkspaceSubscription (optional; отсутствие записи = Free)
+**Used in:** SettingsPage (BillingSection), WaybillPreviewSheet (PDF gate), `useIsProWorkspace()` selector
+**Used by Features:** F-020
+**Used by User Stories:** US-B01, US-B02
+**Backend:** `subscriptions` table, RLS = owner-only via workspaces join
+**Note:** `stripe_customer_id` и `stripe_subscription_id` пишутся только сервером (Supabase Edge Function). Клиент имеет право только читать. D-020, D-021.
 
 ---
 

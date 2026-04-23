@@ -12,6 +12,7 @@ import type {
   WorkspaceDocument,
   WorkspaceEvent,
   DocumentStatus,
+  WorkspaceSubscription,
 } from '@/entities/types/domain'
 import { mockWorkspaces, mockOrgProfiles, mockVehicleProfiles } from '@/entities/mocks/workspaces'
 import { mockUser } from '@/entities/mocks/user'
@@ -24,6 +25,7 @@ import {
   receiptRepo,
   documentRepo,
   eventRepo,
+  subscriptionRepo,
   fetchAllUserData,
   AuthError,
 } from '@/lib/db/repository'
@@ -80,6 +82,9 @@ interface WorkspaceStore {
   // Receipts
   receipts: Receipt[]
 
+  // Subscriptions (billing, F-020)
+  subscriptions: WorkspaceSubscription[]
+
   // Onboarding
   onboarding: OnboardingState | null
 
@@ -113,6 +118,12 @@ interface WorkspaceStore {
   clearOnboarding: () => void
   hydrateFromBackend: () => Promise<void>
   clearSyncError: () => void
+
+  // Billing actions (F-020)
+  setSubscription: (sub: WorkspaceSubscription) => void
+  refreshSubscription: (workspaceId: string) => Promise<void>
+  /** Dev-only: simulate Pro activation without real Stripe payment */
+  activateDevProSubscription: (workspaceId: string) => void
 }
 
 // ─── Error helpers ────────────────────────────────────────────────────────────
@@ -136,6 +147,7 @@ const EMPTY_WORKSPACE_STATE = {
   receipts: [] as Receipt[],
   documents: [] as WorkspaceDocument[],
   events: [] as WorkspaceEvent[],
+  subscriptions: [] as WorkspaceSubscription[],
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -160,6 +172,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       documents: mockDocuments,
       events: mockEvents,
       receipts: [],
+      subscriptions: [],
       onboarding: null,
 
       isSyncing: false,
@@ -260,6 +273,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
               receipts: data.receipts,
               documents: data.documents,
               events: data.events,
+              subscriptions: data.subscriptions,
               currentWorkspaceId: stillValid
                 ? currentId
                 : (data.workspaces[0]?.id ?? null),
@@ -497,6 +511,50 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       clearOnboarding: () => set({ onboarding: null }),
 
       clearSyncError: () => set({ syncError: null }),
+
+      // ── Billing actions (F-020) ───────────────────────────────────────────────
+
+      setSubscription: (sub) =>
+        set((state) => ({
+          subscriptions: [
+            ...state.subscriptions.filter((s) => s.workspaceId !== sub.workspaceId),
+            sub,
+          ],
+        })),
+
+      refreshSubscription: async (workspaceId) => {
+        if (!isBackendConfigured) return
+        try {
+          const sub = await subscriptionRepo.getByWorkspace(workspaceId)
+          if (sub) {
+            set((state) => ({
+              subscriptions: [
+                ...state.subscriptions.filter((s) => s.workspaceId !== workspaceId),
+                sub,
+              ],
+            }))
+          }
+        } catch (err) {
+          set({ syncError: syncErrorMessage(err) })
+        }
+      },
+
+      activateDevProSubscription: (workspaceId) => {
+        const devSub: WorkspaceSubscription = {
+          id: `dev-sub-${workspaceId}`,
+          workspaceId,
+          planCode: 'pro',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        set((state) => ({
+          subscriptions: [
+            ...state.subscriptions.filter((s) => s.workspaceId !== workspaceId),
+            devSub,
+          ],
+        }))
+      },
     }),
     {
       name: 'drivedocs-workspace',
@@ -511,6 +569,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         documents: state.documents,
         events: state.events,
         receipts: state.receipts,
+        subscriptions: state.subscriptions,
       }),
     },
   ),
@@ -635,6 +694,20 @@ export const useReceiptsForPeriod = (workspaceId: string, fromDate: string, toDa
 
 export const useSyncError = () => useWorkspaceStore((s) => s.syncError)
 export const useIsSyncing = () => useWorkspaceStore((s) => s.isSyncing)
+
+// ─── Billing selectors (F-020) ────────────────────────────────────────────────
+
+export const useWorkspaceSubscription = (workspaceId: string) =>
+  useWorkspaceStore((s) =>
+    s.subscriptions.find((sub) => sub.workspaceId === workspaceId) ?? null,
+  )
+
+/** Returns true if workspace has an active Pro subscription */
+export const useIsProWorkspace = (workspaceId: string) =>
+  useWorkspaceStore((s) => {
+    const sub = s.subscriptions.find((sub) => sub.workspaceId === workspaceId)
+    return sub?.planCode === 'pro' && sub?.status === 'active'
+  })
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

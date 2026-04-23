@@ -21,6 +21,9 @@ import type {
   WorkspaceDocument,
   DocumentStatus,
   WorkspaceEvent,
+  WorkspaceSubscription,
+  PlanCode,
+  SubscriptionPaymentStatus,
 } from '@/entities/types/domain'
 
 // ─── Row types (snake_case DB columns) ────────────────────────────────────────
@@ -593,6 +596,88 @@ export const eventRepo = {
   },
 }
 
+// ─── Subscription repo ────────────────────────────────────────────────────────
+
+interface SubscriptionRow {
+  id: string
+  workspace_id: string
+  plan_code: string
+  status: string
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  current_period_end: string | null
+  created_at: string
+  updated_at: string
+}
+
+function rowToSubscription(r: SubscriptionRow): WorkspaceSubscription {
+  return {
+    id: r.id,
+    workspaceId: r.workspace_id,
+    planCode: r.plan_code as PlanCode,
+    status: r.status as SubscriptionPaymentStatus,
+    stripeCustomerId: r.stripe_customer_id ?? undefined,
+    stripeSubscriptionId: r.stripe_subscription_id ?? undefined,
+    currentPeriodEnd: r.current_period_end ?? undefined,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }
+}
+
+function subscriptionToRow(s: WorkspaceSubscription): SubscriptionRow {
+  return {
+    id: s.id,
+    workspace_id: s.workspaceId,
+    plan_code: s.planCode,
+    status: s.status,
+    stripe_customer_id: s.stripeCustomerId ?? null,
+    stripe_subscription_id: s.stripeSubscriptionId ?? null,
+    current_period_end: s.currentPeriodEnd ?? null,
+    created_at: s.createdAt,
+    updated_at: s.updatedAt,
+  }
+}
+
+export const subscriptionRepo = {
+  async getByWorkspace(workspaceId: string): Promise<WorkspaceSubscription | null> {
+    if (!supabase) return null
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .maybeSingle()
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+    return data ? rowToSubscription(data as SubscriptionRow) : null
+  },
+
+  async listByUser(userId: string): Promise<WorkspaceSubscription[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*, workspaces!inner(user_id)')
+      .eq('workspaces.user_id', userId)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+    return (data as SubscriptionRow[]).map(rowToSubscription)
+  },
+
+  async upsert(subscription: WorkspaceSubscription): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('subscriptions')
+      .upsert(subscriptionToRow(subscription))
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+  },
+}
+
 // ─── Bulk hydration ───────────────────────────────────────────────────────────
 
 export interface HydratedUserData {
@@ -603,17 +688,20 @@ export interface HydratedUserData {
   receipts: Receipt[]
   documents: WorkspaceDocument[]
   events: WorkspaceEvent[]
+  subscriptions: WorkspaceSubscription[]
 }
 
 export async function fetchAllUserData(userId: string): Promise<HydratedUserData> {
-  const [workspaces, orgProfiles, vehicleProfiles, trips, receipts, documents, events] = await Promise.all([
-    workspaceRepo.listByUser(userId),
-    orgProfileRepo.listByUser(userId),
-    vehicleProfileRepo.listByUser(userId),
-    tripRepo.listByUser(userId),
-    receiptRepo.listByUser(userId),
-    documentRepo.listByUser(userId),
-    eventRepo.listByUser(userId),
-  ])
-  return { workspaces, orgProfiles, vehicleProfiles, trips, receipts, documents, events }
+  const [workspaces, orgProfiles, vehicleProfiles, trips, receipts, documents, events, subscriptions] =
+    await Promise.all([
+      workspaceRepo.listByUser(userId),
+      orgProfileRepo.listByUser(userId),
+      vehicleProfileRepo.listByUser(userId),
+      tripRepo.listByUser(userId),
+      receiptRepo.listByUser(userId),
+      documentRepo.listByUser(userId),
+      eventRepo.listByUser(userId),
+      subscriptionRepo.listByUser(userId),
+    ])
+  return { workspaces, orgProfiles, vehicleProfiles, trips, receipts, documents, events, subscriptions }
 }

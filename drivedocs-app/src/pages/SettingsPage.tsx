@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   Building2,
   CreditCard,
@@ -10,6 +10,10 @@ import {
   X,
   TriangleAlert,
   LogOut,
+  Star,
+  Loader,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react'
 import { Card } from '@/shared/ui/components/Card'
 import { Badge } from '@/shared/ui/components/Badge'
@@ -17,8 +21,11 @@ import {
   useWorkspaceStore,
   useCurrentWorkspace,
   useOrgProfile,
+  useWorkspaceSubscription,
+  useIsProWorkspace,
 } from '@/app/store/workspaceStore'
 import { isBackendConfigured } from '@/lib/supabase'
+import { createCheckoutSession } from '@/lib/billing/billingService'
 import {
   ENTITY_TYPE_LABELS,
   TAX_MODE_LABELS,
@@ -125,23 +132,195 @@ function ConfigRow({
   )
 }
 
+// ─── Billing section ──────────────────────────────────────────────────────────
+
+interface BillingSectionProps {
+  workspaceId: string
+}
+
+function BillingSection({ workspaceId }: BillingSectionProps) {
+  const subscription = useWorkspaceSubscription(workspaceId)
+  const isPro = useIsProWorkspace(workspaceId)
+  const { refreshSubscription, activateDevProSubscription } = useWorkspaceStore()
+
+  const [isLoading, setIsLoading] = useState(false)
+  const [billingError, setBillingError] = useState<string | null>(null)
+
+  const planLabel = isPro ? 'Pro' : 'Бесплатный'
+  const statusLabel = (() => {
+    if (!subscription) return 'Активен'
+    const map: Record<string, string> = {
+      active: 'Активна',
+      canceled: 'Отменена',
+      past_due: 'Просрочена',
+      incomplete: 'Не завершена',
+    }
+    return map[subscription.status] ?? subscription.status
+  })()
+
+  const handleUpgrade = async () => {
+    setBillingError(null)
+    setIsLoading(true)
+    try {
+      const returnBaseUrl = `${window.location.origin}/w/${workspaceId}/settings`
+      const result = await createCheckoutSession(workspaceId, returnBaseUrl)
+      if (result.error) {
+        setBillingError(result.error)
+        return
+      }
+      if (result.isMockMode) {
+        // Dev mode: simulate activation
+        activateDevProSubscription(workspaceId)
+        return
+      }
+      if (result.url) {
+        window.location.href = result.url
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleManageSubscription = async () => {
+    setBillingError(null)
+    // In MVP: just refresh subscription data. Customer Portal — next phase.
+    setIsLoading(true)
+    try {
+      await refreshSubscription(workspaceId)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <section>
+      <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+        Подписка
+      </h2>
+      <Card className="p-4 space-y-4">
+        {/* Plan + status */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {isPro ? (
+              <Star size={16} className="text-amber-500 fill-amber-400" />
+            ) : (
+              <CreditCard size={16} className="text-slate-400" />
+            )}
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Тариф: {planLabel}</p>
+              {subscription?.currentPeriodEnd && isPro && (
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Действует до{' '}
+                  {new Date(subscription.currentPeriodEnd).toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </p>
+              )}
+            </div>
+          </div>
+          <Badge variant={isPro ? 'green' : 'slate'}>{statusLabel}</Badge>
+        </div>
+
+        {/* Pro features list */}
+        {!isPro && (
+          <div className="bg-indigo-50 rounded-xl p-3 space-y-1.5">
+            <p className="text-xs font-semibold text-indigo-800 mb-2">Pro включает:</p>
+            {[
+              'Скачивание путевого листа в PDF',
+              'Продвинутая аналитика расходов',
+              'Напоминания и уведомления (скоро)',
+            ].map((f) => (
+              <div key={f} className="flex items-start gap-2">
+                <Check size={13} className="text-indigo-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-indigo-700">{f}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Error */}
+        {billingError && (
+          <div className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5">
+            <p className="text-xs text-red-700">{billingError}</p>
+          </div>
+        )}
+
+        {/* Dev mode notice */}
+        {!isBackendConfigured && !isPro && (
+          <p className="text-xs text-slate-400 text-center">
+            Оплата недоступна в демо-режиме — нажмите кнопку для симуляции Pro
+          </p>
+        )}
+
+        {/* CTA */}
+        {isPro ? (
+          <button
+            onClick={handleManageSubscription}
+            disabled={isLoading}
+            className="w-full py-3 rounded-2xl text-sm font-semibold border border-slate-200 text-slate-700 bg-white active:bg-slate-50 flex items-center justify-center gap-2 transition-colors"
+          >
+            {isLoading ? <Loader size={15} className="animate-spin" /> : null}
+            Управлять подпиской
+          </button>
+        ) : (
+          <button
+            onClick={handleUpgrade}
+            disabled={isLoading}
+            className="w-full py-3 rounded-2xl text-sm font-semibold bg-indigo-600 text-white active:bg-indigo-700 flex items-center justify-center gap-2 transition-colors disabled:opacity-70"
+          >
+            {isLoading ? <Loader size={15} className="animate-spin" /> : <Star size={15} />}
+            {isBackendConfigured ? 'Перейти на Pro' : 'Симулировать Pro (демо)'}
+          </button>
+        )}
+      </Card>
+    </section>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function SettingsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const id = workspaceId ?? ''
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const workspace = useCurrentWorkspace()
   const orgProfile = useOrgProfile(id)
   const allWorkspaces = useWorkspaceStore((s) => s.workspaces)
   const user = useWorkspaceStore((s) => s.user)
-  const { setCurrentWorkspace, updateWorkspace, resetWorkspaceConfig } = useWorkspaceStore()
-
+  const { setCurrentWorkspace, updateWorkspace, resetWorkspaceConfig, refreshSubscription } =
+    useWorkspaceStore()
   const signOut = useWorkspaceStore((s) => s.signOut)
 
+  const billingResult = searchParams.get('billing')
   const [renameOpen, setRenameOpen] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+
+  // Handle Stripe return URLs
+  useEffect(() => {
+    if (billingResult === 'success') {
+      refreshSubscription(id).catch(console.error)
+      const p = new URLSearchParams(searchParams)
+      p.delete('billing')
+      setSearchParams(p, { replace: true })
+    } else if (billingResult === 'cancel') {
+      const p = new URLSearchParams(searchParams)
+      p.delete('billing')
+      setSearchParams(p, { replace: true })
+    }
+    // Scroll to billing section on ?upgrade=1
+    if (searchParams.get('upgrade') === '1') {
+      const p = new URLSearchParams(searchParams)
+      p.delete('upgrade')
+      setSearchParams(p, { replace: true })
+      setTimeout(() => {
+        document.getElementById('billing-section')?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!workspace) return null
 
@@ -164,6 +343,20 @@ export function SettingsPage() {
   return (
     <div className="px-4 py-5 space-y-5 pb-10">
       <h1 className="text-xl font-bold text-slate-900">Настройки</h1>
+
+      {/* ── Billing return banner ── */}
+      {billingResult === 'success' && (
+        <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
+          <CheckCircle size={18} className="text-green-600 shrink-0" />
+          <p className="text-sm font-medium text-green-800">Подписка Pro успешно активирована!</p>
+        </div>
+      )}
+      {billingResult === 'cancel' && (
+        <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+          <XCircle size={18} className="text-slate-400 shrink-0" />
+          <p className="text-sm text-slate-600">Оплата отменена. Вы можете попробовать снова.</p>
+        </div>
+      )}
 
       {/* ── Current workspace card ── */}
       <section>
@@ -267,7 +460,12 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* ── Account / Subscription ── */}
+      {/* ── Billing ── */}
+      <div id="billing-section">
+        <BillingSection workspaceId={id} />
+      </div>
+
+      {/* ── Account ── */}
       <section>
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
           Аккаунт
@@ -275,25 +473,8 @@ export function SettingsPage() {
         <Card className="p-4 space-y-1">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-800">{user.name}</p>
-            <Badge variant={user.subscriptionStatus === 'active' ? 'green' : 'yellow'}>
-              {user.subscriptionStatus === 'trial'
-                ? 'Пробный период'
-                : user.subscriptionStatus === 'active'
-                ? 'Подписка активна'
-                : 'Истекла'}
-            </Badge>
           </div>
           <p className="text-xs text-slate-400">{user.email}</p>
-          {user.subscriptionExpiresAt && (
-            <p className="text-xs text-slate-400">
-              {user.subscriptionStatus === 'trial' ? 'Пробный период до' : 'До'}{' '}
-              {new Date(user.subscriptionExpiresAt).toLocaleDateString('ru-RU', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </p>
-          )}
           {isBackendConfigured && (
             <button
               onClick={() => signOut()}

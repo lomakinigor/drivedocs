@@ -482,3 +482,47 @@ Format:
   - Zustand persist (localStorage) при следующем входе перезаписывается hydration из backend.
   - Mock данные не возвращаются при signOut — store чист.
 - **Links:** T-071, T-111
+
+---
+
+## D-020 — Stripe как единственный billing-провайдер
+
+- **Date:** 2026-04-23
+- **Context:** Нужно выбрать провайдера биллинга для реализации подписки на drivedocs.
+- **Options:**
+  1. Stripe — зрелый SaaS-биллинг, стандартный path Supabase + Stripe (официальная интеграция)
+  2. ЮKassa / CloudPayments — российские провайдеры, лучше для рублёвых транзакций
+  3. Абстракция под несколько провайдеров
+- **Decision:** Stripe в качестве единственного провайдера для MVP. Причины:
+  - Supabase + Stripe — хорошо задокументированный, популярный path.
+  - Stripe Checkout снимает ответственность за PCI DSS с приложения.
+  - Stripe secret key **никогда не попадает на клиент** — только на сервере (Supabase Edge Function).
+  - Абстракция под нескольких провайдеров не нужна в MVP; при необходимости добавляется позже.
+  - Российские провайдеры — отдельная итерация (при локализации платежей).
+- **Consequences:**
+  - Server-side код для Stripe живёт в Supabase Edge Function `create-checkout-session`.
+  - Вебхуки Stripe обрабатываются отдельной Edge Function `stripe-webhook`.
+  - На фронтенде — только вызов Edge Function (получить URL Checkout Session) и редирект.
+  - `STRIPE_SECRET_KEY` и `STRIPE_WEBHOOK_SECRET` хранятся только как Supabase secrets (через `supabase secrets set`), никогда в `.env` клиентского приложения.
+- **Links:** F-020, T-072, T-114..T-121
+
+---
+
+## D-021 — Подписка привязана к workspace (workspace-scoped)
+
+- **Date:** 2026-04-23
+- **Context:** Нужно решить: подписка на уровне user-аккаунта или на уровне workspace.
+- **Options:**
+  1. User-level: один аккаунт → один тариф для всех workspace
+  2. Workspace-level: каждый workspace имеет собственную подписку
+- **Decision:** Workspace-scoped (вариант 2). Обоснование:
+  - workspace = юридический контур (ИП или ООО). Разные предприятия могут требовать разного уровня сервиса.
+  - Пользователь может вести бесплатное ИП и платное ООО в одном аккаунте.
+  - Экономическая единица биллинга = предприятие, а не аккаунт физлица.
+  - Stripe Customer ID и Subscription ID хранятся на уровне workspace в таблице `subscriptions`.
+- **Consequences:**
+  - Таблица `subscriptions` (schema.sql): `workspace_id` — уникальный FK, не `user_id`.
+  - Логика доступа к Pro-фичам: `isProWorkspace(workspaceId)`, не `isProUser()`.
+  - При создании Checkout Session передаётся `workspaceId` → Edge Function создаёт или находит Stripe Customer для workspace.
+  - User entity сохраняет поле `subscriptionStatus` для обратной совместимости, но основная истина — в `subscriptions` таблице.
+- **Links:** F-020, T-072, T-114..T-121

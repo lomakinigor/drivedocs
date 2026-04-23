@@ -207,6 +207,32 @@
 
 ---
 
+## Phase 11 — Billing / subscriptions (Stripe + Pro gate)
+
+**Цель:** первая рабочая фаза биллинга: workspace-scoped Free / Pro подписка, Stripe Checkout, BillingSection в SettingsPage, PDF-экспорт как Pro gate.
+
+**Decisions:** D-020 (Stripe как провайдер), D-021 (workspace-scoped billing)
+
+**Принцип:**
+- Stripe secret key — только в Supabase Edge Function, никогда на клиенте.
+- Клиент: вызов Edge Function → Checkout URL → редирект → return URL с `?billing=success/cancel`.
+- В dev/mock-режиме: «Симулировать Pro» активирует Pro локально без оплаты.
+
+**Backend:**
+- schema.sql: таблица `subscriptions` (workspace_id FK, plan_code, status, stripe_*, period_end)
+- rls-policies.sql: owner-only RLS для subscriptions
+- repository.ts: `subscriptionRepo`, `fetchAllUserData` расширён
+
+**Фронтенд:**
+- `src/lib/billing/billingService.ts` — `createCheckoutSession()`
+- workspaceStore.ts — `subscriptions[]`, `setSubscription`, `refreshSubscription`, `activateDevProSubscription`, `useIsProWorkspace()` selector
+- SettingsPage — BillingSection с планом/статусом/CTA, обработка `?billing=success/cancel`
+- WaybillPreviewSheet — PDF gate + PdfPaywall компонент
+
+**Задачи:** T-072, T-114, T-115, T-116, T-117, T-118, T-119, T-120, T-121
+
+---
+
 ## Phase 10 — Backend-backed documents + events
 
 **Цель:** перенести `documents` и `events` из local-only в Supabase backend.
@@ -243,6 +269,7 @@
 | 8.4 — PDF template enhancement | F-018 | T-105 | US-018, US-019 |
 | 8 — Backend foundation | — | T-070, T-106, T-107, T-108 | all |
 | 9 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
+| 11 — Billing Phase 1 (Stripe + Pro gate) | F-020 | T-072, T-114..T-121 | US-B01, US-B02 |
 
 ---
 
