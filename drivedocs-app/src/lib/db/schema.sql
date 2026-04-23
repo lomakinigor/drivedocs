@@ -72,9 +72,41 @@ create table if not exists receipts (
 
 create index if not exists receipts_workspace_date on receipts(workspace_id, date desc);
 
--- ─── Phase 9 note ─────────────────────────────────────────────────────────────
--- Add RLS policies here when auth is ready:
---   alter table workspaces enable row level security;
---   create policy "users see own workspaces"
---     on workspaces for all using (auth.uid()::text = user_id);
--- (repeat for all tables via workspace_id FK)
+-- ─── documents ────────────────────────────────────────────────────────────────
+-- Workspace-scoped required/recurring document checklist items.
+-- Generated at workspace creation (see workspaceDocumentSeed.ts) and updated
+-- via updateDocumentStatus. RLS in rls-policies.sql.
+
+create table if not exists documents (
+  id           text        primary key,
+  workspace_id text        not null references workspaces(id) on delete cascade,
+  title        text        not null,
+  description  text,
+  type         text        not null,   -- 'one_time' | 'recurring'
+  status       text        not null,   -- 'required' | 'in_progress' | 'completed' | 'overdue'
+  due_date     date,
+  completed_at date,
+  template_key text,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists documents_workspace on documents(workspace_id);
+
+-- ─── events ───────────────────────────────────────────────────────────────────
+-- Workspace-scoped activity / notification feed items.
+-- Written by store actions (addEvent, trip_logged, etc.). RLS in rls-policies.sql.
+
+create table if not exists events (
+  id           text        primary key,
+  workspace_id text        not null references workspaces(id) on delete cascade,
+  type         text        not null,   -- EventType union
+  title        text        not null,
+  description  text        not null default '',
+  date         timestamptz not null,
+  is_read      boolean     not null default false,
+  severity     text        not null,   -- 'info' | 'warning' | 'urgent'
+  link_to      text,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists events_workspace_date on events(workspace_id, date desc);

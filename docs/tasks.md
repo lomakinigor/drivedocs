@@ -471,3 +471,15 @@ Supabase email/password auth. Замена `ANON_USER_ID` хардкода на 
 Реализовать биллинговый flow: тарифные планы, оплата, управление подпиской.
 **Links:** F-020, PRD (Phase 9)
 **Acceptance:** TBD при спецификации F-020. `subscriptionStatus` пользователя отражает реальное состояние. Истёкшая подписка блокирует доступ к данным с понятным CTA.
+
+### T-112 — Phase 10: documents + events schema + RLS
+**Type:** impl | **Status:** done | **Owner:** AI
+Таблицы `documents` и `events` добавлены в `schema.sql`. RLS policies (owner via workspace join) добавлены в `rls-policies.sql`.
+**Files/Areas:** `src/lib/db/schema.sql`, `src/lib/db/rls-policies.sql`
+**Links:** F-006, F-007, F-008
+
+### T-113 — Phase 10: documentRepo + eventRepo + store wiring
+**Type:** impl | **Status:** done | **Owner:** AI
+Добавлены `documentRepo` (listByUser, upsert, updateStatus, bulkUpsert) и `eventRepo` (listByUser, insert, markRead) в `repository.ts`. `fetchAllUserData` расширён — включает documents + events. Store: hydration, `updateDocumentStatus`, `addEvent`, `markEventRead` теперь синхронизируются с backend.
+**Files/Areas:** `src/lib/db/repository.ts`, `src/app/store/workspaceStore.ts`
+**Links:** F-006, F-007, F-008, T-112

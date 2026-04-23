@@ -18,6 +18,9 @@ import type {
   VehicleProfile,
   Trip,
   Receipt,
+  WorkspaceDocument,
+  DocumentStatus,
+  WorkspaceEvent,
 } from '@/entities/types/domain'
 
 // ─── Row types (snake_case DB columns) ────────────────────────────────────────
@@ -422,6 +425,174 @@ export const receiptRepo = {
   },
 }
 
+// ─── Document repo ────────────────────────────────────────────────────────────
+
+interface DocumentRow {
+  id: string
+  workspace_id: string
+  title: string
+  description: string | null
+  type: string
+  status: string
+  due_date: string | null
+  completed_at: string | null
+  template_key: string | null
+  created_at: string
+}
+
+function rowToDocument(r: DocumentRow): WorkspaceDocument {
+  return {
+    id: r.id,
+    workspaceId: r.workspace_id,
+    title: r.title,
+    description: r.description ?? undefined,
+    type: r.type as WorkspaceDocument['type'],
+    status: r.status as DocumentStatus,
+    dueDate: r.due_date ?? undefined,
+    completedAt: r.completed_at ?? undefined,
+    templateKey: r.template_key ?? undefined,
+  }
+}
+
+function documentToRow(d: WorkspaceDocument): DocumentRow {
+  return {
+    id: d.id,
+    workspace_id: d.workspaceId,
+    title: d.title,
+    description: d.description ?? null,
+    type: d.type,
+    status: d.status,
+    due_date: d.dueDate ?? null,
+    completed_at: d.completedAt ?? null,
+    template_key: d.templateKey ?? null,
+    created_at: new Date().toISOString(),
+  }
+}
+
+export const documentRepo = {
+  async listByUser(userId: string): Promise<WorkspaceDocument[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*, workspaces!inner(user_id)')
+      .eq('workspaces.user_id', userId)
+      .order('created_at')
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+    return (data as DocumentRow[]).map(rowToDocument)
+  },
+
+  async upsert(document: WorkspaceDocument): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase.from('documents').upsert(documentToRow(document))
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+  },
+
+  async updateStatus(id: string, status: DocumentStatus, completedAt: string | null): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('documents')
+      .update({ status, completed_at: completedAt })
+      .eq('id', id)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+  },
+
+  async bulkUpsert(documents: WorkspaceDocument[]): Promise<void> {
+    if (!supabase || documents.length === 0) return
+    const { error } = await supabase.from('documents').upsert(documents.map(documentToRow))
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+  },
+}
+
+// ─── Event repo ───────────────────────────────────────────────────────────────
+
+interface EventRow {
+  id: string
+  workspace_id: string
+  type: string
+  title: string
+  description: string
+  date: string
+  is_read: boolean
+  severity: string
+  link_to: string | null
+  created_at: string
+}
+
+function rowToEvent(r: EventRow): WorkspaceEvent {
+  return {
+    id: r.id,
+    workspaceId: r.workspace_id,
+    type: r.type as WorkspaceEvent['type'],
+    title: r.title,
+    description: r.description,
+    date: r.date,
+    isRead: r.is_read,
+    severity: r.severity as WorkspaceEvent['severity'],
+    linkTo: r.link_to ?? undefined,
+  }
+}
+
+function eventToRow(e: WorkspaceEvent): EventRow {
+  return {
+    id: e.id,
+    workspace_id: e.workspaceId,
+    type: e.type,
+    title: e.title,
+    description: e.description,
+    date: e.date,
+    is_read: e.isRead,
+    severity: e.severity,
+    link_to: e.linkTo ?? null,
+    created_at: new Date().toISOString(),
+  }
+}
+
+export const eventRepo = {
+  async listByUser(userId: string): Promise<WorkspaceEvent[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase
+      .from('events')
+      .select('*, workspaces!inner(user_id)')
+      .eq('workspaces.user_id', userId)
+      .order('date', { ascending: false })
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+    return (data as EventRow[]).map(rowToEvent)
+  },
+
+  async insert(event: WorkspaceEvent): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase.from('events').insert(eventToRow(event))
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+  },
+
+  async markRead(id: string): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase.from('events').update({ is_read: true }).eq('id', id)
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+  },
+}
+
 // ─── Bulk hydration ───────────────────────────────────────────────────────────
 
 export interface HydratedUserData {
@@ -430,15 +601,19 @@ export interface HydratedUserData {
   vehicleProfiles: VehicleProfile[]
   trips: Trip[]
   receipts: Receipt[]
+  documents: WorkspaceDocument[]
+  events: WorkspaceEvent[]
 }
 
 export async function fetchAllUserData(userId: string): Promise<HydratedUserData> {
-  const [workspaces, orgProfiles, vehicleProfiles, trips, receipts] = await Promise.all([
+  const [workspaces, orgProfiles, vehicleProfiles, trips, receipts, documents, events] = await Promise.all([
     workspaceRepo.listByUser(userId),
     orgProfileRepo.listByUser(userId),
     vehicleProfileRepo.listByUser(userId),
     tripRepo.listByUser(userId),
     receiptRepo.listByUser(userId),
+    documentRepo.listByUser(userId),
+    eventRepo.listByUser(userId),
   ])
-  return { workspaces, orgProfiles, vehicleProfiles, trips, receipts }
+  return { workspaces, orgProfiles, vehicleProfiles, trips, receipts, documents, events }
 }

@@ -22,6 +22,8 @@ import {
   vehicleProfileRepo,
   tripRepo,
   receiptRepo,
+  documentRepo,
+  eventRepo,
   fetchAllUserData,
   AuthError,
 } from '@/lib/db/repository'
@@ -256,6 +258,8 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
               vehicleProfiles: data.vehicleProfiles,
               trips: data.trips,
               receipts: data.receipts,
+              documents: data.documents,
+              events: data.events,
               currentWorkspaceId: stillValid
                 ? currentId
                 : (data.workspaces[0]?.id ?? null),
@@ -386,32 +390,43 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         }
       },
 
-      // ── Document actions (local only in Phase 9) ─────────────────────────────
+      // ── Document actions ──────────────────────────────────────────────────────
 
-      updateDocumentStatus: (documentId, status) =>
+      updateDocumentStatus: (documentId, status) => {
+        const completedAt = status === 'completed' ? todayISO() : undefined
         set((state) => ({
           documents: state.documents.map((d) =>
-            d.id === documentId
-              ? {
-                  ...d,
-                  status,
-                  completedAt: status === 'completed' ? todayISO() : d.completedAt,
-                }
-              : d,
+            d.id === documentId ? { ...d, status, completedAt } : d,
           ),
-        })),
+        }))
+        if (isBackendConfigured) {
+          documentRepo
+            .updateStatus(documentId, status, completedAt ?? null)
+            .catch((err) => set({ syncError: syncErrorMessage(err) }))
+        }
+      },
 
-      // ── Event actions (local only in Phase 9) ────────────────────────────────
+      // ── Event actions ─────────────────────────────────────────────────────────
 
-      addEvent: (event) =>
-        set((state) => ({ events: [event, ...state.events] })),
+      addEvent: (event) => {
+        set((state) => ({ events: [event, ...state.events] }))
+        if (isBackendConfigured) {
+          eventRepo
+            .insert(event)
+            .catch((err) => set({ syncError: syncErrorMessage(err) }))
+        }
+      },
 
-      markEventRead: (id) =>
+      markEventRead: (id) => {
         set((state) => ({
-          events: state.events.map((e) =>
-            e.id === id ? { ...e, isRead: true } : e,
-          ),
-        })),
+          events: state.events.map((e) => (e.id === id ? { ...e, isRead: true } : e)),
+        }))
+        if (isBackendConfigured) {
+          eventRepo
+            .markRead(id)
+            .catch((err) => set({ syncError: syncErrorMessage(err) }))
+        }
+      },
 
       // ── Receipt actions ──────────────────────────────────────────────────────
 

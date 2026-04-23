@@ -197,6 +197,20 @@
 
 ---
 
+## Phase 10 — Backend-backed documents + events
+
+**Цель:** перенести `documents` и `events` из local-only в Supabase backend.
+
+**Schema:** таблицы `documents` и `events` + RLS policies добавлены в `schema.sql` / `rls-policies.sql`.
+
+**Repository:** `documentRepo` (listByUser, upsert, updateStatus, bulkUpsert) и `eventRepo` (listByUser, insert, markRead) в `repository.ts`.
+
+**Store:** `fetchAllUserData` расширён; hydration, `updateDocumentStatus`, `addEvent`, `markEventRead` синхронизируются с backend.
+
+**Задачи:** T-112, T-113
+
+---
+
 ## Traceability index
 
 | Phase | Features | Key Tasks | User Stories |

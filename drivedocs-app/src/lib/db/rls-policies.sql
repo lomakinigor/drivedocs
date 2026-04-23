@@ -102,6 +102,46 @@ create policy "owner access receipts"
     )
   );
 
--- ─── Note ─────────────────────────────────────────────────────────────────────
--- documents and events are not backend-backed yet (Phase 9).
--- They will be added here when documents/events are moved to backend (future phase).
+-- ─── documents ────────────────────────────────────────────────────────────────
+
+alter table documents enable row level security;
+
+create policy "owner access documents"
+  on documents
+  for all
+  using (
+    exists (
+      select 1 from workspaces w
+      where w.id = workspace_id
+        and w.user_id = auth.uid()::text
+    )
+  )
+  with check (
+    exists (
+      select 1 from workspaces w
+      where w.id = workspace_id
+        and w.user_id = auth.uid()::text
+    )
+  );
+
+-- ─── events ───────────────────────────────────────────────────────────────────
+
+alter table events enable row level security;
+
+create policy "owner access events"
+  on events
+  for all
+  using (
+    exists (
+      select 1 from workspaces w
+      where w.id = workspace_id
+        and w.user_id = auth.uid()::text
+    )
+  )
+  with check (
+    exists (
+      select 1 from workspaces w
+      where w.id = workspace_id
+        and w.user_id = auth.uid()::text
+    )
+  );
