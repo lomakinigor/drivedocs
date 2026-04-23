@@ -31,6 +31,8 @@
 | 7 | Receipt capture | done |
 | 8 | Backend foundation (Supabase) | done |
 | 9 | Real auth + subscription enforcement | done |
+| 11 | Billing Phase 1 (Stripe + Pro gate) | done |
+| 12 | Edge Functions: production billing backend | done |
 
 ---
 
@@ -233,6 +235,36 @@
 
 ---
 
+## Phase 12 — Edge Functions: production billing backend
+
+**Цель:** замкнуть billing loop на server-side — Stripe Checkout Session через Edge Function, синхронизация подписки через webhook.
+
+**Задачи:** T-122, T-123
+
+**Затронутые файлы:**
+- `supabase/functions/create-checkout-session/index.ts` (новый)
+- `supabase/functions/stripe-webhook/index.ts` (новый)
+- `supabase/functions/_shared/cors.ts` (новый)
+- `drivedocs-app/.env.example` — документация server-side secrets
+- `docs/tech-spec.md` — раздел Billing / subscriptions
+
+**Acceptance:**
+- `create-checkout-session` возвращает `{ url }` при валидном запросе с auth.
+- `stripe-webhook` обновляет таблицу `subscriptions` при `checkout.session.completed`.
+- Подпись webhook валидируется; невалидные запросы → 400 без изменений в БД.
+- Весь Stripe secret key flow остаётся на сервере; клиент получает только URL.
+
+**Deploy:**
+```
+supabase functions deploy create-checkout-session
+supabase functions deploy stripe-webhook
+supabase secrets set STRIPE_SECRET_KEY=sk_test_...
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+supabase secrets set STRIPE_PRICE_PRO_MONTHLY=price_...
+```
+
+---
+
 ## Phase 10 — Backend-backed documents + events
 
 **Цель:** перенести `documents` и `events` из local-only в Supabase backend.
@@ -270,6 +302,7 @@
 | 8 — Backend foundation | — | T-070, T-106, T-107, T-108 | all |
 | 9 — Auth + Billing | F-020 | T-071, T-072 | US-001..US-003 |
 | 11 — Billing Phase 1 (Stripe + Pro gate) | F-020 | T-072, T-114..T-121 | US-B01, US-B02 |
+| 12 — Edge Functions: production billing backend | F-020 | T-122, T-123 | US-B01, US-B02 |
 
 ---
 

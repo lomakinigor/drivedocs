@@ -533,3 +533,30 @@ SettingsPage: новый `BillingSection` компонент. Показывае
 SettingsPage читает `?billing=success` → вызывает `refreshSubscription`, показывает success banner. `?billing=cancel` → показывает cancel notice. `?upgrade=1` → scroll к billing-section. URL params очищаются через `setSearchParams` (no history push).
 **Files/Areas:** `src/pages/SettingsPage.tsx`
 **Links:** F-020, US-B01, T-117
+
+---
+
+## Phase 12 — Edge Functions (production billing backend)
+
+### T-122 — Edge Function: create-checkout-session
+**Type:** impl | **Status:** done | **Owner:** AI
+Supabase Edge Function (Deno). Принимает POST `{ workspaceId, successUrl, cancelUrl }`. Проверяет auth (JWT) и ownership workspace. Создаёт или переиспользует Stripe Customer. Создаёт Stripe Checkout Session (mode: subscription, Pro price). Пресохраняет `stripe_customer_id` в `subscriptions`. Возвращает `{ url }`. Ошибки: только безопасные формулировки наружу, детали в логах.
+**Files/Areas:** `supabase/functions/create-checkout-session/index.ts`, `supabase/functions/_shared/cors.ts`
+**Links:** F-020, D-020, D-021, T-117
+**Acceptance:**
+- Вызов с валидным JWT + workspaceId → возвращает `{ url: "https://checkout.stripe.com/..." }`.
+- Вызов без JWT → 401.
+- Вызов с чужим workspaceId → 403.
+- Workspace уже Pro → возвращает `{ alreadyPro: true }`.
+- `STRIPE_SECRET_KEY` не попадает в клиентский код.
+
+### T-123 — Edge Function: stripe-webhook
+**Type:** impl | **Status:** done | **Owner:** AI
+Supabase Edge Function (Deno). Принимает raw webhook от Stripe. Валидирует подпись через `STRIPE_WEBHOOK_SECRET`. Обрабатывает: `checkout.session.completed` (upgrade workspace to Pro), `customer.subscription.updated` (sync status, period_end), `customer.subscription.deleted` (downgrade to Free/canceled). Пишет в `subscriptions` через service role key. При невалидной подписи → 400 (не retry). При ошибке БД → 500 (Stripe retry).
+**Files/Areas:** `supabase/functions/stripe-webhook/index.ts`
+**Links:** F-020, D-020, T-122
+**Acceptance:**
+- `checkout.session.completed` с корректным payload → `subscriptions` updated, plan_code='pro'.
+- Невалидная подпись → 400, никаких изменений в БД.
+- `subscription.deleted` → plan_code='free', status='canceled'.
+- Локальное тестирование: `stripe listen --forward-to http://localhost:54321/functions/v1/stripe-webhook`.

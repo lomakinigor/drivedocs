@@ -1,7 +1,7 @@
 # Tech Spec — drivedocs
 
-**Версия:** 3.0
-**Дата:** 7 апреля 2026 г.
+**Версия:** 4.0
+**Дата:** 23 апреля 2026 г.
 
 **Правило:** любое архитектурное изменение сначала фиксируется в этом документе или в `docs/decisions.md`, затем реализуется в коде. Молчаливые архитектурные изменения не допускаются.
 
@@ -188,10 +188,49 @@ Architecture: `UI → workspaceStore actions/selectors → repository layer → 
 
 ---
 
+## Billing / subscriptions (Phase 11)
+
+Architecture: `UI → billingService → Supabase Edge Function → Stripe → webhook → subscriptions table`.
+
+**Plan:** Free (default) / Pro (workspace-scoped). See D-020, D-021.
+
+**Production Checkout flow:**
+1. User taps «Перейти на Pro» → `billingService.createCheckoutSession(workspaceId, returnBaseUrl)`.
+2. Client calls Supabase Edge Function `create-checkout-session` (POST, with user JWT).
+3. Edge Function: verifies auth + workspace ownership → creates/reuses Stripe Customer → creates Stripe Checkout Session → returns `{ url }`.
+4. Client redirects to Stripe Checkout.
+5. After payment: Stripe redirects back to `?billing=success` (or `?billing=cancel`).
+6. On success: `refreshSubscription()` refetches from `subscriptions` table → store updates → UI rerenders.
+
+**Webhook sync flow:**
+1. Stripe POSTs events to Edge Function `stripe-webhook`.
+2. Function validates `stripe-signature` header against `STRIPE_WEBHOOK_SECRET`.
+3. Handles: `checkout.session.completed` (upgrade to Pro), `customer.subscription.updated` (sync status/period), `customer.subscription.deleted` (downgrade to Free/canceled).
+4. Upserts `subscriptions` table via service role key.
+
+**Edge Functions:** `supabase/functions/create-checkout-session/index.ts`, `supabase/functions/stripe-webhook/index.ts`.
+
+**Dev/mock mode:** when `VITE_SUPABASE_URL` is absent, `billingService` returns `{ isMockMode: true }`. SettingsPage offers «Симулировать Pro» button which calls `activateDevProSubscription()` — sets Pro state locally without Stripe.
+
+**Required Supabase secrets** (server-side only, never in `.env.local`):
+```
+supabase secrets set STRIPE_SECRET_KEY=sk_test_...
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+supabase secrets set STRIPE_PRICE_PRO_MONTHLY=price_...
+```
+
+**Feature gate:** `useIsProWorkspace(workspaceId)` — single selector used by all Pro-gated features. Currently: PDF export (`WaybillPreviewSheet`). See F-018, F-020.
+
+**Local webhook testing:**
+```
+stripe listen --forward-to http://localhost:54321/functions/v1/stripe-webhook
+```
+
+---
+
 ## Constraints and trade-offs
 
 - **Backend optional:** app runs in localStorage-only mode when Supabase env vars are absent. No crash.
-- **No auth:** `isAuthenticated: true` is hardcoded. Phase 9 wires real Supabase Auth.
 - **No file uploads:** document status is user-managed. Receipt `imageUrl` is object URL (ephemeral, D-009). Backend file storage is not in scope for Phase 8.
 - **No rollback on sync error:** optimistic update stays local on backend failure. User can refresh to re-sync.
 - **TailwindCSS v4:** no `tailwind.config.js`. All customization via CSS variables and `@theme` blocks.
@@ -206,7 +245,7 @@ Architecture: `UI → workspaceStore actions/selectors → repository layer → 
 | Backend integration will require significant store refactoring | Keep store actions as the single mutation interface — easier to swap implementation later |
 | Document template config (`documentHelp.ts`) is static | Acceptable for MVP; plan is to move to server-side config post-MVP |
 | No offline support | Zustand persist gives basic resilience; full offline needs service worker |
-| Subscription enforcement not implemented | Placeholder model; billing flow is F-020 (draft) |
+| Stripe in test mode only until Edge Functions deployed | Dev simulation via `activateDevProSubscription()` available |
 
 ---
 
