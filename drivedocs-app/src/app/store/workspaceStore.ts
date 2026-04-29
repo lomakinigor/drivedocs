@@ -107,6 +107,7 @@ interface WorkspaceStore {
   updateVehicleProfile: (workspaceId: string, patch: Partial<VehicleProfile>) => Promise<void>
   addTrip: (trip: Trip) => Promise<void>
   deleteTrip: (id: string) => Promise<void>
+  initWorkspaceDocuments: (workspaceId: string, docs: WorkspaceDocument[]) => Promise<void>
   updateDocumentStatus: (documentId: string, status: DocumentStatus) => void
   addEvent: (event: WorkspaceEvent) => void
   markEventRead: (id: string) => void
@@ -421,6 +422,22 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       },
 
       // ── Document actions ──────────────────────────────────────────────────────
+
+      initWorkspaceDocuments: async (workspaceId, docs) => {
+        set((state) => ({
+          documents: [
+            ...state.documents.filter((d) => d.workspaceId !== workspaceId),
+            ...docs,
+          ],
+        }))
+        if (isBackendConfigured) {
+          try {
+            await documentRepo.bulkUpsert(docs)
+          } catch (err) {
+            set({ syncError: syncErrorMessage(err) })
+          }
+        }
+      },
 
       updateDocumentStatus: (documentId, status) => {
         const completedAt = status === 'completed' ? todayISO() : undefined

@@ -9,6 +9,7 @@ import { VehicleModelStep } from './steps/VehicleModelStep'
 import { SummaryStep } from './steps/SummaryStep'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import type { EntityType, TaxMode, VehicleUsageModel } from '@/entities/types/domain'
+import { generateInitialDocuments } from '@/features/documents/initialDocuments'
 
 // ─── Step config ─────────────────────────────────────────────────────────────
 
@@ -93,7 +94,7 @@ export function OnboardingWizard() {
   // If ?ws=<id> is present, we are re-configuring an existing workspace
   const targetWsId = searchParams.get('ws') ?? null
 
-  const { addWorkspace, updateWorkspace, addOrgProfile, setCurrentWorkspace, user } =
+  const { addWorkspace, updateWorkspace, addOrgProfile, setCurrentWorkspace, initWorkspaceDocuments, user } =
     useWorkspaceStore()
 
   const [currentStep, setCurrentStep] = useState<Step>('entity_type')
@@ -132,14 +133,14 @@ export function OnboardingWizard() {
 
   // ── Completion ──────────────────────────────────────────────────────────────
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!state.entityType || !state.taxMode || !state.vehicleUsageModel) return
 
     const workspaceName =
       state.workspaceName.trim() || defaultWorkspaceName(state.entityType, user.name)
 
     if (targetWsId) {
-      // Re-configuring an existing workspace
+      // Re-configuring an existing workspace — regenerate documents for new config
       updateWorkspace(targetWsId, {
         name: workspaceName,
         entityType: state.entityType,
@@ -154,12 +155,19 @@ export function OnboardingWizard() {
         organizationName: state.entityType === 'OOO' ? workspaceName : undefined,
         ownerFullName: state.entityType === 'IP' ? user.name : undefined,
       })
+      const docs = generateInitialDocuments(
+        targetWsId,
+        state.entityType,
+        state.taxMode,
+        state.vehicleUsageModel,
+      )
+      await initWorkspaceDocuments(targetWsId, docs)
       setCurrentWorkspace(targetWsId)
       navigate(`/w/${targetWsId}/home`)
     } else {
       // Creating a brand-new workspace
       const workspaceId = `ws-${Date.now()}`
-      addWorkspace({
+      await addWorkspace({
         id: workspaceId,
         userId: user.id,
         name: workspaceName,
@@ -176,6 +184,13 @@ export function OnboardingWizard() {
         organizationName: state.entityType === 'OOO' ? workspaceName : undefined,
         ownerFullName: state.entityType === 'IP' ? user.name : undefined,
       })
+      const docs = generateInitialDocuments(
+        workspaceId,
+        state.entityType,
+        state.taxMode,
+        state.vehicleUsageModel,
+      )
+      await initWorkspaceDocuments(workspaceId, docs)
       navigate(`/w/${workspaceId}/home`)
     }
   }

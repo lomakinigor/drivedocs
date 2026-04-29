@@ -288,7 +288,7 @@ Status: `draft` | `planned` | `in-dev` | `done`
 **Screens/Flows:** SettingsPage (BillingSection), WaybillPreviewSheet (PDF gate + paywall), `?billing=success/cancel` return URLs
 **User Stories:** US-B01, US-B02
 **Tasks:** T-072, T-114, T-115, T-116, T-117, T-118, T-119, T-120, T-121
-**Status:** in-dev
+**Status:** done
 
 **Architecture (D-020, D-021):**
 - Stripe secret key — только на сервере (Supabase Edge Function `create-checkout-session`)
