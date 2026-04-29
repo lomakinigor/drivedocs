@@ -1,11 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Share, PlusSquare } from 'lucide-react'
 
 const STORAGE_KEY = 'pwa-install-dismissed'
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 export function InstallPrompt() {
   const [show, setShow] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
+  const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY)
@@ -20,15 +26,15 @@ export function InstallPrompt() {
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent)
     setIsIOS(ios)
 
-    // On iOS show immediately since there's no beforeinstallprompt
     if (ios) {
       setShow(true)
       return
     }
 
-    // On Android/Chrome listen for beforeinstallprompt
+    // Сохраняем событие и показываем баннер — .prompt() вызываем по кнопке
     const handler = (e: Event) => {
       e.preventDefault()
+      deferredPrompt.current = e as BeforeInstallPromptEvent
       setShow(true)
     }
     window.addEventListener('beforeinstallprompt', handler)
@@ -37,6 +43,18 @@ export function InstallPrompt() {
 
   const dismiss = () => {
     localStorage.setItem(STORAGE_KEY, '1')
+    setShow(false)
+  }
+
+  const handleInstall = async () => {
+    const prompt = deferredPrompt.current
+    if (!prompt) return
+    await prompt.prompt()
+    const { outcome } = await prompt.userChoice
+    deferredPrompt.current = null
+    if (outcome === 'accepted') {
+      localStorage.setItem(STORAGE_KEY, '1')
+    }
     setShow(false)
   }
 
@@ -74,7 +92,7 @@ export function InstallPrompt() {
 
       {!isIOS && (
         <button
-          onClick={dismiss}
+          onClick={handleInstall}
           className="mt-3 w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl active:bg-blue-700"
         >
           Установить
