@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { InstallPrompt } from '@/shared/components/InstallPrompt'
 import { MobileLayout } from '@/shared/ui/layouts/MobileLayout'
 import { HomePage } from '@/pages/HomePage'
 import { TodayPage } from '@/pages/TodayPage'
@@ -110,5 +111,10 @@ export function App() {
     return subscribeToAuthChanges(setAuthUser)
   }, [setAuthUser])
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <InstallPrompt />
+    </>
+  )
 }
