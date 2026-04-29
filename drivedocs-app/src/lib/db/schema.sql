@@ -130,3 +130,21 @@ create table if not exists subscriptions (
 );
 
 create index if not exists subscriptions_workspace on subscriptions(workspace_id);
+
+-- ─── Auto-create free subscription on workspace insert ────────────────────────
+-- Ensures every workspace always has a subscriptions row (plan_code='free').
+-- Stripe webhook overwrites this row on successful payment.
+create or replace function create_free_subscription_on_workspace()
+returns trigger language plpgsql security definer as $$
+begin
+  insert into subscriptions (id, workspace_id, plan_code, status)
+  values (gen_random_uuid()::text, NEW.id, 'free', 'active')
+  on conflict (workspace_id) do nothing;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_create_free_subscription on workspaces;
+create trigger trg_create_free_subscription
+  after insert on workspaces
+  for each row execute procedure create_free_subscription_on_workspace();

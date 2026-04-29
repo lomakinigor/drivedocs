@@ -303,13 +303,29 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         const workspaceWithAuth = authUserId
           ? { ...workspace, userId: authUserId }
           : workspace
+        const now = new Date().toISOString()
+        const freeSub: WorkspaceSubscription = {
+          id: crypto.randomUUID(),
+          workspaceId: workspaceWithAuth.id,
+          planCode: 'free',
+          status: 'active',
+          createdAt: now,
+          updatedAt: now,
+        }
         set((state) => ({
           workspaces: [...state.workspaces, workspaceWithAuth],
           currentWorkspaceId: workspaceWithAuth.id,
+          subscriptions: [
+            ...state.subscriptions.filter((s) => s.workspaceId !== workspaceWithAuth.id),
+            freeSub,
+          ],
         }))
         if (isBackendConfigured) {
           try {
             await workspaceRepo.upsert(workspaceWithAuth)
+            // DB trigger auto-creates the free row; upsert here is a safety fallback
+            // in case the trigger is not yet applied to the Supabase instance.
+            await subscriptionRepo.upsert(freeSub)
           } catch (err) {
             set({ syncError: syncErrorMessage(err) })
           }
