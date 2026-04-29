@@ -18,6 +18,7 @@
 import { supabase, isBackendConfigured } from '../supabase'
 
 const CHECKOUT_FUNCTION = 'create-checkout-session'
+const PORTAL_FUNCTION = 'create-portal-session'
 
 export interface CheckoutResult {
   /** Stripe Checkout URL to redirect to. null = backend not configured (dev mode). */
@@ -76,6 +77,66 @@ export async function createCheckoutSession(
       url: null,
       isMockMode: false,
       error: 'Не удалось соединиться с сервером оплаты. Проверьте интернет и попробуйте ещё раз.',
+    }
+  }
+}
+
+// ─── Customer Portal ──────────────────────────────────────────────────────────
+
+export interface PortalResult {
+  /** Stripe Billing Portal URL to redirect to. null on error or mock mode. */
+  url: string | null
+  /** true when backend is not configured — no portal available in dev mode */
+  isMockMode: boolean
+  /** Russian-language error for user display. null = success */
+  error: string | null
+}
+
+export async function createPortalSession(
+  workspaceId: string,
+  returnUrl: string,
+): Promise<PortalResult> {
+  if (!isBackendConfigured || !supabase) {
+    return { url: null, isMockMode: true, error: null }
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  if (!session) {
+    return { url: null, isMockMode: false, error: 'Необходимо войти в аккаунт.' }
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke(PORTAL_FUNCTION, {
+      body: { workspaceId, returnUrl },
+    })
+
+    if (error) {
+      console.error('[billing] Portal Edge Function error:', error)
+      return {
+        url: null,
+        isMockMode: false,
+        error: 'Не удалось открыть портал управления подпиской. Попробуйте ещё раз.',
+      }
+    }
+
+    const url = (data as { url?: string })?.url ?? null
+    if (!url) {
+      return {
+        url: null,
+        isMockMode: false,
+        error: (data as { error?: string })?.error ?? 'Сервер не вернул ссылку. Попробуйте ещё раз.',
+      }
+    }
+
+    return { url, isMockMode: false, error: null }
+  } catch (err) {
+    console.error('[billing] Portal session error:', err)
+    return {
+      url: null,
+      isMockMode: false,
+      error: 'Не удалось соединиться с сервером. Проверьте интернет и попробуйте ещё раз.',
     }
   }
 }

@@ -25,7 +25,7 @@ import {
   useIsProWorkspace,
 } from '@/app/store/workspaceStore'
 import { isBackendConfigured } from '@/lib/supabase'
-import { createCheckoutSession } from '@/lib/billing/billingService'
+import { createCheckoutSession, createPortalSession } from '@/lib/billing/billingService'
 import {
   ENTITY_TYPE_LABELS,
   TAX_MODE_LABELS,
@@ -183,10 +183,22 @@ function BillingSection({ workspaceId }: BillingSectionProps) {
 
   const handleManageSubscription = async () => {
     setBillingError(null)
-    // In MVP: just refresh subscription data. Customer Portal — next phase.
     setIsLoading(true)
     try {
-      await refreshSubscription(workspaceId)
+      const returnUrl = `${window.location.origin}/w/${workspaceId}/settings`
+      const result = await createPortalSession(workspaceId, returnUrl)
+      if (result.isMockMode) {
+        // Dev mode: portal not available, just refresh data
+        await refreshSubscription(workspaceId)
+        return
+      }
+      if (result.error) {
+        setBillingError(result.error)
+        return
+      }
+      if (result.url) {
+        window.location.href = result.url
+      }
     } finally {
       setIsLoading(false)
     }

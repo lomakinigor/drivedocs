@@ -34,6 +34,7 @@
 | 11 | Billing Phase 1 (Stripe + Pro gate) | done |
 | 12 | Edge Functions: production billing backend | done |
 | 13 | Pro Analytics Block (второй Pro gate) | done |
+| 14 | Stripe Customer Portal | done |
 
 ---
 
@@ -262,6 +263,30 @@ supabase functions deploy stripe-webhook
 supabase secrets set STRIPE_SECRET_KEY=sk_test_...
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 supabase secrets set STRIPE_PRICE_PRO_MONTHLY=price_...
+```
+
+---
+
+## Phase 14 — Stripe Customer Portal
+
+**Цель:** дать Pro-пользователю возможность самостоятельно управлять подпиской (отмена, смена карты, история платежей) через Stripe Billing Portal.
+
+**Задачи:** T-125
+
+**Затронутые файлы:**
+- `supabase/functions/create-portal-session/index.ts` (новый)
+- `src/lib/billing/billingService.ts` — добавлен `createPortalSession()`
+- `src/pages/SettingsPage.tsx` — `handleManageSubscription` → вызов Edge Function → редирект
+
+**Acceptance:**
+- Pro-пользователь: «Управлять подпиской» → редирект на Stripe Billing Portal.
+- Dev-режим (mock): кнопка обновляет данные из store (портал недоступен без Stripe).
+- Ошибки показываются на русском под кнопкой.
+- Stripe secret key не попадает в клиентский код.
+
+**Deploy:**
+```
+supabase functions deploy create-portal-session
 ```
 
 ---
