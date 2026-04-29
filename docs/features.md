@@ -296,11 +296,11 @@ Status: `draft` | `planned` | `in-dev` | `done`
 - Stripe webhook → Edge Function `stripe-webhook` → обновляет `subscriptions` таблицу
 - Клиент читает состояние через `subscriptionRepo.listByUser()` при hydration
 
-**Pro gates (Phase 11):**
-- PDF-экспорт путевого листа (WaybillPreviewSheet)
+**Pro gates:**
+- PDF-экспорт путевого листа (WaybillPreviewSheet) — Phase 11
+- Расширенная аналитика расходов на ReceiptsPage (Phase 13): средний чек, тренд, прогресс-бары по категориям
 
 **Planned Pro gates (следующие итерации):**
-- Продвинутая аналитика расходов
 - Push / email напоминания (F-019)
 
 ---

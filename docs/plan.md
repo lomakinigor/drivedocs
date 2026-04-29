@@ -33,6 +33,7 @@
 | 9 | Real auth + subscription enforcement | done |
 | 11 | Billing Phase 1 (Stripe + Pro gate) | done |
 | 12 | Edge Functions: production billing backend | done |
+| 13 | Pro Analytics Block (второй Pro gate) | done |
 
 ---
 

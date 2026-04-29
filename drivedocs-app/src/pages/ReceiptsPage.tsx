@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Receipt, ArrowLeft } from 'lucide-react'
+import { Receipt, ArrowLeft, Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card } from '@/shared/ui/components/Card'
 import { ReceiptDetailSheet } from '@/features/receipts/ReceiptDetailSheet'
-import { useReceiptsForPeriod, todayISO } from '@/app/store/workspaceStore'
-import { buildReceiptAnalytics } from '@/features/receipts/receiptAnalytics'
+import { useReceiptsForPeriod, useIsProWorkspace, todayISO } from '@/app/store/workspaceStore'
+import { buildReceiptAnalytics, buildEnhancedAnalytics } from '@/features/receipts/receiptAnalytics'
 import { RECEIPT_CATEGORY_LABELS } from '@/entities/constants/labels'
 import type { Receipt as ReceiptType, ReceiptCategory } from '@/entities/types/domain'
 
@@ -36,13 +36,20 @@ export function ReceiptsPage() {
   const navigate = useNavigate()
 
   const [period, setPeriod] = useState<PeriodDays>(DEFAULT_PERIOD)
-
-  const fromDate = daysAgoISO(period - 1)
-  const toDate = todayISO()
-  const receipts = useReceiptsForPeriod(id, fromDate, toDate)
-  const analytics = buildReceiptAnalytics(receipts)
-
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptType | null>(null)
+
+  const isPro = useIsProWorkspace(id)
+
+  const toDate = todayISO()
+  const fromDate = daysAgoISO(period - 1)
+  const prevToDate = daysAgoISO(period)
+  const prevFromDate = daysAgoISO(period * 2 - 1)
+
+  const receipts = useReceiptsForPeriod(id, fromDate, toDate)
+  const prevReceipts = useReceiptsForPeriod(id, prevFromDate, prevToDate)
+
+  const analytics = buildReceiptAnalytics(receipts)
+  const enhanced = buildEnhancedAnalytics(receipts, prevReceipts)
 
   return (
     <div className="px-4 py-5 space-y-5">
@@ -95,7 +102,7 @@ export function ReceiptsPage() {
         </Card>
       ) : (
         <>
-          {/* Analytics block */}
+          {/* Basic analytics block (Free + Pro) */}
           <Card className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
@@ -125,6 +132,13 @@ export function ReceiptsPage() {
               </div>
             )}
           </Card>
+
+          {/* Pro analytics block */}
+          {isPro ? (
+            <ProAnalyticsBlock enhanced={enhanced} period={period} />
+          ) : (
+            <AnalyticsPaywall onUpgrade={() => navigate(`/w/${id}/settings?upgrade=1`)} />
+          )}
 
           {/* Receipt list */}
           <section>
@@ -178,6 +192,171 @@ export function ReceiptsPage() {
           onClose={() => setSelectedReceipt(null)}
         />
       )}
+    </div>
+  )
+}
+
+// ─── Pro analytics block ──────────────────────────────────────────────────────
+
+import type { EnhancedAnalytics } from '@/features/receipts/receiptAnalytics'
+
+function ProAnalyticsBlock({
+  enhanced,
+  period,
+}: {
+  enhanced: EnhancedAnalytics
+  period: number
+}) {
+  return (
+    <Card className="p-4 space-y-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Аналитика Pro
+        </p>
+        <span className="text-[10px] font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+          PRO
+        </span>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-slate-50 rounded-xl p-3">
+          <p className="text-xs text-slate-500 mb-1">Средний чек</p>
+          <p className="text-base font-bold text-slate-900">
+            {enhanced.average.toLocaleString('ru-RU')} ₽
+          </p>
+        </div>
+        <div className="bg-slate-50 rounded-xl p-3">
+          <p className="text-xs text-slate-500 mb-1">Всего чеков</p>
+          <p className="text-base font-bold text-slate-900">{enhanced.count}</p>
+        </div>
+      </div>
+
+      {/* Trend */}
+      {enhanced.trendPct !== null && (
+        <TrendBadge trendPct={enhanced.trendPct} period={period} />
+      )}
+
+      {/* Category bars */}
+      {enhanced.categories.length > 0 && (
+        <div className="space-y-3 border-t border-slate-100 pt-4">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            По категориям
+          </p>
+          {enhanced.categories.map((stat) => (
+            <CategoryBar key={stat.category} stat={stat} />
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function TrendBadge({ trendPct, period }: { trendPct: number; period: number }) {
+  const isUp = trendPct > 0
+  const isFlat = trendPct === 0
+
+  return (
+    <div
+      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 ${
+        isFlat
+          ? 'bg-slate-50'
+          : isUp
+            ? 'bg-red-50'
+            : 'bg-green-50'
+      }`}
+    >
+      {isFlat ? (
+        <Minus size={15} className="text-slate-400 shrink-0" />
+      ) : isUp ? (
+        <TrendingUp size={15} className="text-red-500 shrink-0" />
+      ) : (
+        <TrendingDown size={15} className="text-green-600 shrink-0" />
+      )}
+      <p
+        className={`text-sm font-medium ${
+          isFlat ? 'text-slate-500' : isUp ? 'text-red-600' : 'text-green-700'
+        }`}
+      >
+        {isFlat
+          ? 'Расходы на уровне прошлого периода'
+          : isUp
+            ? `На ${trendPct}% больше расходов, чем ${period} дней назад`
+            : `На ${Math.abs(trendPct)}% меньше расходов, чем ${period} дней назад`}
+      </p>
+    </div>
+  )
+}
+
+function CategoryBar({ stat }: { stat: { category: ReceiptCategory; amount: number; count: number; pct: number } }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-700">{RECEIPT_CATEGORY_LABELS[stat.category]}</span>
+          <span className="text-xs text-slate-400">{stat.count} шт.</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">{stat.pct}%</span>
+          <span className="text-sm font-semibold text-slate-800">
+            {stat.amount.toLocaleString('ru-RU')} ₽
+          </span>
+        </div>
+      </div>
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-indigo-500 rounded-full"
+          style={{ width: `${stat.pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── Analytics paywall ────────────────────────────────────────────────────────
+
+function AnalyticsPaywall({ onUpgrade }: { onUpgrade: () => void }) {
+  return (
+    <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="p-1.5 bg-indigo-100 rounded-lg shrink-0">
+          <Lock size={15} className="text-indigo-600" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-indigo-900">
+            Детальная аналитика — тариф Pro
+          </p>
+          <p className="text-xs text-indigo-700 mt-0.5 leading-relaxed">
+            Прогресс по категориям, средний чек и сравнение с предыдущим периодом.
+          </p>
+        </div>
+      </div>
+
+      {/* Blurred preview */}
+      <div className="relative rounded-xl overflow-hidden">
+        <div className="blur-sm pointer-events-none select-none p-3 bg-white space-y-2">
+          {['Топливо', 'Парковка', 'Ремонт'].map((label) => (
+            <div key={label} className="space-y-1">
+              <div className="flex justify-between">
+                <span className="text-sm text-slate-700">{label}</span>
+                <span className="text-sm font-semibold text-slate-800">— ₽</span>
+              </div>
+              <div className="h-1.5 bg-slate-100 rounded-full">
+                <div className="h-full bg-indigo-400 rounded-full" style={{ width: '60%' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="absolute inset-0 bg-indigo-50/60" />
+      </div>
+
+      <button
+        onClick={onUpgrade}
+        className="w-full py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white active:bg-indigo-700 transition-colors"
+      >
+        Перейти на Pro
+      </button>
     </div>
   )
 }
