@@ -306,6 +306,7 @@ export function SettingsPage() {
   const { setCurrentWorkspace, updateWorkspace, resetWorkspaceConfig, refreshSubscription } =
     useWorkspaceStore()
   const signOut = useWorkspaceStore((s) => s.signOut)
+  const resetTour = useWorkspaceStore((s) => s.resetTour)
 
   const billingResult = searchParams.get('billing')
   const [renameOpen, setRenameOpen] = useState(false)
@@ -487,10 +488,16 @@ export function SettingsPage() {
             <p className="text-sm font-medium text-slate-800">{user.name}</p>
           </div>
           <p className="text-xs text-slate-400">{user.email}</p>
+          <button
+            onClick={resetTour}
+            className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 w-full text-left text-sm font-medium text-blue-500 active:text-blue-700"
+          >
+            Показать стартовую инструкцию
+          </button>
           {isBackendConfigured && (
             <button
               onClick={() => signOut()}
-              className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 w-full text-left text-sm font-medium text-red-500 active:text-red-700"
+              className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 w-full text-left text-sm font-medium text-red-500 active:text-red-700"
             >
               <LogOut size={15} />
               Выйти из аккаунта

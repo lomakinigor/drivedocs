@@ -88,6 +88,9 @@ interface WorkspaceStore {
   // Onboarding
   onboarding: OnboardingState | null
 
+  // Tour
+  hasSeenTour: boolean
+
   // Backend sync state
   isSyncing: boolean
   syncError: string | null
@@ -119,6 +122,8 @@ interface WorkspaceStore {
   resetWorkspaceConfig: (workspaceId: string) => void
   setOnboarding: (state: OnboardingState | null) => void
   clearOnboarding: () => void
+  completeTour: () => void
+  resetTour: () => void
   hydrateFromBackend: () => Promise<void>
   clearSyncError: () => void
 
@@ -177,6 +182,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       receipts: [],
       subscriptions: [],
       onboarding: null,
+      hasSeenTour: false,
 
       isSyncing: false,
       syncError: null,
@@ -561,6 +567,9 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       setOnboarding: (onboarding) => set({ onboarding }),
       clearOnboarding: () => set({ onboarding: null }),
 
+      completeTour: () => set({ hasSeenTour: true }),
+      resetTour: () => set({ hasSeenTour: false }),
+
       clearSyncError: () => set({ syncError: null }),
 
       // ── Billing actions (F-020) ───────────────────────────────────────────────
@@ -621,6 +630,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         events: state.events,
         receipts: state.receipts,
         subscriptions: state.subscriptions,
+        hasSeenTour: state.hasSeenTour,
       }),
     },
   ),

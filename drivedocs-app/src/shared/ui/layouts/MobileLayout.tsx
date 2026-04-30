@@ -8,6 +8,7 @@ import { AddTripSheet } from '@/features/trips/AddTripSheet'
 import { QuickTripProvider } from '@/features/trips/QuickTripContext'
 import { GeoTripProvider, type GeoTripResult } from '@/features/trips/GeoTripContext'
 import { GeoTripTracker } from '@/features/trips/GeoTripTracker'
+import { OnboardingTour } from '@/features/onboarding/OnboardingTour'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 
 export function MobileLayout() {
@@ -68,6 +69,8 @@ useEffect(() => {
       <GeoTripTracker onFinished={handleGeoTripFinished} />
 
       <BottomNav />
+
+      <OnboardingTour />
 
       {/* Workspace switcher bottom sheet */}
       {switcherOpen && (
