@@ -735,12 +735,8 @@ export const useWorkspaceSubscription = (workspaceId: string) =>
     s.subscriptions.find((sub) => sub.workspaceId === workspaceId) ?? null,
   )
 
-/** Returns true if workspace has an active Pro subscription */
-export const useIsProWorkspace = (workspaceId: string) =>
-  useWorkspaceStore((s) => {
-    const sub = s.subscriptions.find((sub) => sub.workspaceId === workspaceId)
-    return sub?.planCode === 'pro' && sub?.status === 'active'
-  })
+/** Beta: все пользователи получают Pro-доступ без ограничений */
+export const useIsProWorkspace = (_workspaceId: string) => true
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
