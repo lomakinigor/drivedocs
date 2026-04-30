@@ -7,6 +7,7 @@ import type {
   OnboardingState,
   OrganizationProfile,
   VehicleProfile,
+  Driver,
   Trip,
   Receipt,
   WorkspaceDocument,
@@ -70,6 +71,9 @@ interface WorkspaceStore {
   // Vehicle profiles (one per workspace)
   vehicleProfiles: VehicleProfile[]
 
+  // Drivers (multiple per workspace)
+  drivers: Driver[]
+
   // Trips
   trips: Trip[]
 
@@ -108,6 +112,9 @@ interface WorkspaceStore {
   addOrgProfile: (profile: OrganizationProfile) => Promise<void>
   addVehicleProfile: (profile: VehicleProfile) => Promise<void>
   updateVehicleProfile: (workspaceId: string, patch: Partial<VehicleProfile>) => Promise<void>
+  addDriver: (driver: Driver) => void
+  updateDriver: (id: string, patch: Partial<Driver>) => void
+  deleteDriver: (id: string) => void
   addTrip: (trip: Trip) => Promise<void>
   deleteTrip: (id: string) => Promise<void>
   initWorkspaceDocuments: (workspaceId: string, docs: WorkspaceDocument[]) => Promise<void>
@@ -176,6 +183,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 
       orgProfiles: mockOrgProfiles,
       vehicleProfiles: mockVehicleProfiles,
+      drivers: [],
       trips: mockTrips,
       documents: mockDocuments,
       events: mockEvents,
@@ -405,6 +413,19 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         }
       },
 
+      // ── Driver actions ───────────────────────────────────────────────────────
+
+      addDriver: (driver) =>
+        set((state) => ({ drivers: [...state.drivers, driver] })),
+
+      updateDriver: (id, patch) =>
+        set((state) => ({
+          drivers: state.drivers.map((d) => (d.id === id ? { ...d, ...patch } : d)),
+        })),
+
+      deleteDriver: (id) =>
+        set((state) => ({ drivers: state.drivers.filter((d) => d.id !== id) })),
+
       // ── Trip actions ─────────────────────────────────────────────────────────
 
       addTrip: async (trip) => {
@@ -625,6 +646,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         workspaces: state.workspaces,
         orgProfiles: state.orgProfiles,
         vehicleProfiles: state.vehicleProfiles,
+        drivers: state.drivers,
         trips: state.trips,
         documents: state.documents,
         events: state.events,
@@ -765,6 +787,9 @@ export const useWorkspaceSubscription = (workspaceId: string) =>
 
 /** Beta: все пользователи получают Pro-доступ без ограничений */
 export const useIsProWorkspace = (_workspaceId: string) => true
+
+export const useDrivers = (workspaceId: string) =>
+  useWorkspaceStore((s) => s.drivers.filter((d) => d.workspaceId === workspaceId))
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -80,6 +80,8 @@ export interface TaxProfile {
 
 // ─── Vehicle profile ─────────────────────────────────────────────────────────
 
+export type FuelType = 'gasoline' | 'diesel' | 'electric' | 'hybrid'
+
 export interface VehicleProfile {
   workspaceId: string
   make: string
@@ -87,9 +89,40 @@ export interface VehicleProfile {
   year: number
   licensePlate: string
   engineVolume?: number     // cc
-  fuelType?: 'gasoline' | 'diesel' | 'electric' | 'hybrid'
+  enginePowerHp?: number    // л.с.
+  vehicleCategory?: string  // A, B, C, D, ...
+  fuelType?: FuelType
   fuelConsumptionPer100km?: number  // litres per 100 km
   ownerFullName?: string
+
+  // ПТС
+  ptsNumber?: string        // серия и номер ПТС
+  vin?: string
+
+  // СТС
+  stsNumber?: string        // номер свидетельства о регистрации
+  stsDate?: string          // дата регистрации ISO
+
+  // ОСАГО
+  osagoNumber?: string
+  osagoInsurer?: string     // наименование страховщика
+  osagoExpires?: string     // ISO date — дата окончания полиса
+  kaskoNumber?: string
+  kaskoInsurer?: string
+  kaskoExpires?: string
+}
+
+// ─── Driver ──────────────────────────────────────────────────────────────────
+
+export interface Driver {
+  id: string
+  workspaceId: string
+  fullName: string
+  licenseNumber: string     // серия + номер ВУ, напр. «77 АА 123456»
+  licenseIssueDate?: string // ISO date
+  licenseExpires?: string   // ISO date — напоминание за 30 и 7 дней
+  licenseCategories?: string // напр. «B, C»
+  isDefault?: boolean       // основной водитель для путевых листов
 }
 
 // ─── Trip ─────────────────────────────────────────────────────────────────────

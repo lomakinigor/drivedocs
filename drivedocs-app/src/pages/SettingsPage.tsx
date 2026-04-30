@@ -34,6 +34,9 @@ import {
   VEHICLE_USAGE_MODEL_DESCRIPTIONS,
 } from '@/entities/constants/labels'
 import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
+import { VehicleProfileSheet } from '@/features/workspace/VehicleProfileSheet'
+import { DriversSheet } from '@/features/workspace/DriversSheet'
+import { useVehicleProfile, useDrivers } from '@/app/store/workspaceStore'
 import type { VehicleUsageModel } from '@/entities/types/domain'
 
 // ─── Rename sheet ─────────────────────────────────────────────────────────────
@@ -304,6 +307,91 @@ function BillingSection({ workspaceId }: BillingSectionProps) {
   )
 }
 
+// ─── Vehicle & Drivers section ────────────────────────────────────────────────
+
+function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
+  const vehicleProfile = useVehicleProfile(workspaceId)
+  const drivers = useDrivers(workspaceId)
+  const [vehicleSheetOpen, setVehicleSheetOpen] = useState(false)
+  const [driversSheetOpen, setDriversSheetOpen] = useState(false)
+
+  return (
+    <section>
+      <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+        Автомобиль и водители
+      </h2>
+      <div className="space-y-2">
+        {/* Vehicle card */}
+        <Card
+          className="p-4 flex items-center gap-3"
+          onClick={() => setVehicleSheetOpen(true)}
+        >
+          <div className="p-2 bg-slate-100 rounded-xl shrink-0">
+            <Car size={18} className="text-slate-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            {vehicleProfile ? (
+              <>
+                <p className="text-sm font-semibold text-slate-900">
+                  {vehicleProfile.make} {vehicleProfile.model} {vehicleProfile.year}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {vehicleProfile.licensePlate}
+                  {vehicleProfile.vin && ` · VIN: ${vehicleProfile.vin}`}
+                  {vehicleProfile.osagoExpires && ` · ОСАГО до ${new Date(vehicleProfile.osagoExpires).toLocaleDateString('ru-RU')}`}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400">Заполнить профиль авто</p>
+            )}
+          </div>
+          <span className="text-slate-300 text-lg shrink-0">›</span>
+        </Card>
+
+        {/* Drivers card */}
+        <Card
+          className="p-4 flex items-center gap-3"
+          onClick={() => setDriversSheetOpen(true)}
+        >
+          <div className="p-2 bg-slate-100 rounded-xl shrink-0">
+            <Car size={18} className="text-slate-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            {drivers.length > 0 ? (
+              <>
+                <p className="text-sm font-semibold text-slate-900">
+                  Водители ({drivers.length})
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {drivers.find((d) => d.isDefault)?.fullName ?? drivers[0]?.fullName}
+                  {drivers.length > 1 && ` и ещё ${drivers.length - 1}`}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400">Добавить водителей</p>
+            )}
+          </div>
+          <span className="text-slate-300 text-lg shrink-0">›</span>
+        </Card>
+      </div>
+
+      {vehicleSheetOpen && vehicleProfile && (
+        <VehicleProfileSheet
+          workspaceId={workspaceId}
+          profile={vehicleProfile}
+          onClose={() => setVehicleSheetOpen(false)}
+        />
+      )}
+      {driversSheetOpen && (
+        <DriversSheet
+          workspaceId={workspaceId}
+          onClose={() => setDriversSheetOpen(false)}
+        />
+      )}
+    </section>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function SettingsPage() {
@@ -441,6 +529,9 @@ export function SettingsPage() {
           </div>
         </Card>
       </section>
+
+      {/* ── Vehicle & Drivers ── */}
+      <VehicleAndDriversSection workspaceId={id} />
 
       {/* ── Workspace list ── */}
       <section>
