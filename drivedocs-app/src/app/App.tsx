@@ -10,6 +10,7 @@ import { ReceiptsPage } from '@/pages/ReceiptsPage'
 import { EventsPage } from '@/pages/EventsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { AdminPage } from '@/pages/AdminPage'
 import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard'
 import { AuthPage } from '@/features/auth/AuthPage'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
@@ -93,6 +94,10 @@ const router = createBrowserRouter([
       { path: 'events', element: <EventsPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
+  },
+  {
+    path: '/admin',
+    element: <AdminPage />,
   },
   {
     path: '*',

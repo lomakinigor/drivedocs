@@ -549,6 +549,16 @@ export function SettingsPage() {
         </Card>
       </section>
 
+      {/* Admin link — only for owner */}
+      {user.email === 'claudesecond2026@gmail.com' || !isBackendConfigured ? (
+        <button
+          onClick={() => navigate('/admin')}
+          className="w-full text-center text-xs text-slate-300 active:text-slate-500 py-1"
+        >
+          Аналитика · только для разработчика
+        </button>
+      ) : null}
+
       {/* Version */}
       <p className="text-center text-xs text-slate-400">drivedocs · v0.1.0</p>
 

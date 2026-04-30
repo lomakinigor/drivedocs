@@ -10,6 +10,7 @@ import { SummaryStep } from './steps/SummaryStep'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import type { EntityType, TaxMode, VehicleUsageModel } from '@/entities/types/domain'
 import { generateInitialDocuments } from '@/features/documents/initialDocuments'
+import { buildDemoSeedData } from '@/lib/demo/demoSeed'
 
 // ─── Step config ─────────────────────────────────────────────────────────────
 
@@ -94,7 +95,7 @@ export function OnboardingWizard() {
   // If ?ws=<id> is present, we are re-configuring an existing workspace
   const targetWsId = searchParams.get('ws') ?? null
 
-  const { addWorkspace, updateWorkspace, addOrgProfile, setCurrentWorkspace, initWorkspaceDocuments, user } =
+  const { addWorkspace, updateWorkspace, addOrgProfile, setCurrentWorkspace, initWorkspaceDocuments, addTrip, addReceipt, addEvent, user } =
     useWorkspaceStore()
 
   const [currentStep, setCurrentStep] = useState<Step>('entity_type')
@@ -191,6 +192,13 @@ export function OnboardingWizard() {
         state.vehicleUsageModel,
       )
       await initWorkspaceDocuments(workspaceId, docs)
+
+      // Seed demo data so the user immediately sees what the app can do
+      const seed = buildDemoSeedData(workspaceId, state.entityType, state.vehicleUsageModel)
+      await Promise.all(seed.trips.map((t) => addTrip(t)))
+      await Promise.all(seed.receipts.map((r) => addReceipt(r)))
+      seed.events.forEach((e) => addEvent(e))
+
       navigate(`/w/${workspaceId}/home`)
     }
   }
