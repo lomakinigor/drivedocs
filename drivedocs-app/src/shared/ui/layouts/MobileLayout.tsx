@@ -6,6 +6,8 @@ import { WorkspaceSwitcher } from '@/features/workspace/WorkspaceSwitcher'
 import { NotificationsSheet } from '@/features/events/NotificationsSheet'
 import { AddTripSheet } from '@/features/trips/AddTripSheet'
 import { QuickTripProvider } from '@/features/trips/QuickTripContext'
+import { GeoTripProvider, type GeoTripResult } from '@/features/trips/GeoTripContext'
+import { GeoTripTracker } from '@/features/trips/GeoTripTracker'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 
 export function MobileLayout() {
@@ -17,6 +19,17 @@ export function MobileLayout() {
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [addTripOpen, setAddTripOpen] = useState(false)
+  const [geoTripResult, setGeoTripResult] = useState<GeoTripResult | null>(null)
+
+  const handleGeoTripFinished = (result: GeoTripResult) => {
+    setGeoTripResult(result)
+    setAddTripOpen(true)
+  }
+
+  const handleAddTripClose = () => {
+    setAddTripOpen(false)
+    setGeoTripResult(null)
+  }
 
 // Sync URL workspaceId → store on mount/change
 useEffect(() => {
@@ -37,6 +50,7 @@ useEffect(() => {
   }
 
   return (
+    <GeoTripProvider>
     <div className="flex flex-col h-full bg-slate-50">
       <MobileHeader
         onOpenSwitcher={() => setSwitcherOpen(true)}
@@ -50,6 +64,8 @@ useEffect(() => {
           <Outlet />
         </QuickTripProvider>
       </main>
+
+      <GeoTripTracker onFinished={handleGeoTripFinished} />
 
       <BottomNav />
 
@@ -74,10 +90,20 @@ useEffect(() => {
       {addTripOpen && (
         <AddTripSheet
           workspaceId={id}
-          onClose={() => setAddTripOpen(false)}
-          onSaved={() => setAddTripOpen(false)}
+          prefill={
+            geoTripResult
+              ? {
+                  from: geoTripResult.startAddress,
+                  to: geoTripResult.endAddress,
+                  distanceKm: geoTripResult.distanceKm,
+                }
+              : undefined
+          }
+          onClose={handleAddTripClose}
+          onSaved={handleAddTripClose}
         />
       )}
     </div>
+    </GeoTripProvider>
   )
 }

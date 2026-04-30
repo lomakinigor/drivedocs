@@ -87,6 +87,7 @@ export interface VehicleProfile {
   licensePlate: string
   engineVolume?: number     // cc
   fuelType?: 'gasoline' | 'diesel' | 'electric' | 'hybrid'
+  fuelConsumptionPer100km?: number  // litres per 100 km
   ownerFullName?: string
 }
 

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, LocateFixed, Loader } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
+import { reverseGeocode } from '@/shared/lib/reverseGeocode'
 import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
 
 // ─── Purpose options ──────────────────────────────────────────────────────────
@@ -65,26 +66,62 @@ function isValid(form: FormState): boolean {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+interface TripPrefill {
+  from?: string
+  to?: string
+  distanceKm?: number
+}
+
 interface AddTripSheetProps {
   workspaceId: string
+  prefill?: TripPrefill
   onClose: () => void
   onSaved: () => void
 }
 
-export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProps) {
+export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTripSheetProps) {
   const addTrip = useWorkspaceStore((s) => s.addTrip)
   const addEvent = useWorkspaceStore((s) => s.addEvent)
+  const vehicleProfile = useWorkspaceStore((s) =>
+    s.vehicleProfiles.find((v) => v.workspaceId === workspaceId),
+  )
   const fromRef = useRef<HTMLInputElement>(null)
 
-  const [form, setForm] = useState<FormState>(initialState)
+  const [form, setForm] = useState<FormState>(() => ({
+    ...initialState(),
+    from: prefill?.from ?? '',
+    to: prefill?.to ?? '',
+    distanceKm: prefill?.distanceKm ? String(prefill.distanceKm) : '',
+  }))
   const [errors, setErrors] = useState<FieldErrors>({})
   const [touched, setTouched] = useState(false)
+  const [locatingFrom, setLocatingFrom] = useState(false)
+  const [locatingTo, setLocatingTo] = useState(false)
 
   // Auto-focus first field after sheet animates in
   useEffect(() => {
     const t = setTimeout(() => fromRef.current?.focus(), 150)
     return () => clearTimeout(t)
   }, [])
+
+  const locateField = async (field: 'from' | 'to') => {
+    if (!navigator.geolocation) return
+    if (field === 'from') setLocatingFrom(true)
+    else setLocatingTo(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
+        set({ [field]: addr })
+        if (field === 'from') setLocatingFrom(false)
+        else setLocatingTo(false)
+      },
+      () => {
+        if (field === 'from') setLocatingFrom(false)
+        else setLocatingTo(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }
 
   const set = (patch: Partial<FormState>) =>
     setForm((prev) => ({ ...prev, ...patch }))
@@ -176,6 +213,15 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
                 className={fieldClass(touched && !!errors.from)}
               />
               <VoiceMicButton onResult={(t) => set({ from: t })} />
+              <button
+                type="button"
+                onClick={() => locateField('from')}
+                disabled={locatingFrom}
+                className="shrink-0 p-2 rounded-xl text-slate-400 active:bg-slate-100 disabled:opacity-40"
+                aria-label="Определить местоположение"
+              >
+                {locatingFrom ? <Loader size={17} className="animate-spin" /> : <LocateFixed size={17} />}
+              </button>
             </div>
           </Field>
 
@@ -191,6 +237,15 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
                 className={fieldClass(touched && !!errors.to)}
               />
               <VoiceMicButton onResult={(t) => set({ to: t })} />
+              <button
+                type="button"
+                onClick={() => locateField('to')}
+                disabled={locatingTo}
+                className="shrink-0 p-2 rounded-xl text-slate-400 active:bg-slate-100 disabled:opacity-40"
+                aria-label="Определить местоположение"
+              >
+                {locatingTo ? <Loader size={17} className="animate-spin" /> : <LocateFixed size={17} />}
+              </button>
             </div>
           </Field>
 
@@ -206,6 +261,17 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
                 placeholder="0"
                 className={fieldClass(touched && !!errors.distanceKm)}
               />
+              {(() => {
+                const km = parseFloat(form.distanceKm.replace(',', '.'))
+                const rate = vehicleProfile?.fuelConsumptionPer100km
+                if (!rate || isNaN(km) || km <= 0) return null
+                const liters = (km * rate) / 100
+                return (
+                  <p className="text-xs text-slate-400 mt-1">
+                    ~{liters.toFixed(1)} л топлива
+                  </p>
+                )
+              })()}
             </Field>
 
             <Field label="Дата">
