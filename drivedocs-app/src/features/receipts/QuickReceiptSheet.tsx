@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react'
-import { X, Camera, RotateCcw } from 'lucide-react'
+import { useState } from 'react'
+import { X, Camera, RotateCcw, Loader } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
+import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
 import type { Receipt, ReceiptCategory } from '@/entities/types/domain'
 
 // ─── Category options ─────────────────────────────────────────────────────────
@@ -38,22 +39,14 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
   const addReceipt = useWorkspaceStore((s) => s.addReceipt)
   const [form, setForm] = useState<FormState>(initialState)
   const [touched, setTouched] = useState(false)
-  const [photoError, setPhotoError] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
   const set = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }))
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPhotoError(false)
-    set({ imageUrl: URL.createObjectURL(file) })
-  }
+  const photo = usePhotoCapture({
+    onCapture: (base64) => set({ imageUrl: base64 }),
+  })
 
   const handleRemovePhoto = () => {
     set({ imageUrl: undefined })
-    setPhotoError(false)
-    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const amountNum = parseFloat(form.amount.replace(',', '.'))
@@ -167,56 +160,20 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
           {/* Photo capture */}
           <Field label="Фото чека (необязательно)">
             <input
-              ref={fileInputRef}
+              ref={photo.inputRef}
               type="file"
               accept="image/*"
               capture="environment"
               className="hidden"
-              onChange={handlePhotoChange}
+              onChange={photo.handleChange}
             />
-            {form.imageUrl ? (
-              <div className="space-y-2">
-                <div className="relative">
-                  <img
-                    src={form.imageUrl}
-                    alt="Фото чека"
-                    className="w-full h-32 object-cover rounded-xl"
-                    onError={() => {
-                      setPhotoError(true)
-                      handleRemovePhoto()
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleRemovePhoto}
-                    className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white active:bg-black/70"
-                    aria-label="Удалить фото"
-                  >
-                    <X size={13} />
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 text-xs text-blue-600 font-medium py-0.5"
-                >
-                  <RotateCcw size={13} />
-                  Переснять
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center gap-2.5 px-3.5 py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 active:bg-slate-50"
-              >
-                <Camera size={18} className="shrink-0 text-slate-400" />
-                <span className="text-sm">Прикрепить фото</span>
-              </button>
-            )}
-            {photoError && (
-              <p className="text-xs text-red-500 mt-1">Не удалось загрузить фото — попробуйте другой файл</p>
-            )}
+            <PhotoPicker
+              imageUrl={form.imageUrl}
+              loading={photo.loading}
+              error={photo.error}
+              onOpen={photo.open}
+              onRemove={handleRemovePhoto}
+            />
           </Field>
 
           <div className="h-2" />
@@ -262,6 +219,73 @@ function Field({
       <label className="block text-xs font-semibold text-slate-500 mb-1.5">{label}</label>
       {children}
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  )
+}
+
+export function PhotoPicker({
+  imageUrl,
+  loading,
+  error,
+  onOpen,
+  onRemove,
+  label = 'Прикрепить фото',
+}: {
+  imageUrl?: string
+  loading?: boolean
+  error?: string | null
+  onOpen: () => void
+  onRemove: () => void
+  label?: string
+}) {
+  if (loading) {
+    return (
+      <div className="w-full flex items-center gap-2.5 px-3.5 py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400">
+        <Loader size={18} className="animate-spin shrink-0" />
+        <span className="text-sm">Загрузка…</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {imageUrl ? (
+        <>
+          <div className="relative">
+            <img
+              src={imageUrl}
+              alt="Фото"
+              className="w-full h-36 object-cover rounded-xl"
+            />
+            <button
+              type="button"
+              onClick={onRemove}
+              className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white active:bg-black/70"
+              aria-label="Удалить фото"
+            >
+              <X size={13} />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="flex items-center gap-1.5 text-xs text-blue-600 font-medium py-0.5"
+          >
+            <RotateCcw size={13} />
+            Переснять
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="w-full flex items-center gap-2.5 px-3.5 py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 active:bg-slate-50"
+        >
+          <Camera size={18} className="shrink-0 text-slate-400" />
+          <span className="text-sm">{label}</span>
+        </button>
+      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   )
 }

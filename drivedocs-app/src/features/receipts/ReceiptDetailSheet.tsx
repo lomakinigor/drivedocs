@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { X, Receipt as ReceiptIcon, Link, Unlink, Car, ChevronRight } from 'lucide-react'
 import { useWorkspaceStore, useWorkspaceTrips } from '@/app/store/workspaceStore'
+import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
+import { PhotoPicker } from '@/features/receipts/QuickReceiptSheet'
 import { RECEIPT_CATEGORY_LABELS } from '@/entities/constants/labels'
 import type { Receipt, Trip } from '@/entities/types/domain'
 
@@ -13,7 +15,12 @@ interface ReceiptDetailSheetProps {
 export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDetailSheetProps) {
   const attachReceiptToTrip = useWorkspaceStore((s) => s.attachReceiptToTrip)
   const detachReceiptFromTrip = useWorkspaceStore((s) => s.detachReceiptFromTrip)
+  const updateReceiptImage = useWorkspaceStore((s) => s.updateReceiptImage)
   const trips = useWorkspaceTrips(workspaceId)
+
+  const photo = usePhotoCapture({
+    onCapture: (base64) => updateReceiptImage(receipt.id, base64),
+  })
 
   const [pickingTrip, setPickingTrip] = useState(false)
 
@@ -91,9 +98,27 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
           )}
 
           {/* Receipt photo */}
-          {liveReceipt.imageUrl && (
-            <ReceiptPhoto imageUrl={liveReceipt.imageUrl} />
-          )}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              Фото чека
+            </p>
+            <input
+              ref={photo.inputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={photo.handleChange}
+            />
+            <PhotoPicker
+              imageUrl={liveReceipt.imageUrl}
+              loading={photo.loading}
+              error={photo.error}
+              onOpen={photo.open}
+              onRemove={() => updateReceiptImage(receipt.id, undefined)}
+              label="Прикрепить фото чека"
+            />
+          </div>
 
           {/* Trip linking section */}
           <div>
@@ -196,26 +221,3 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
   )
 }
 
-// ─── Receipt photo (graceful fallback on dead blob URL — D-009) ───────────────
-
-function ReceiptPhoto({ imageUrl }: { imageUrl: string }) {
-  const [broken, setBroken] = useState(false)
-
-  if (broken) return null
-
-  return (
-    <div>
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-        Фото чека
-      </p>
-      <div className="relative">
-        <img
-          src={imageUrl}
-          alt="Фото чека"
-          className="w-full rounded-2xl max-h-56 object-cover"
-          onError={() => setBroken(true)}
-        />
-      </div>
-    </div>
-  )
-}

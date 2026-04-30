@@ -1,5 +1,7 @@
 import { X, HelpCircle, Lightbulb } from 'lucide-react'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
+import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
+import { PhotoPicker } from '@/features/receipts/QuickReceiptSheet'
 import { getDocumentHelp } from '@/entities/config/documentHelp'
 import type { WorkspaceDocument, DocumentStatus } from '@/entities/types/domain'
 
@@ -28,7 +30,13 @@ interface DocumentDetailSheetProps {
 
 export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) {
   const updateDocumentStatus = useWorkspaceStore((s) => s.updateDocumentStatus)
+  const updateDocumentImage = useWorkspaceStore((s) => s.updateDocumentImage)
+  const liveDoc = useWorkspaceStore((s) => s.documents.find((d) => d.id === doc.id) ?? doc)
   const help = getDocumentHelp(doc.templateKey)
+
+  const photo = usePhotoCapture({
+    onCapture: (base64) => updateDocumentImage(doc.id, base64),
+  })
 
   const markDone = () => {
     updateDocumentStatus(doc.id, 'completed')
@@ -144,6 +152,29 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
               <p className="text-sm text-slate-600 leading-relaxed">{doc.description}</p>
             )
           )}
+
+          {/* Scan attachment */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              Скан / фото документа
+            </p>
+            <input
+              ref={photo.inputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={photo.handleChange}
+            />
+            <PhotoPicker
+              imageUrl={liveDoc.imageUrl}
+              loading={photo.loading}
+              error={photo.error}
+              onOpen={photo.open}
+              onRemove={() => updateDocumentImage(doc.id, undefined)}
+              label="Прикрепить скан документа"
+            />
+          </div>
 
           <div className="h-1" />
         </div>

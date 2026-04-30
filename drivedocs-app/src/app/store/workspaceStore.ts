@@ -112,8 +112,10 @@ interface WorkspaceStore {
   addEvent: (event: WorkspaceEvent) => void
   markEventRead: (id: string) => void
   addReceipt: (receipt: Receipt) => Promise<void>
+  updateReceiptImage: (receiptId: string, imageUrl: string | undefined) => void
   attachReceiptToTrip: (receiptId: string, tripId: string) => Promise<void>
   detachReceiptFromTrip: (receiptId: string) => Promise<void>
+  updateDocumentImage: (documentId: string, imageUrl: string | undefined) => void
   resetWorkspaceConfig: (workspaceId: string) => void
   setOnboarding: (state: OnboardingState | null) => void
   clearOnboarding: () => void
@@ -503,6 +505,14 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         }
       },
 
+      updateReceiptImage: (receiptId, imageUrl) => {
+        set((state) => ({
+          receipts: state.receipts.map((r) =>
+            r.id === receiptId ? { ...r, imageUrl } : r,
+          ),
+        }))
+      },
+
       detachReceiptFromTrip: async (receiptId) => {
         set((state) => ({
           receipts: state.receipts.map((r) => {
@@ -518,6 +528,14 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
             set({ syncError: syncErrorMessage(err) })
           }
         }
+      },
+
+      updateDocumentImage: (documentId, imageUrl) => {
+        set((state) => ({
+          documents: state.documents.map((d) =>
+            d.id === documentId ? { ...d, imageUrl } : d,
+          ),
+        }))
       },
 
       // ── Config reset ─────────────────────────────────────────────────────────

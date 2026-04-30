@@ -146,6 +146,7 @@ export interface WorkspaceDocument {
   dueDate?: string
   completedAt?: string
   templateKey?: string      // refers to a legal template
+  imageUrl?: string         // base64 data URL of scanned document photo
 }
 
 // ─── Events ──────────────────────────────────────────────────────────────────
