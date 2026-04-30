@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Car, Receipt as ReceiptIcon, CheckCircle, Plus } from 'lucide-react'
+import { Car, Receipt as ReceiptIcon, CheckCircle, Plus, Printer } from 'lucide-react'
 import { useParams, Link } from 'react-router-dom'
 import { Card } from '@/shared/ui/components/Card'
 import { TripCard } from '@/features/trips/TripCard'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
+import { WaybillPreviewSheet } from '@/features/trips/WaybillPreviewSheet'
 import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
 import { ReceiptDetailSheet } from '@/features/receipts/ReceiptDetailSheet'
 import { useTodayTrips, useTodayReceipts } from '@/app/store/workspaceStore'
@@ -22,6 +23,9 @@ export function TodayPage() {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [showReceiptSheet, setShowReceiptSheet] = useState(false)
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null)
+  const [showWaybill, setShowWaybill] = useState(false)
+
+  const todayIso = new Date().toISOString().slice(0, 10)
 
   // Show success banner when a new trip appears in today's list
   const prevCountRef = useRef(todayTrips.length)
@@ -93,6 +97,23 @@ export function TodayPage() {
           </Link>
         </div>
       </div>
+
+      {/* Daily waybill button */}
+      <button
+        onClick={() => setShowWaybill(true)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-white active:bg-slate-50"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-50 rounded-xl shrink-0">
+            <Printer size={18} className="text-indigo-500" />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-semibold text-slate-900">Путевой лист за сегодня</p>
+            <p className="text-xs text-slate-400 mt-0.5">Скачать PDF для печати</p>
+          </div>
+        </div>
+        <span className="text-slate-300 text-lg leading-none">›</span>
+      </button>
 
       {/* Journal */}
       <section>
@@ -173,6 +194,15 @@ export function TodayPage() {
         <TripDetailSheet
           trip={selectedTrip}
           onClose={() => setSelectedTrip(null)}
+        />
+      )}
+
+      {showWaybill && (
+        <WaybillPreviewSheet
+          workspaceId={id}
+          fromDate={todayIso}
+          toDate={todayIso}
+          onClose={() => setShowWaybill(false)}
         />
       )}
 

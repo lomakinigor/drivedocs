@@ -37,7 +37,8 @@ async function loadCyrillicFont(): Promise<string> {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function buildFileName(fromDate: string): string {
+function buildFileName(fromDate: string, toDate: string): string {
+  if (fromDate === toDate) return `putevoy-list-${fromDate}.pdf`
   const [year, month] = fromDate.split('-')
   return `putevoy-list-${year}-${month}.pdf`
 }
@@ -283,5 +284,5 @@ export async function exportWaybillPdf(data: MonthlyWaybillData): Promise<void> 
 
   // ── Сохранить ────────────────────────────────────────────────────────────────
 
-  doc.save(buildFileName(data.fromDate))
+  doc.save(buildFileName(data.fromDate, data.toDate))
 }

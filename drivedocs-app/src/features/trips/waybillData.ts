@@ -19,7 +19,8 @@ export interface MonthlyWaybillData {
   workspaceId: string
   entityType: EntityType       // 'IP' | 'OOO' — for signature block wording
   fromDate: string             // ISO date — period start, for filename + doc date
-  periodLabel: string          // "апрель 2026"
+  toDate: string               // ISO date — period end (same as fromDate for daily)
+  periodLabel: string          // "апрель 2026" or "30 апреля 2026"
   organizationName: string     // resolved or fallback to workspace.name
   organizationInn: string | null
   organizationOgrn: string | null  // ОГРН (ООО) or ОГРНИП (ИП), gracefully null
@@ -53,11 +54,19 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
   const { workspace, orgProfile, vehicleProfile, trips, fromDate } = input
   const warnings: string[] = []
 
-  // Period label — "апрель 2026"
-  const periodLabel = new Date(fromDate + 'T00:00:00').toLocaleDateString('ru-RU', {
-    month: 'long',
-    year: 'numeric',
-  })
+  // Period label — "30 апреля 2026" for single day, "апрель 2026" for month range
+  const { toDate } = input
+  const periodLabel =
+    fromDate === toDate
+      ? new Date(fromDate + 'T00:00:00').toLocaleDateString('ru-RU', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : new Date(fromDate + 'T00:00:00').toLocaleDateString('ru-RU', {
+          month: 'long',
+          year: 'numeric',
+        })
 
   // Organization name — most specific source first
   const organizationName =
@@ -118,6 +127,7 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
     workspaceId: workspace.id,
     entityType: workspace.entityType,
     fromDate,
+    toDate,
     periodLabel,
     organizationName,
     organizationInn: orgProfile?.inn ?? null,
