@@ -1,40 +1,71 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Background -->
-  <rect width="1024" height="1024" rx="220" fill="#1a3060"/>
-  <!-- Radial gradient overlay for depth -->
   <defs>
-    <radialGradient id="bg" cx="40%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="#243d7a"/>
-      <stop offset="100%" stop-color="#111f45"/>
+    <radialGradient id="bg" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#9B7FDB"/>
+      <stop offset="100%" stop-color="#5B35C0"/>
     </radialGradient>
   </defs>
-  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
 
-  <!-- Car body outline (white, stroke-based) -->
-  <g fill="none" stroke="white" stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Car roof/cabin -->
-    <path d="M280 480 Q320 360 430 340 L600 340 Q670 340 710 390 L760 480"/>
-    <!-- Car bottom chassis line -->
-    <line x1="220" y1="560" x2="790" y2="560"/>
-    <!-- Front -->
-    <path d="M760 480 L790 540 Q800 570 790 580 L790 600"/>
-    <!-- Rear -->
-    <path d="M280 480 L230 540 Q215 565 220 580 L220 600"/>
-    <!-- Roof line inner -->
-    <path d="M310 478 Q348 382 442 364 L590 364 Q648 364 684 408 L726 478"/>
+  <!-- Background circle -->
+  <circle cx="512" cy="512" r="512" fill="url(#bg)"/>
+
+  <!-- Car silhouette (white, filled) -->
+  <path fill="white" d="
+    M 172 600
+    L 172 555
+    Q 176 528 202 522
+    L 242 522
+    L 284 395
+    Q 308 352 356 346
+    L 588 346
+    Q 636 352 660 395
+    L 702 522
+    L 748 522
+    Q 774 528 778 555
+    L 778 600
+    Q 774 632 748 636
+    L 700 636
+    Q 690 572 636 562
+    Q 576 572 570 636
+    L 368 636
+    Q 360 572 304 562
+    Q 248 572 242 636
+    L 196 636
+    Q 176 632 172 600 Z
+  "/>
+
+  <!-- Windows cutout -->
+  <path fill="#7252C5" d="M 300 516 L 337 405 Q 354 374 382 370 L 468 370 L 468 516 Z"/>
+  <path fill="#7252C5" d="M 488 516 L 488 370 L 578 370 Q 606 374 624 405 L 662 516 Z"/>
+
+  <!-- Wheels -->
+  <circle cx="302" cy="636" r="72" fill="white"/>
+  <circle cx="302" cy="636" r="28" fill="#6040BB"/>
+  <circle cx="638" cy="636" r="72" fill="white"/>
+  <circle cx="638" cy="636" r="28" fill="#6040BB"/>
+
+  <!--
+    Fountain pen drawn in its natural upright position centered at (570, 420),
+    then rotated -40deg around that center.
+    Natural pen: cap at top, nib pointing down.
+    Total pen height ~560, width ~108.
+    Center at 570,420 means pen spans y from 420-280=140 to 420+280=700.
+  -->
+  <g transform="rotate(-40, 570, 420)">
+    <!-- Cap (rounded top) -->
+    <rect x="516" y="140" width="108" height="220" rx="54" fill="white"/>
+    <!-- Barrel -->
+    <rect x="516" y="345" width="108" height="230" rx="12" fill="white" opacity="0.92"/>
+    <!-- Grip section -->
+    <rect x="519" y="568" width="102" height="62" rx="8" fill="white"/>
+    <!-- Nib body -->
+    <path d="M 519 628 Q 519 660 570 700 Q 621 660 621 628 Z" fill="white"/>
+    <!-- Clip -->
+    <rect x="608" y="150" width="14" height="370" rx="7" fill="#8060C0" opacity="0.45"/>
+    <!-- Cap ring -->
+    <rect x="513" y="348" width="114" height="20" rx="5" fill="#7858C8" opacity="0.35"/>
   </g>
 
-  <!-- Front wheel -->
-  <circle cx="320" cy="620" r="72" fill="none" stroke="white" stroke-width="52"/>
-  <!-- Rear wheel -->
-  <circle cx="700" cy="620" r="72" fill="none" stroke="white" stroke-width="52"/>
-
-  <!-- Wheel hubs -->
-  <circle cx="320" cy="620" r="20" fill="white"/>
-  <circle cx="700" cy="620" r="20" fill="white"/>
-
-  <!-- Green checkmark -->
-  <g fill="none" stroke="#3ecf4a" stroke-width="72" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="570,440 650,540 800,350"/>
-  </g>
+  <!-- Underline (horizontal, under pen nib area) -->
+  <rect x="392" y="796" width="210" height="24" rx="12" fill="white"/>
 </svg>
