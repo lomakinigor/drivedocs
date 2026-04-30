@@ -33,6 +33,8 @@ import {
   VEHICLE_USAGE_MODEL_LABELS,
   VEHICLE_USAGE_MODEL_DESCRIPTIONS,
 } from '@/entities/constants/labels'
+import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
+import type { VehicleUsageModel } from '@/entities/types/domain'
 
 // ─── Rename sheet ─────────────────────────────────────────────────────────────
 
@@ -112,11 +114,13 @@ function ConfigRow({
   label,
   value,
   description,
+  onEdit,
 }: {
   icon: React.ReactNode
   label: string
   value: string
   description?: string
+  onEdit?: () => void
 }) {
   return (
     <div className="flex items-start gap-3 py-3.5">
@@ -128,6 +132,15 @@ function ConfigRow({
           <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{description}</p>
         )}
       </div>
+      {onEdit && (
+        <button
+          onClick={onEdit}
+          className="p-1.5 rounded-xl text-slate-400 active:bg-slate-100 shrink-0 mt-0.5"
+          aria-label="Изменить"
+        >
+          <Pencil size={14} />
+        </button>
+      )}
     </div>
   )
 }
@@ -307,6 +320,8 @@ export function SettingsPage() {
     useWorkspaceStore()
   const signOut = useWorkspaceStore((s) => s.signOut)
   const resetTour = useWorkspaceStore((s) => s.resetTour)
+  const updateWorkspaceFn = useWorkspaceStore((s) => s.updateWorkspace)
+  const [schemeSheetOpen, setSchemeSheetOpen] = useState(false)
 
   const billingResult = searchParams.get('billing')
   const [renameOpen, setRenameOpen] = useState(false)
@@ -411,9 +426,10 @@ export function SettingsPage() {
             />
             <ConfigRow
               icon={<Car size={16} />}
-              label="Правовая модель"
+              label="Схема оформления авто"
               value={VEHICLE_USAGE_MODEL_LABELS[workspace.vehicleUsageModel]}
               description={VEHICLE_USAGE_MODEL_DESCRIPTIONS[workspace.vehicleUsageModel]}
+              onEdit={() => setSchemeSheetOpen(true)}
             />
             {orgProfile?.inn && (
               <ConfigRow
@@ -575,6 +591,17 @@ export function SettingsPage() {
           currentName={workspace.name}
           onSave={handleRename}
           onClose={() => setRenameOpen(false)}
+        />
+      )}
+
+      {/* Vehicle scheme sheet */}
+      {schemeSheetOpen && (
+        <VehicleSchemeSheet
+          current={workspace.vehicleUsageModel}
+          onSelect={(model: VehicleUsageModel) =>
+            updateWorkspaceFn(id, { vehicleUsageModel: model })
+          }
+          onClose={() => setSchemeSheetOpen(false)}
         />
       )}
     </div>

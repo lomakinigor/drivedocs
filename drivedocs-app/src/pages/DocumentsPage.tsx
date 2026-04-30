@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react'
-import { useParams } from 'react-router-dom'
+import { FileText, CheckCircle, Clock, AlertCircle, Car } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Badge } from '@/shared/ui/components/Badge'
 import { EmptyState } from '@/shared/ui/components/EmptyState'
 import { DocumentDetailSheet } from '@/features/documents/DocumentDetailSheet'
-import { useWorkspaceDocuments, useWorkspaceStore } from '@/app/store/workspaceStore'
+import { useWorkspaceDocuments, useWorkspaceStore, useCurrentWorkspace } from '@/app/store/workspaceStore'
+import { VEHICLE_USAGE_MODEL_LABELS } from '@/entities/constants/labels'
+import { VEHICLE_DOCUMENT_CHECKLIST } from '@/entities/constants/vehicleDocumentChecklist'
 import type { WorkspaceDocument, DocumentStatus } from '@/entities/types/domain'
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -34,13 +36,18 @@ function computeProgress(docs: WorkspaceDocument[]) {
 export function DocumentsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const id = workspaceId ?? ''
+  const navigate = useNavigate()
 
   const docs = useWorkspaceDocuments(id)
   const updateDocumentStatus = useWorkspaceStore((s) => s.updateDocumentStatus)
+  const workspace = useCurrentWorkspace()
 
   const [selectedDoc, setSelectedDoc] = useState<WorkspaceDocument | null>(null)
 
   const { total, completed, pending, percent } = computeProgress(docs)
+
+  const checklist = workspace ? VEHICLE_DOCUMENT_CHECKLIST[workspace.vehicleUsageModel] : []
+  const requiredCount = checklist.filter((d) => d.required).length
 
   // Group docs for display
   const attention = docs.filter((d) => d.status === 'required' || d.status === 'overdue')
@@ -65,6 +72,26 @@ export function DocumentsPage() {
               : `${pending} из ${total} не готовы`}
           </p>
         </div>
+
+        {/* Scheme banner */}
+        {workspace && (
+          <button
+            onClick={() => navigate(`/w/${id}/settings`)}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-blue-100 bg-blue-50 text-left active:bg-blue-100"
+          >
+            <div className="p-2 bg-blue-100 rounded-xl shrink-0">
+              <Car size={16} className="text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-blue-800">
+                {VEHICLE_USAGE_MODEL_LABELS[workspace.vehicleUsageModel]}
+              </p>
+              <p className="text-xs text-blue-500 mt-0.5">
+                {requiredCount} обязательных документа · Изменить схему →
+              </p>
+            </div>
+          </button>
+        )}
 
         {/* Progress bar */}
         {total > 0 && (
