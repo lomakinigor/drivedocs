@@ -79,34 +79,6 @@ const RENT_WITHOUT_CREW_DOCS: ChecklistItem[] = [
   },
 ]
 
-const RENT_WITH_CREW_DOCS: ChecklistItem[] = [
-  {
-    templateKey: 'rent_crew_agreement',
-    title: 'Договор аренды ТС с экипажем',
-    description: 'Включает оказание услуг управления и технического обслуживания',
-    required: true,
-    normative: 'ст. 632–641 ГК РФ',
-  },
-  {
-    templateKey: 'rent_acceptance_act',
-    title: 'Акт приёма-передачи ТС',
-    description: 'Фиксирует состояние авто на момент начала аренды',
-    required: true,
-  },
-  {
-    templateKey: 'trip_log',
-    title: 'Путевые листы',
-    description: 'Учёт рабочего времени водителя и маршрутов',
-    required: true,
-    normative: 'Приказ Минтранса № 152',
-  },
-  {
-    templateKey: 'service_report',
-    title: 'Ежемесячный акт об оказании услуг',
-    description: 'Подтверждает факт оказания услуг управления за период',
-    required: true,
-  },
-]
 
 const FREE_USE_DOCS: ChecklistItem[] = [
   {

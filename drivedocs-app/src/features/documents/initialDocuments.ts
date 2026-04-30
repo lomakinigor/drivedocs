@@ -87,6 +87,9 @@ function selectTemplates(
       return isOOO
         ? [FREE_USE_AGREEMENT, TRIP_LOG, WAYBILL]
         : [FREE_USE_AGREEMENT, TRIP_LOG]
+
+    case 'OWN_IP':
+      return [TRIP_LOG]
   }
 }
 

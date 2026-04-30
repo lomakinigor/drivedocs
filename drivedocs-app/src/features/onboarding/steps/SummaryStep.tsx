@@ -44,6 +44,7 @@ const VEHICLE_MODEL_NOTES: Record<VehicleUsageModel, string> = {
   COMPENSATION: 'Фиксированная ежемесячная выплата',
   RENT: 'Договор аренды + НДФЛ с выплат',
   FREE_USE: 'Договор безвозмездного пользования',
+  OWN_IP: 'ИП — собственный автомобиль для бизнеса',
 }
 
 export function SummaryStep({

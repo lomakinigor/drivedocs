@@ -11,13 +11,14 @@ interface VehicleModelStepProps {
   onSelect: (model: VehicleUsageModel) => void
 }
 
-const ALL_MODELS: VehicleUsageModel[] = ['COMPENSATION', 'RENT', 'FREE_USE']
+const ALL_MODELS: VehicleUsageModel[] = ['COMPENSATION', 'RENT', 'FREE_USE', 'OWN_IP']
 
 // Short helper text shown under each option title
 const MODEL_HINTS: Record<VehicleUsageModel, string> = {
   COMPENSATION: 'Самый простой вариант для большинства ИП и ООО',
   RENT: 'Нужен договор аренды. С выплат удерживается НДФЛ 13%',
   FREE_USE: 'Автомобиль "передаётся" без оплаты. Есть налоговые риски',
+  OWN_IP: 'ИП использует свой авто напрямую, без компенсаций',
 }
 
 // Content for the help bottom sheet
