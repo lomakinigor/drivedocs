@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
+import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
 
 // ─── Purpose options ──────────────────────────────────────────────────────────
@@ -164,27 +165,33 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
         <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
           {/* From */}
           <Field label="Откуда" error={touched ? errors.from : undefined}>
-            <input
-              ref={fromRef}
-              type="text"
-              value={form.from}
-              onChange={(e) => set({ from: e.target.value })}
-              onBlur={handleBlur}
-              placeholder="Адрес или район"
-              className={fieldClass(touched && !!errors.from)}
-            />
+            <div className="flex items-center gap-1.5">
+              <input
+                ref={fromRef}
+                type="text"
+                value={form.from}
+                onChange={(e) => set({ from: e.target.value })}
+                onBlur={handleBlur}
+                placeholder="Адрес или район"
+                className={fieldClass(touched && !!errors.from)}
+              />
+              <VoiceMicButton onResult={(t) => set({ from: t })} />
+            </div>
           </Field>
 
           {/* To */}
           <Field label="Куда" error={touched ? errors.to : undefined}>
-            <input
-              type="text"
-              value={form.to}
-              onChange={(e) => set({ to: e.target.value })}
-              onBlur={handleBlur}
-              placeholder="Адрес или район"
-              className={fieldClass(touched && !!errors.to)}
-            />
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                value={form.to}
+                onChange={(e) => set({ to: e.target.value })}
+                onBlur={handleBlur}
+                placeholder="Адрес или район"
+                className={fieldClass(touched && !!errors.to)}
+              />
+              <VoiceMicButton onResult={(t) => set({ to: t })} />
+            </div>
           </Field>
 
           {/* Distance + Date — side by side */}
@@ -247,15 +254,18 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
 
             {/* Custom purpose input */}
             {form.purpose === 'Другое' && (
-              <input
-                type="text"
-                value={form.customPurpose}
-                onChange={(e) => set({ customPurpose: e.target.value })}
-                onBlur={handleBlur}
-                placeholder="Опишите цель поездки"
-                autoFocus
-                className={`mt-2 ${fieldClass(touched && !form.customPurpose.trim())}`}
-              />
+              <div className="flex items-center gap-1.5 mt-2">
+                <input
+                  type="text"
+                  value={form.customPurpose}
+                  onChange={(e) => set({ customPurpose: e.target.value })}
+                  onBlur={handleBlur}
+                  placeholder="Опишите цель поездки"
+                  autoFocus
+                  className={fieldClass(touched && !form.customPurpose.trim())}
+                />
+                <VoiceMicButton onResult={(t) => set({ customPurpose: t })} />
+              </div>
             )}
           </Field>
 

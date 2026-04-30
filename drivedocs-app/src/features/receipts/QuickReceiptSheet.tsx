@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Camera, RotateCcw, Loader } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
 import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
+import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import type { Receipt, ReceiptCategory } from '@/entities/types/domain'
 
 // ─── Category options ─────────────────────────────────────────────────────────
@@ -148,13 +149,16 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
 
           {/* Description (optional) */}
           <Field label="Комментарий (необязательно)">
-            <input
-              type="text"
-              value={form.description}
-              onChange={(e) => set({ description: e.target.value })}
-              placeholder="Например, АЗС Лукойл"
-              className={fieldClass(false)}
-            />
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                value={form.description}
+                onChange={(e) => set({ description: e.target.value })}
+                placeholder="Например, АЗС Лукойл"
+                className={fieldClass(false)}
+              />
+              <VoiceMicButton onResult={(t) => set({ description: t })} />
+            </div>
           </Field>
 
           {/* Photo capture */}
