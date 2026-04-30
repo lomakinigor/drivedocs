@@ -3,3 +3,6 @@
 .dolt/
 *.db
 .beads-credential-key
+.vercel
+drivedocs-app/.netlify/
+package-lock.json
