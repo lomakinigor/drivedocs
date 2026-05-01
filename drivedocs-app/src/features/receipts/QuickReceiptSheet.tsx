@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { X, Camera, RotateCcw, Loader } from 'lucide-react'
+import { X, Camera, RotateCcw, Loader, Sparkles, CheckCheck } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
 import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
+import { useOcrExtract } from '@/shared/hooks/useOcrExtract'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import type { Receipt, ReceiptCategory } from '@/entities/types/domain'
 
@@ -42,12 +43,29 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
   const [touched, setTouched] = useState(false)
   const set = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }))
 
+  const ocr = useOcrExtract()
+
   const photo = usePhotoCapture({
-    onCapture: (base64) => set({ imageUrl: base64 }),
+    onCapture: (base64) => {
+      set({ imageUrl: base64 })
+      ocr.clear()
+    },
   })
 
   const handleRemovePhoto = () => {
     set({ imageUrl: undefined })
+    ocr.clear()
+  }
+
+  const handleOcrApplyAll = () => {
+    if (!ocr.result) return
+    const patch: Partial<FormState> = {}
+    if (ocr.result.amount) patch.amount = ocr.result.amount
+    if (ocr.result.date) patch.date = ocr.result.date
+    if (ocr.result.description) patch.description = ocr.result.description
+    if (ocr.result.category) patch.category = ocr.result.category
+    set(patch)
+    ocr.clear()
   }
 
   const amountNum = parseFloat(form.amount.replace(',', '.'))
@@ -178,6 +196,20 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
               onOpen={photo.open}
               onRemove={handleRemovePhoto}
             />
+            {form.imageUrl && !ocr.result && (
+              <OcrPanel
+                loading={ocr.loading}
+                error={ocr.error}
+                onExtract={() => ocr.extract(form.imageUrl!)}
+              />
+            )}
+            {ocr.result && (
+              <OcrResultPanel
+                result={ocr.result}
+                onApplyAll={handleOcrApplyAll}
+                onDismiss={ocr.clear}
+              />
+            )}
           </Field>
 
           <div className="h-2" />
@@ -223,6 +255,107 @@ function Field({
       <label className="block text-xs font-semibold text-slate-500 mb-1.5">{label}</label>
       {children}
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  )
+}
+
+// ─── OCR Panel ────────────────────────────────────────────────────────────────
+
+function OcrPanel({
+  loading,
+  error,
+  onExtract,
+}: {
+  loading: boolean
+  error: string | null
+  onExtract: () => void
+}) {
+  if (error) {
+    return (
+      <div className="mt-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+        <p className="text-xs text-amber-700">{error}</p>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onExtract}
+      disabled={loading}
+      className="mt-2 w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-violet-50 border border-violet-200 rounded-xl text-violet-700 text-sm font-medium active:bg-violet-100 disabled:opacity-60"
+    >
+      {loading ? (
+        <>
+          <Loader size={15} className="animate-spin shrink-0" />
+          Распознаём…
+        </>
+      ) : (
+        <>
+          <Sparkles size={15} className="shrink-0" />
+          Распознать с фото
+        </>
+      )}
+    </button>
+  )
+}
+
+// ─── OCR Result Panel ─────────────────────────────────────────────────────────
+
+const CATEGORY_LABELS: Record<string, string> = {
+  fuel: 'Топливо', parking: 'Парковка', repair: 'Ремонт', wash: 'Мойка', other: 'Другое',
+}
+
+function OcrResultPanel({
+  result,
+  onApplyAll,
+  onDismiss,
+}: {
+  result: import('@/shared/hooks/useOcrExtract').OcrReceiptResult
+  onApplyAll: () => void
+  onDismiss: () => void
+}) {
+  const items = [
+    result.amount && { label: 'Сумма', value: `${result.amount} ₽` },
+    result.date && { label: 'Дата', value: result.date },
+    result.description && { label: 'Место', value: result.description },
+    result.category && { label: 'Категория', value: CATEGORY_LABELS[result.category] ?? result.category },
+  ].filter(Boolean) as { label: string; value: string }[]
+
+  return (
+    <div className="mt-2 px-3 py-3 bg-violet-50 border border-violet-200 rounded-xl space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-violet-700 flex items-center gap-1.5">
+          <Sparkles size={13} />
+          Распознано
+        </span>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="text-violet-400 active:text-violet-600"
+          aria-label="Закрыть"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((item) => (
+          <span
+            key={item.label}
+            className="px-2 py-1 bg-white border border-violet-200 rounded-lg text-xs text-slate-700"
+          >
+            <span className="text-violet-500 font-medium">{item.label}:</span> {item.value}
+          </span>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onApplyAll}
+        className="w-full flex items-center justify-center gap-1.5 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium active:bg-violet-700"
+      >
+        <CheckCheck size={15} />
+        Применить всё
+      </button>
     </div>
   )
 }
