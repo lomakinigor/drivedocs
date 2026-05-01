@@ -1,8 +1,8 @@
-import type { WorkspaceDocument, WorkspaceEvent, Receipt } from '@/entities/types/domain'
+import type { WorkspaceDocument, WorkspaceEvent, Receipt, VehicleProfile, Driver } from '@/entities/types/domain'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type AttentionItemKind = 'document' | 'event' | 'receipt'
+export type AttentionItemKind = 'document' | 'event' | 'receipt' | 'expiry'
 
 /**
  * Unified attention item — produced by buildAttentionItems(), never persisted.
@@ -86,7 +86,69 @@ export function buildAttentionItems(
   )
 }
 
+// ─── Expiry rules ─────────────────────────────────────────────────────────────
+
+const EXPIRY_URGENT_DAYS = 14
+const EXPIRY_WARNING_DAYS = 30
+
+interface ExpiryCheck {
+  id: string
+  label: string
+  date: string
+}
+
+export function buildExpiryItems(vehicle: VehicleProfile | null, drivers: Driver[]): AttentionItem[] {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const checks: ExpiryCheck[] = []
+
+  if (vehicle?.osagoExpires) checks.push({ id: 'osago', label: 'ОСАГО', date: vehicle.osagoExpires })
+  if (vehicle?.kaskoExpires) checks.push({ id: 'kasko', label: 'КАСКО', date: vehicle.kaskoExpires })
+  if (vehicle?.techInspectionExpires) checks.push({ id: 'to', label: 'Технический осмотр', date: vehicle.techInspectionExpires })
+
+  const defaultDriver = drivers.find((d) => d.isDefault) ?? drivers[0]
+  if (defaultDriver?.licenseExpires) {
+    checks.push({ id: 'license', label: 'Водительское удостоверение', date: defaultDriver.licenseExpires })
+  }
+
+  const items: AttentionItem[] = []
+
+  for (const { id, label, date } of checks) {
+    const expires = new Date(date)
+    expires.setHours(0, 0, 0, 0)
+    const daysLeft = Math.ceil((expires.getTime() - today.getTime()) / 86_400_000)
+
+    if (daysLeft > EXPIRY_WARNING_DAYS) continue
+
+    const expired = daysLeft < 0
+    const severity: 'urgent' | 'warning' = expired || daysLeft <= EXPIRY_URGENT_DAYS ? 'urgent' : 'warning'
+    const subtitle = expired
+      ? `Истёк ${Math.abs(daysLeft)} ${pluralDays(Math.abs(daysLeft))} назад`
+      : daysLeft === 0
+      ? 'Истекает сегодня'
+      : `Через ${daysLeft} ${pluralDays(daysLeft)}`
+
+    items.push({
+      id: `expiry-${id}`,
+      kind: 'expiry',
+      title: `${label} — срок ${expired ? 'истёк' : 'истекает'}`,
+      subtitle,
+      severity,
+    })
+  }
+
+  return items
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function pluralDays(n: number): string {
+  const abs = Math.abs(n)
+  if (abs % 10 === 1 && abs % 100 !== 11) return 'день'
+  if ([2, 3, 4].includes(abs % 10) && ![12, 13, 14].includes(abs % 100)) return 'дня'
+  return 'дней'
+}
 
 function pluralReceipts(n: number): string {
   if (n % 10 === 1 && n % 100 !== 11) return 'чек'

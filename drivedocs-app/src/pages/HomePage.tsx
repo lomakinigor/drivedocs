@@ -31,6 +31,8 @@ export function HomePage() {
       setSelectedDoc(item.document)
     } else if (item.kind === 'receipt') {
       navigate(`/w/${id}/receipts`)
+    } else if (item.kind === 'expiry') {
+      navigate(`/w/${id}/settings`)
     } else {
       navigate(`/w/${id}/events`)
     }

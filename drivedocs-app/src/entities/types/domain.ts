@@ -121,6 +121,9 @@ export interface VehicleProfile {
   kaskoNumber?: string
   kaskoInsurer?: string
   kaskoExpires?: string
+
+  // Техосмотр (ТО)
+  techInspectionExpires?: string  // ISO date
 }
 
 // ─── Driver ──────────────────────────────────────────────────────────────────

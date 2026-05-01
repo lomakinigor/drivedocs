@@ -42,6 +42,7 @@ export function VehicleProfileSheet({ workspaceId, profile, onClose }: VehiclePr
     kaskoNumber: profile.kaskoNumber ?? '',
     kaskoInsurer: profile.kaskoInsurer ?? '',
     kaskoExpires: profile.kaskoExpires ?? '',
+    techInspectionExpires: profile.techInspectionExpires ?? '',
   })
 
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }))
@@ -70,6 +71,7 @@ export function VehicleProfileSheet({ workspaceId, profile, onClose }: VehiclePr
       kaskoNumber: form.kaskoNumber.trim() || undefined,
       kaskoInsurer: form.kaskoInsurer.trim() || undefined,
       kaskoExpires: form.kaskoExpires || undefined,
+      techInspectionExpires: form.techInspectionExpires || undefined,
     })
     onClose()
   }
@@ -202,6 +204,14 @@ export function VehicleProfileSheet({ workspaceId, profile, onClose }: VehiclePr
             <Row label="Срок действия до">
               <input className={cls} type="date" value={form.kaskoExpires}
                 onChange={(e) => set({ kaskoExpires: e.target.value })} />
+            </Row>
+          </Section>
+
+          {/* Техосмотр */}
+          <Section title="Технический осмотр">
+            <Row label="Талон ТО действителен до">
+              <input className={cls} type="date" value={form.techInspectionExpires}
+                onChange={(e) => set({ techInspectionExpires: e.target.value })} />
             </Row>
           </Section>
 

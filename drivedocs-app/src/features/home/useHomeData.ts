@@ -5,9 +5,11 @@ import {
   useUrgentDocuments,
   useUrgentEvents,
   useReceiptsForPeriod,
+  useVehicleProfile,
+  useDrivers,
   todayISO,
 } from '@/app/store/workspaceStore'
-import { buildAttentionItems } from './attentionRules'
+import { buildAttentionItems, buildExpiryItems } from './attentionRules'
 import type { AttentionItem } from './attentionRules'
 import type { Trip } from '@/entities/types/domain'
 
@@ -74,8 +76,15 @@ export function useHomeData(workspaceId: string): HomeData {
   )
   const unattachedReceipts = recentReceipts.filter((r) => !r.tripId)
 
+  // Vehicle and drivers for expiry rules
+  const vehicle = useVehicleProfile(workspaceId)
+  const drivers = useDrivers(workspaceId)
+
   // Attention rule engine — pure function, no hooks
-  const attentionItems = buildAttentionItems(urgentDocs, urgentEvents, unattachedReceipts)
+  const expiryItems = buildExpiryItems(vehicle ?? null, drivers)
+  const attentionItems = [...buildAttentionItems(urgentDocs, urgentEvents, unattachedReceipts), ...expiryItems].sort(
+    (a, b) => (a.severity === 'urgent' ? 0 : 1) - (b.severity === 'urgent' ? 0 : 1),
+  )
 
   // Monthly aggregation
   const monthPrefix = currentMonthPrefix()
