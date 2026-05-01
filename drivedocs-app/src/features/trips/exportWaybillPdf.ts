@@ -1,46 +1,12 @@
-import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import { openPrintWindow } from '@/features/documents/templates/printUtils'
 import type { MonthlyWaybillData } from './waybillData'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const MARGIN_L = 20
-const MARGIN_R = 20
-const PAGE_W = 210  // A4 mm
-
-const COLOR_BLACK: [number, number, number] = [20, 20, 20]
-const COLOR_DARK: [number, number, number] = [50, 50, 50]
-const COLOR_MID: [number, number, number] = [100, 100, 100]
-const COLOR_LIGHT: [number, number, number] = [160, 160, 160]
-const COLOR_RULE: [number, number, number] = [190, 190, 190]
-const COLOR_TABLE_HEAD_BG: [number, number, number] = [240, 242, 245]
-const COLOR_TABLE_ALT: [number, number, number] = [251, 252, 253]
-
-// ─── Font loading ─────────────────────────────────────────────────────────────
-
-let cachedFontBase64: string | null = null
-
-async function loadCyrillicFont(): Promise<string> {
-  if (cachedFontBase64) return cachedFontBase64
-  const response = await fetch('/fonts/Roboto-Regular.ttf')
-  if (!response.ok) throw new Error('Не удалось загрузить шрифт для PDF')
-  const buffer = await response.arrayBuffer()
-  const bytes = new Uint8Array(buffer)
-  let binary = ''
-  const chunkSize = 8192
-  for (let i = 0; i < bytes.byteLength; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-  }
-  cachedFontBase64 = btoa(binary)
-  return cachedFontBase64
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function buildFileName(fromDate: string, toDate: string): string {
-  if (fromDate === toDate) return `putevoy-list-${fromDate}.pdf`
-  const [year, month] = fromDate.split('-')
-  return `putevoy-list-${year}-${month}.pdf`
+function formatRowDate(iso: string): string {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
 }
 
 function todayRu(): string {
@@ -55,236 +21,133 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-/** Draws a thin horizontal rule across the content area */
-function drawRule(doc: jsPDF, y: number): void {
-  doc.setDrawColor(...COLOR_RULE)
-  doc.setLineWidth(0.2)
-  doc.line(MARGIN_L, y, PAGE_W - MARGIN_R, y)
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
-/** Draws a meta row: grey label left, black value after fixed indent */
-function drawMetaRow(doc: jsPDF, label: string, value: string, y: number): void {
-  const LABEL_W = 52
-  doc.setFontSize(9)
-  doc.setTextColor(...COLOR_MID)
-  doc.text(label, MARGIN_L, y)
-  doc.setTextColor(...COLOR_DARK)
-  doc.text(value, MARGIN_L + LABEL_W, y, { maxWidth: PAGE_W - MARGIN_R - MARGIN_L - LABEL_W })
-}
-
-/** Draws a signature line: label, underline, then optional name hint in grey */
-function drawSignatureLine(
-  doc: jsPDF,
-  label: string,
-  nameHint: string,
-  y: number,
-): void {
-  const lineStart = MARGIN_L + 52
-  const lineEnd = MARGIN_L + 110
-
-  doc.setFontSize(9)
-  doc.setTextColor(...COLOR_MID)
-  doc.text(label, MARGIN_L, y)
-
-  doc.setDrawColor(...COLOR_RULE)
-  doc.setLineWidth(0.25)
-  doc.line(lineStart, y, lineEnd, y)
-
-  if (nameHint) {
-    doc.setFontSize(7.5)
-    doc.setTextColor(...COLOR_LIGHT)
-    const cx = (lineStart + lineEnd) / 2
-    doc.text(nameHint, cx, y + 3.5, { align: 'center' })
-  }
-}
-
-// ─── Main export function ─────────────────────────────────────────────────────
-
-export async function exportWaybillPdf(data: MonthlyWaybillData): Promise<void> {
-  const fontBase64 = await loadCyrillicFont()
-
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-
-  doc.addFileToVFS('Roboto-Regular.ttf', fontBase64)
-  doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
-  // jspdf-autotable v5 ищет вариант 'bold' при расчёте ширин — регистрируем тот же файл как алиас
-  doc.addFont('Roboto-Regular.ttf', 'Roboto', 'bold')
-  doc.setFont('Roboto', 'normal')
-
-  let y = 18
-
-  // ── Title ────────────────────────────────────────────────────────────────────
-
-  doc.setFontSize(15)
-  doc.setTextColor(...COLOR_BLACK)
-  doc.text('ПУТЕВОЙ ЛИСТ', PAGE_W / 2, y, { align: 'center' })
-  y += 6
-
-  const entityLabel = data.entityType === 'IP' ? 'Индивидуальный предприниматель' : 'Организация'
-  const periodDisplay = capitalize(data.periodLabel)
-  doc.setFontSize(8.5)
-  doc.setTextColor(...COLOR_MID)
-  doc.text(`${entityLabel}  ·  ${periodDisplay}`, PAGE_W / 2, y, { align: 'center' })
-  y += 5
-
-  doc.setFontSize(8)
-  doc.setTextColor(...COLOR_LIGHT)
-  doc.text(`Дата составления: ${todayRu()}`, PAGE_W / 2, y, { align: 'center' })
-  y += 5
-
-  drawRule(doc, y)
-  y += 7
-
-  // ── Реквизиты ────────────────────────────────────────────────────────────────
-
-  doc.setFontSize(8)
-  doc.setTextColor(...COLOR_LIGHT)
-  doc.text('РЕКВИЗИТЫ', MARGIN_L, y)
-  y += 4.5
-
-  drawMetaRow(doc, 'Организация:', data.organizationName, y)
-  y += 5.5
-
-  if (data.organizationInn) {
-    drawMetaRow(doc, 'ИНН:', data.organizationInn, y)
-    y += 5.5
-  }
-
-  if (data.organizationOgrn) {
-    const ogrnLabel = data.entityType === 'IP' ? 'ОГРНИП:' : 'ОГРН:'
-    drawMetaRow(doc, ogrnLabel, data.organizationOgrn, y)
-    y += 5.5
-  }
-
-  drawMetaRow(doc, 'Транспортное средство:', data.vehicleLabel, y)
-  y += 5.5
-
-  drawMetaRow(doc, 'Водитель:', data.driverLabel, y)
-  y += 7
-
-  drawRule(doc, y)
-  y += 6
-
-  // ── Trips table ──────────────────────────────────────────────────────────────
-
-  doc.setFontSize(8)
-  doc.setTextColor(...COLOR_LIGHT)
-  doc.text('СЛУЖЕБНЫЕ ПОЕЗДКИ ЗА ПЕРИОД', MARGIN_L, y)
-  y += 4
-
-  const contentW = PAGE_W - MARGIN_L - MARGIN_R
-  // Column widths: date=22, route=dynamic, purpose=48, km=15
-  const kmW = 15
-  const dateW = 22
-  const purposeW = 48
-  const routeW = contentW - dateW - purposeW - kmW
-
-  const tableRows = data.rows.map((row) => {
-    const dateStr = new Date(row.date + 'T00:00:00').toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    })
-    const km = row.distanceKm != null ? String(row.distanceKm) : '—'
-    return [dateStr, row.route, row.purpose, km]
-  })
-
-  autoTable(doc, {
-    startY: y,
-    margin: { left: MARGIN_L, right: MARGIN_R },
-    head: [['Дата', 'Маршрут следования', 'Цель поездки', 'Пробег, км']],
-    body: tableRows,
-    styles: {
-      font: 'Roboto',
-      fontSize: 8.5,
-      cellPadding: { top: 2.5, bottom: 2.5, left: 2.5, right: 2.5 },
-      textColor: COLOR_DARK,
-      lineColor: [215, 215, 215],
-      lineWidth: 0.2,
-      overflow: 'linebreak',
-    },
-    headStyles: {
-      fillColor: COLOR_TABLE_HEAD_BG,
-      textColor: COLOR_MID,
-      fontStyle: 'normal',
-      fontSize: 7.5,
-      cellPadding: { top: 2, bottom: 2, left: 2.5, right: 2.5 },
-    },
-    columnStyles: {
-      0: { cellWidth: dateW },
-      1: { cellWidth: routeW },
-      2: { cellWidth: purposeW },
-      3: { cellWidth: kmW, halign: 'right' },
-    },
-    alternateRowStyles: { fillColor: COLOR_TABLE_ALT },
-  })
-
-  // ── Итоги ────────────────────────────────────────────────────────────────────
-
-  const lastTable = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
-  let afterTable = (lastTable?.finalY ?? 180) + 5
-
-  drawRule(doc, afterTable)
-  afterTable += 5
+function buildWaybillHtml(data: MonthlyWaybillData): string {
+  const entityLabel =
+    data.entityType === 'IP' ? 'Индивидуальный предприниматель' : 'Организация'
+  const responsibleLabel =
+    data.entityType === 'IP'
+      ? 'Индивидуальный предприниматель'
+      : 'Руководитель организации'
+  const ogrnLabel = data.entityType === 'IP' ? 'ОГРНИП' : 'ОГРН'
 
   const kmFormatted =
     data.totals.totalDistanceKm % 1 === 0
       ? `${data.totals.totalDistanceKm} км`
       : `${data.totals.totalDistanceKm.toFixed(1)} км`
 
-  doc.setFontSize(9)
-  doc.setTextColor(...COLOR_MID)
-  doc.text('Итого поездок:', MARGIN_L, afterTable)
-  doc.setTextColor(...COLOR_BLACK)
-  doc.text(String(data.totals.tripsCount), MARGIN_L + 34, afterTable)
+  const tableRows = data.rows
+    .map(
+      (row) => `
+        <tr>
+          <td class="doc-td doc-td-center">${escapeHtml(formatRowDate(row.date))}</td>
+          <td class="doc-td">${escapeHtml(row.route)}</td>
+          <td class="doc-td">${escapeHtml(row.purpose)}</td>
+          <td class="doc-td doc-td-center">${row.distanceKm != null ? row.distanceKm : '—'}</td>
+        </tr>`,
+    )
+    .join('')
 
-  doc.setTextColor(...COLOR_MID)
-  doc.text('Общий пробег:', MARGIN_L + 48, afterTable)
-  doc.setTextColor(...COLOR_BLACK)
-  doc.text(kmFormatted, MARGIN_L + 48 + 32, afterTable)
+  const metaRows = [
+    `<tr><td class="wb-meta-label">Организация:</td><td class="wb-meta-value">${escapeHtml(data.organizationName)}</td></tr>`,
+    data.organizationInn
+      ? `<tr><td class="wb-meta-label">ИНН:</td><td class="wb-meta-value">${escapeHtml(data.organizationInn)}</td></tr>`
+      : '',
+    data.organizationOgrn
+      ? `<tr><td class="wb-meta-label">${ogrnLabel}:</td><td class="wb-meta-value">${escapeHtml(data.organizationOgrn)}</td></tr>`
+      : '',
+    `<tr><td class="wb-meta-label">Транспортное средство:</td><td class="wb-meta-value">${escapeHtml(data.vehicleLabel)}</td></tr>`,
+    `<tr><td class="wb-meta-label">Водитель:</td><td class="wb-meta-value">${escapeHtml(data.driverLabel)}</td></tr>`,
+  ]
+    .filter(Boolean)
+    .join('')
 
-  afterTable += 10
+  return `
+    <div class="doc-body">
+      <h1 class="doc-title doc-center">ПУТЕВОЙ ЛИСТ</h1>
+      <p class="doc-meta">${escapeHtml(entityLabel)} · ${escapeHtml(capitalize(data.periodLabel))}</p>
+      <p class="doc-meta" style="font-size: 9pt; color: #888;">Дата составления: ${todayRu()}</p>
 
-  drawRule(doc, afterTable)
-  afterTable += 8
+      <p class="wb-section">РЕКВИЗИТЫ</p>
+      <table class="wb-meta-table">${metaRows}</table>
 
-  // ── Подписи ──────────────────────────────────────────────────────────────────
+      <p class="wb-section">СЛУЖЕБНЫЕ ПОЕЗДКИ ЗА ПЕРИОД</p>
+      <table class="doc-table wb-trips">
+        <thead>
+          <tr>
+            <th class="doc-th" style="width: 18%">Дата</th>
+            <th class="doc-th">Маршрут следования</th>
+            <th class="doc-th" style="width: 30%">Цель поездки</th>
+            <th class="doc-th" style="width: 15%">Пробег, км</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
 
-  doc.setFontSize(8)
-  doc.setTextColor(...COLOR_LIGHT)
-  doc.text('ПОДПИСИ', MARGIN_L, afterTable)
-  afterTable += 5.5
+      <table class="wb-totals">
+        <tr>
+          <td>Итого поездок:</td>
+          <td class="wb-totals-value">${data.totals.tripsCount}</td>
+          <td>Общий пробег:</td>
+          <td class="wb-totals-value">${escapeHtml(kmFormatted)}</td>
+        </tr>
+      </table>
 
-  drawSignatureLine(doc, 'Водитель:', data.driverLabel, afterTable)
-  afterTable += 10
+      <p class="wb-section">ПОДПИСИ</p>
 
-  const responsibleLabel =
-    data.entityType === 'IP'
-      ? 'Индивидуальный предприниматель:'
-      : 'Руководитель организации:'
-  drawSignatureLine(doc, responsibleLabel, data.driverLabel, afterTable)
-  afterTable += 10
+      <div class="wb-sign-row">
+        <span class="wb-sign-label">Водитель:</span>
+        <span class="wb-sign-line"></span>
+        <span class="wb-sign-hint">${escapeHtml(data.driverLabel)}</span>
+      </div>
 
-  // Date of signing + М.П.
-  doc.setFontSize(9)
-  doc.setTextColor(...COLOR_MID)
-  doc.text('Дата подписания:', MARGIN_L, afterTable)
+      <div class="wb-sign-row">
+        <span class="wb-sign-label">${escapeHtml(responsibleLabel)}:</span>
+        <span class="wb-sign-line"></span>
+        <span class="wb-sign-hint">${escapeHtml(data.driverLabel)}</span>
+      </div>
 
-  doc.setDrawColor(...COLOR_RULE)
-  doc.setLineWidth(0.25)
-  doc.line(MARGIN_L + 40, afterTable, MARGIN_L + 75, afterTable)
+      <div class="wb-sign-bottom">
+        <span class="wb-sign-label">Дата подписания:</span>
+        <span class="wb-sign-line wb-sign-line-short"></span>
+        <span class="wb-mp">М.П.</span>
+      </div>
+    </div>
 
-  // М.П. box
-  const mpX = PAGE_W - MARGIN_R - 28
-  const mpY = afterTable - 10
-  doc.setDrawColor(...COLOR_RULE)
-  doc.setLineWidth(0.2)
-  doc.rect(mpX, mpY, 28, 14)
-  doc.setFontSize(7.5)
-  doc.setTextColor(...COLOR_LIGHT)
-  doc.text('М.П.', mpX + 14, mpY + 7.5, { align: 'center' })
+    <style>
+      .wb-section { font-size: 9pt; color: #888; letter-spacing: 0.05em; margin: 14pt 0 4pt; text-indent: 0; text-align: left; }
+      .wb-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 6pt; }
+      .wb-meta-table td { padding: 2pt 0; vertical-align: top; }
+      .wb-meta-label { width: 50mm; color: #666; font-size: 10pt; }
+      .wb-meta-value { color: #111; font-size: 10pt; }
+      .wb-trips td.doc-td-center { text-align: center; }
+      .wb-totals { width: 100%; margin-top: 8pt; border-top: 0.5pt solid #ccc; border-bottom: 0.5pt solid #ccc; }
+      .wb-totals td { padding: 6pt 4pt; font-size: 10pt; color: #666; }
+      .wb-totals-value { font-weight: bold; color: #111; }
+      .wb-sign-row { margin: 12pt 0; font-size: 10pt; }
+      .wb-sign-label { color: #666; display: inline-block; min-width: 65mm; }
+      .wb-sign-line { display: inline-block; width: 60mm; border-bottom: 0.4pt solid #999; height: 12pt; vertical-align: bottom; margin-right: 4pt; }
+      .wb-sign-line-short { width: 35mm; }
+      .wb-sign-hint { font-size: 8pt; color: #aaa; }
+      .wb-sign-bottom { margin-top: 16pt; font-size: 10pt; }
+      .wb-mp { display: inline-block; border: 0.3pt solid #aaa; padding: 6pt 12pt; margin-left: 16pt; font-size: 8pt; color: #888; }
+    </style>
+  `
+}
 
-  // ── Сохранить ────────────────────────────────────────────────────────────────
-
-  doc.save(buildFileName(data.fromDate, data.toDate))
+export async function exportWaybillPdf(data: MonthlyWaybillData): Promise<void> {
+  const html = buildWaybillHtml(data)
+  const title =
+    data.fromDate === data.toDate
+      ? `Путевой лист ${formatRowDate(data.fromDate)}`
+      : `Путевой лист ${capitalize(data.periodLabel)}`
+  openPrintWindow(html, title)
 }
