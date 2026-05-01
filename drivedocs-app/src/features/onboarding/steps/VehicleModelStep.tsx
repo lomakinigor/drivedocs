@@ -11,7 +11,7 @@ interface VehicleModelStepProps {
   onSelect: (model: VehicleUsageModel) => void
 }
 
-const ALL_MODELS: VehicleUsageModel[] = ['COMPENSATION', 'RENT', 'FREE_USE', 'OWN_IP']
+const ALL_MODELS: VehicleUsageModel[] = ['COMPENSATION', 'RENT', 'FREE_USE', 'OWN_IP', 'BALANCE']
 
 // Short helper text shown under each option title
 const MODEL_HINTS: Record<VehicleUsageModel, string> = {
@@ -19,6 +19,7 @@ const MODEL_HINTS: Record<VehicleUsageModel, string> = {
   RENT: 'Нужен договор аренды. С выплат удерживается НДФЛ 13%',
   FREE_USE: 'Автомобиль "передаётся" без оплаты. Есть налоговые риски',
   OWN_IP: 'ИП использует свой авто напрямую, без компенсаций',
+  BALANCE: 'Авто куплено организацией. Нужны путевые листы и учёт ГСМ',
 }
 
 // Content for the help bottom sheet
@@ -64,6 +65,20 @@ const HELP_ITEMS: Array<{
       'ФНС может признать это доходом организации',
       'Риск доначисления налога',
       'Редко используется на практике',
+    ],
+  },
+  {
+    model: 'BALANCE',
+    title: 'Авто на балансе предприятия',
+    pros: [
+      'Авто — актив организации, амортизация снижает налог',
+      'Расходы на ГСМ, ТО, страховку — полностью в затраты',
+      'Подходит для парка машин любого размера',
+    ],
+    cons: [
+      'Обязательны ежедневные путевые листы с медосмотром и техконтролем',
+      'Нужны: приказ о нормах ГСМ, учёт ТО, акты списания топлива',
+      'Больше бухгалтерской нагрузки по сравнению с компенсацией',
     ],
   },
 ]
@@ -129,7 +144,7 @@ function HelpSheet({ onClose }: { onClose: () => void }) {
           <div className="bg-blue-50 rounded-2xl p-4">
             <p className="text-xs font-semibold text-blue-700 mb-1">Подсказка</p>
             <p className="text-sm text-blue-800 leading-relaxed">
-              Если вы только начинаете — выбирайте компенсацию. Её можно сменить позже в настройках предприятия.
+              Если авто личное — выбирайте компенсацию. Если организация купила авто и поставила на баланс — выбирайте «Авто на балансе». Модель можно сменить позже в настройках.
             </p>
           </div>
         </div>

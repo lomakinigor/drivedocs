@@ -18,6 +18,7 @@ export const VEHICLE_USAGE_MODEL_LABELS: Record<VehicleUsageModel, string> = {
   RENT: 'Аренда',
   FREE_USE: 'Безвозмездное пользование',
   OWN_IP: 'ИП — собственный автомобиль',
+  BALANCE: 'Авто на балансе предприятия',
 }
 
 export const TAX_MODE_DESCRIPTIONS: Record<TaxMode, string> = {
@@ -42,4 +43,6 @@ export const VEHICLE_USAGE_MODEL_DESCRIPTIONS: Record<VehicleUsageModel, string>
   RENT: 'Организация заключает договор аренды авто с физлицом или ИП',
   FREE_USE: 'Авто передаётся организации по договору безвозмездного пользования',
   OWN_IP: 'ИП использует собственный автомобиль в предпринимательской деятельности напрямую',
+  BALANCE:
+    'Служебный автомобиль принадлежит организации, стоит на балансе. Обязательны путевые листы, учёт ГСМ, приказ о закреплении',
 }

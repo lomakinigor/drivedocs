@@ -63,6 +63,57 @@ const WAYBILL: DocTemplate = {
   templateKey: 'waybill',
 }
 
+// ─── BALANCE templates ────────────────────────────────────────────────────────
+
+const BALANCE_ACCEPTANCE_ACT: DocTemplate = {
+  title: 'Акт приёма-передачи ОС (форма ОС-1)',
+  description: 'Оформляется при постановке автомобиля на баланс. Основание для ввода в эксплуатацию',
+  type: 'one_time',
+  templateKey: 'balance_os1_act',
+}
+
+const BALANCE_COMMISSION_ORDER: DocTemplate = {
+  title: 'Приказ о вводе автомобиля в эксплуатацию',
+  description: 'Приказ руководителя о принятии ТС к учёту и вводе в эксплуатацию',
+  type: 'one_time',
+  templateKey: 'balance_commission_order',
+}
+
+const BALANCE_VEHICLE_ASSIGNMENT: DocTemplate = {
+  title: 'Приказ о закреплении ТС за водителем',
+  description: 'Определяет ответственного водителя: марка, VIN, госномер. Обновляется при смене водителя',
+  type: 'one_time',
+  templateKey: 'balance_vehicle_assignment',
+}
+
+const BALANCE_FUEL_NORMS_ORDER: DocTemplate = {
+  title: 'Приказ об утверждении норм расхода ГСМ',
+  description: 'Норма расхода топлива л/100 км по марке авто (Распоряжение Минтранса АМ-23-р)',
+  type: 'one_time',
+  templateKey: 'balance_fuel_norms_order',
+}
+
+const BALANCE_WAYBILL: DocTemplate = {
+  title: 'Путевые листы',
+  description: 'Ежедневный/еженедельный документ. Обязательны: медосмотр водителя, техконтроль ТС, маршрут, показания одометра',
+  type: 'recurring',
+  templateKey: 'balance_waybill',
+}
+
+const BALANCE_FUEL_WRITEOFF: DocTemplate = {
+  title: 'Акт на списание ГСМ',
+  description: 'Ежемесячно на основании путевых листов. Подтверждает расходы на топливо в бухгалтерии',
+  type: 'recurring',
+  templateKey: 'balance_fuel_writeoff',
+}
+
+const BALANCE_USAGE_POLICY: DocTemplate = {
+  title: 'Положение об использовании служебного автотранспорта',
+  description: 'Регламентирует порядок использования, круг водителей, нормы ГСМ, ответственность',
+  type: 'one_time',
+  templateKey: 'balance_usage_policy',
+}
+
 // ─── Template selection ───────────────────────────────────────────────────────
 
 function selectTemplates(
@@ -90,6 +141,17 @@ function selectTemplates(
 
     case 'OWN_IP':
       return [TRIP_LOG]
+
+    case 'BALANCE':
+      return [
+        BALANCE_ACCEPTANCE_ACT,
+        BALANCE_COMMISSION_ORDER,
+        BALANCE_USAGE_POLICY,
+        BALANCE_VEHICLE_ASSIGNMENT,
+        BALANCE_FUEL_NORMS_ORDER,
+        BALANCE_WAYBILL,
+        BALANCE_FUEL_WRITEOFF,
+      ]
   }
 }
 

@@ -116,6 +116,8 @@ export function buildDemoSeedData(
       ? 'Приказ о компенсации — оформить до конца месяца'
       : vehicleUsageModel === 'RENT'
       ? 'Договор аренды авто — проверьте срок действия'
+      : vehicleUsageModel === 'BALANCE'
+      ? 'Путевые листы за текущий месяц — проверьте заполнение'
       : 'Договор безвозмездного пользования — проверьте актуальность'
 
   const events: WorkspaceEvent[] = [
