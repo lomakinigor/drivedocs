@@ -5,6 +5,9 @@ import { RentAgreement, rentAgreementFields } from './RentAgreement'
 import { TripLog, tripLogFields } from './TripLog'
 import { CompensationCalc, compensationCalcFields } from './CompensationCalc'
 import { Waybill, waybillFields } from './Waybill'
+import { FreeUseAgreement, freeUseAgreementFields } from './FreeUseAgreement'
+import { BalanceUsagePolicy, balanceUsagePolicyFields } from './BalanceUsagePolicy'
+import { BalanceVehicleAssignment, balanceVehicleAssignmentFields } from './BalanceVehicleAssignment'
 
 const REGISTRY: Record<string, TemplateDefinition> = {
   ip_compensation_order: {
@@ -36,6 +39,21 @@ const REGISTRY: Record<string, TemplateDefinition> = {
     title: 'Маршрутный лист',
     getFields: waybillFields,
     Component: Waybill,
+  },
+  free_use_agreement: {
+    title: 'Договор безвозмездного пользования ТС',
+    getFields: freeUseAgreementFields,
+    Component: FreeUseAgreement,
+  },
+  balance_usage_policy: {
+    title: 'Положение об использовании личного автотранспорта',
+    getFields: balanceUsagePolicyFields,
+    Component: BalanceUsagePolicy,
+  },
+  balance_vehicle_assignment: {
+    title: 'Приказ о закреплении ТС за сотрудником',
+    getFields: balanceVehicleAssignmentFields,
+    Component: BalanceVehicleAssignment,
   },
 }
 

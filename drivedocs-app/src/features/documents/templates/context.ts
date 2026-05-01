@@ -72,5 +72,11 @@ export function buildTemplateContext(
     actualMileage: '',
     odometerStart: '',
     odometerEnd: '',
+    lessorFullName: '',
+    lessorPassport: '',
+    inventoryNumber: '',
+    employeePosition: '',
+    contractStartDate: '',
+    contractEndDate: '',
   }
 }
