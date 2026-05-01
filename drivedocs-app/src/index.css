@@ -1,5 +1,38 @@
 @import "tailwindcss";
 
+/* ─── Document template preview classes ──────────────────────────────────── */
+.doc-body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: #111; }
+.doc-center { text-align: center; }
+.doc-org-header { text-align: center; font-size: 12pt; font-weight: 700; margin-bottom: 8pt; }
+.doc-title { font-size: 12pt; font-weight: 700; letter-spacing: 0.04em; margin: 8pt 0 4pt; }
+.doc-meta { text-align: center; font-size: 10pt; margin-bottom: 10pt; }
+.doc-subject { text-align: center; font-size: 11pt; font-weight: 700; margin: 6pt 0 12pt; }
+.doc-p { margin: 5pt 0; text-align: justify; text-indent: 1.25cm; }
+.doc-caps { text-transform: uppercase; text-indent: 0 !important; text-align: center; font-weight: 700; letter-spacing: 0.04em; }
+.doc-section { font-weight: 700; margin: 10pt 0 4pt; text-align: center; }
+.doc-indent { margin: 2pt 0 2pt 2cm; }
+.doc-basis { font-style: italic; margin-top: 12pt; }
+.doc-small { font-size: 9pt; color: #555; margin: 2pt 0; }
+.doc-sign-block { margin-top: 20pt; }
+.doc-sign-line { margin: 16pt 0 3pt; }
+.doc-sign-date { font-size: 10pt; }
+.doc-sign-secondary { margin-top: 14pt; border-top: 1px solid #ccc; padding-top: 8pt; }
+.doc-sign-header { font-weight: 700; margin-bottom: 5pt; }
+.doc-sign-row { display: flex; gap: 20pt; margin-top: 20pt; }
+.doc-sign-col { flex: 1; }
+.doc-sign-bottom { margin-top: 14pt; }
+.doc-info-table { width: 100%; margin-bottom: 8pt; border-collapse: collapse; }
+.doc-info-label { width: 35%; padding: 2pt 0; vertical-align: top; }
+.doc-info-value { padding: 2pt 0 2pt 6pt; }
+.doc-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 6pt; }
+.doc-th { border: 1px solid #000; padding: 3pt 2pt; text-align: center; font-size: 8.5pt; }
+.doc-th-num { width: 5%; }
+.doc-th-wide { width: 22%; }
+.doc-th-sm { width: 7%; }
+.doc-td { border: 1px solid #333; padding: 2pt; min-height: 14pt; }
+.doc-td-center { text-align: center; }
+.doc-tr-total td { font-weight: 700; background: #f0f0f0; }
+
 * {
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;

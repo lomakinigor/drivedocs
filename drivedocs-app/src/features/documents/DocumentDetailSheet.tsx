@@ -1,8 +1,11 @@
-import { X, HelpCircle, Lightbulb } from 'lucide-react'
+import { useState } from 'react'
+import { X, HelpCircle, Lightbulb, FileEdit } from 'lucide-react'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
 import { PhotoPicker } from '@/features/receipts/QuickReceiptSheet'
 import { getDocumentHelp } from '@/entities/config/documentHelp'
+import { getTemplate } from './templates/registry'
+import { DocumentFillSheet } from './DocumentFillSheet'
 import type { WorkspaceDocument, DocumentStatus } from '@/entities/types/domain'
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -33,6 +36,8 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
   const updateDocumentImage = useWorkspaceStore((s) => s.updateDocumentImage)
   const liveDoc = useWorkspaceStore((s) => s.documents.find((d) => d.id === doc.id) ?? doc)
   const help = getDocumentHelp(doc.templateKey)
+  const hasTemplate = !!getTemplate(doc.templateKey)
+  const [showFill, setShowFill] = useState(false)
 
   const photo = usePhotoCapture({
     onCapture: (base64) => updateDocumentImage(doc.id, base64),
@@ -181,6 +186,15 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
 
         {/* Sticky footer — actions */}
         <div className="px-5 py-4 border-t border-slate-100 shrink-0 space-y-2">
+          {hasTemplate && (
+            <button
+              onClick={() => setShowFill(true)}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-100 active:bg-blue-100 transition-colors"
+            >
+              <FileEdit size={16} />
+              Заполнить шаблон и распечатать
+            </button>
+          )}
           {doc.status === 'completed' ? (
             <button
               onClick={undoComplete}
@@ -208,6 +222,10 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
           )}
         </div>
       </div>
+
+      {showFill && (
+        <DocumentFillSheet doc={doc} onClose={() => setShowFill(false)} />
+      )}
     </>
   )
 }
