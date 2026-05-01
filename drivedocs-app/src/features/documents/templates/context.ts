@@ -66,5 +66,11 @@ export function buildTemplateContext(
     rentAmount: '',
     contractNumber: '',
     contractDate: '',
+    // Поля для расчёта компенсации и маршрутного листа
+    workingDaysInMonth: '',
+    daysWorked: '',
+    actualMileage: '',
+    odometerStart: '',
+    odometerEnd: '',
   }
 }

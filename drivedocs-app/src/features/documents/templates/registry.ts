@@ -3,6 +3,8 @@ import { IpCompensationOrder, ipCompensationOrderFields } from './IpCompensation
 import { CompensationOrder, compensationOrderFields } from './CompensationOrder'
 import { RentAgreement, rentAgreementFields } from './RentAgreement'
 import { TripLog, tripLogFields } from './TripLog'
+import { CompensationCalc, compensationCalcFields } from './CompensationCalc'
+import { Waybill, waybillFields } from './Waybill'
 
 const REGISTRY: Record<string, TemplateDefinition> = {
   ip_compensation_order: {
@@ -24,6 +26,16 @@ const REGISTRY: Record<string, TemplateDefinition> = {
     title: 'Журнал учёта служебных поездок',
     getFields: tripLogFields,
     Component: TripLog,
+  },
+  compensation_calc: {
+    title: 'Расчёт суммы компенсации',
+    getFields: compensationCalcFields,
+    Component: CompensationCalc,
+  },
+  waybill: {
+    title: 'Маршрутный лист',
+    getFields: waybillFields,
+    Component: Waybill,
   },
 }
 
