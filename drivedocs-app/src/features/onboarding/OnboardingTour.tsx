@@ -1,8 +1,36 @@
 import { useState } from 'react'
-import { Car, Navigation, Receipt, Printer, Mic, ChevronRight, X } from 'lucide-react'
+import { Car, Navigation, Receipt, Printer, Mic, ChevronRight, X, Building2, FileText, Settings } from 'lucide-react'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 
 const STEPS = [
+  {
+    icon: Settings,
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-700',
+    title: 'Добро пожаловать',
+    body: 'DriveDocs ведёт учёт служебного транспорта: путевые листы, расходы, компенсации и пакет печатных документов. Пройдите короткий тур из 8 шагов — за минуту разберётесь.',
+  },
+  {
+    icon: Car,
+    iconBg: 'bg-amber-100',
+    iconColor: 'text-amber-700',
+    title: 'Шаг 1. Добавьте автомобиль',
+    body: 'Откройте «Настройки» → «Автомобиль» и заполните марку, госномер, VIN, объём двигателя и срок ОСАГО. Эти данные подставляются во все документы автоматически.',
+  },
+  {
+    icon: Building2,
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-700',
+    title: 'Шаг 2. Профиль организации',
+    body: 'В «Настройках» заполните данные организации (или ИП): наименование, ИНН, ОГРН, адрес, ФИО руководителя. Будут использоваться в шапках актов и приказов.',
+  },
+  {
+    icon: FileText,
+    iconBg: 'bg-purple-100',
+    iconColor: 'text-purple-700',
+    title: 'Шаг 3. Первый документ',
+    body: 'На вкладке «Документы» выберите шаблон — например, договор аренды или приказ о закреплении ТС. Поля автоматически заполнятся данными из профиля.',
+  },
   {
     icon: Car,
     iconBg: 'bg-blue-100',
