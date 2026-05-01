@@ -13,6 +13,7 @@ import { BalanceCommissionOrder, balanceCommissionOrderFields } from './BalanceC
 import { BalanceFuelNormsOrder, balanceFuelNormsOrderFields } from './BalanceFuelNormsOrder'
 import { BalanceWaybill, balanceWaybillFields } from './BalanceWaybill'
 import { BalanceFuelWriteoff, balanceFuelWriteoffFields } from './BalanceFuelWriteoff'
+import { BalanceOs1Act, balanceOs1ActFields } from './BalanceOs1Act'
 
 const REGISTRY: Record<string, TemplateDefinition> = {
   ip_compensation_order: {
@@ -84,6 +85,11 @@ const REGISTRY: Record<string, TemplateDefinition> = {
     title: 'Акт на списание ГСМ',
     getFields: balanceFuelWriteoffFields,
     Component: BalanceFuelWriteoff,
+  },
+  balance_os1_act: {
+    title: 'Акт приёма-передачи ОС (форма ОС-1)',
+    getFields: balanceOs1ActFields,
+    Component: BalanceOs1Act,
   },
 }
 
