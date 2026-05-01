@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { X, Camera, RotateCcw, Loader, Sparkles, CheckCheck } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Camera, RotateCcw, Loader } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
 import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
 import { useOcrExtract } from '@/shared/hooks/useOcrExtract'
@@ -48,7 +48,8 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
   const photo = usePhotoCapture({
     onCapture: (base64) => {
       set({ imageUrl: base64 })
-      ocr.clear()
+      // Auto-start OCR immediately after photo is captured
+      ocr.extract(base64)
     },
   })
 
@@ -57,7 +58,8 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
     ocr.clear()
   }
 
-  const handleOcrApplyAll = () => {
+  // Auto-apply when OCR completes successfully
+  const applyOcrResult = () => {
     if (!ocr.result) return
     const patch: Partial<FormState> = {}
     if (ocr.result.amount) patch.amount = ocr.result.amount
@@ -67,6 +69,14 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
     set(patch)
     ocr.clear()
   }
+
+  // Auto-apply fields as soon as OCR completes
+  useEffect(() => {
+    if (ocr.status === 'done' && ocr.result) {
+      applyOcrResult()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ocr.status])
 
   const amountNum = parseFloat(form.amount.replace(',', '.'))
   const isValid = form.amount.trim() !== '' && !isNaN(amountNum) && amountNum > 0
@@ -193,23 +203,10 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
               imageUrl={form.imageUrl}
               loading={photo.loading}
               error={photo.error}
+              ocrStatus={ocr.status}
               onOpen={photo.open}
               onRemove={handleRemovePhoto}
             />
-            {form.imageUrl && !ocr.result && (
-              <OcrPanel
-                loading={ocr.loading}
-                error={ocr.error}
-                onExtract={() => ocr.extract(form.imageUrl!)}
-              />
-            )}
-            {ocr.result && (
-              <OcrResultPanel
-                result={ocr.result}
-                onApplyAll={handleOcrApplyAll}
-                onDismiss={ocr.clear}
-              />
-            )}
           </Field>
 
           <div className="h-2" />
@@ -259,111 +256,11 @@ function Field({
   )
 }
 
-// ─── OCR Panel ────────────────────────────────────────────────────────────────
-
-function OcrPanel({
-  loading,
-  error,
-  onExtract,
-}: {
-  loading: boolean
-  error: string | null
-  onExtract: () => void
-}) {
-  if (error) {
-    return (
-      <div className="mt-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
-        <p className="text-xs text-amber-700">{error}</p>
-      </div>
-    )
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onExtract}
-      disabled={loading}
-      className="mt-2 w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-violet-50 border border-violet-200 rounded-xl text-violet-700 text-sm font-medium active:bg-violet-100 disabled:opacity-60"
-    >
-      {loading ? (
-        <>
-          <Loader size={15} className="animate-spin shrink-0" />
-          Распознаём…
-        </>
-      ) : (
-        <>
-          <Sparkles size={15} className="shrink-0" />
-          Распознать с фото
-        </>
-      )}
-    </button>
-  )
-}
-
-// ─── OCR Result Panel ─────────────────────────────────────────────────────────
-
-const CATEGORY_LABELS: Record<string, string> = {
-  fuel: 'Топливо', parking: 'Парковка', repair: 'Ремонт', wash: 'Мойка', other: 'Другое',
-}
-
-function OcrResultPanel({
-  result,
-  onApplyAll,
-  onDismiss,
-}: {
-  result: import('@/shared/hooks/useOcrExtract').OcrReceiptResult
-  onApplyAll: () => void
-  onDismiss: () => void
-}) {
-  const items = [
-    result.amount && { label: 'Сумма', value: `${result.amount} ₽` },
-    result.date && { label: 'Дата', value: result.date },
-    result.description && { label: 'Место', value: result.description },
-    result.category && { label: 'Категория', value: CATEGORY_LABELS[result.category] ?? result.category },
-  ].filter(Boolean) as { label: string; value: string }[]
-
-  return (
-    <div className="mt-2 px-3 py-3 bg-violet-50 border border-violet-200 rounded-xl space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-violet-700 flex items-center gap-1.5">
-          <Sparkles size={13} />
-          Распознано
-        </span>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="text-violet-400 active:text-violet-600"
-          aria-label="Закрыть"
-        >
-          <X size={14} />
-        </button>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {items.map((item) => (
-          <span
-            key={item.label}
-            className="px-2 py-1 bg-white border border-violet-200 rounded-lg text-xs text-slate-700"
-          >
-            <span className="text-violet-500 font-medium">{item.label}:</span> {item.value}
-          </span>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={onApplyAll}
-        className="w-full flex items-center justify-center gap-1.5 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium active:bg-violet-700"
-      >
-        <CheckCheck size={15} />
-        Применить всё
-      </button>
-    </div>
-  )
-}
-
 export function PhotoPicker({
   imageUrl,
   loading,
   error,
+  ocrStatus,
   onOpen,
   onRemove,
   label = 'Прикрепить фото',
@@ -371,6 +268,7 @@ export function PhotoPicker({
   imageUrl?: string
   loading?: boolean
   error?: string | null
+  ocrStatus?: import('@/shared/hooks/useOcrExtract').OcrStatus
   onOpen: () => void
   onRemove: () => void
   label?: string
@@ -384,6 +282,8 @@ export function PhotoPicker({
     )
   }
 
+  const isBadQuality = ocrStatus === 'bad_quality'
+
   return (
     <div className="space-y-2">
       {imageUrl ? (
@@ -392,25 +292,54 @@ export function PhotoPicker({
             <img
               src={imageUrl}
               alt="Фото"
-              className="w-full h-36 object-cover rounded-xl"
+              className={`w-full h-36 object-cover rounded-xl transition-opacity ${isBadQuality ? 'opacity-50' : ''}`}
             />
+            {/* OCR loading overlay */}
+            {ocrStatus === 'loading' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-xl gap-1.5">
+                <Loader size={22} className="text-white animate-spin" />
+                <span className="text-white text-xs font-medium">Распознаём…</span>
+              </div>
+            )}
+            {/* Bad quality overlay */}
+            {isBadQuality && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-xl gap-2">
+                <p className="text-white text-xs font-semibold text-center px-4 leading-snug">
+                  Фото нечёткое — не удалось распознать
+                </p>
+                <button
+                  type="button"
+                  onClick={onOpen}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-xl text-sm font-semibold text-slate-800 active:bg-slate-100"
+                >
+                  <RotateCcw size={14} />
+                  Переснять
+                </button>
+              </div>
+            )}
+            {/* Remove button (hidden while OCR is running) */}
+            {ocrStatus !== 'loading' && !isBadQuality && (
+              <button
+                type="button"
+                onClick={onRemove}
+                className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white active:bg-black/70"
+                aria-label="Удалить фото"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+          {/* Retake link when not in error state */}
+          {!isBadQuality && ocrStatus !== 'loading' && (
             <button
               type="button"
-              onClick={onRemove}
-              className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white active:bg-black/70"
-              aria-label="Удалить фото"
+              onClick={onOpen}
+              className="flex items-center gap-1.5 text-xs text-blue-600 font-medium py-0.5"
             >
-              <X size={13} />
+              <RotateCcw size={13} />
+              Переснять
             </button>
-          </div>
-          <button
-            type="button"
-            onClick={onOpen}
-            className="flex items-center gap-1.5 text-xs text-blue-600 font-medium py-0.5"
-          >
-            <RotateCcw size={13} />
-            Переснять
-          </button>
+          )}
         </>
       ) : (
         <button
