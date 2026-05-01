@@ -131,6 +131,39 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
 
         {/* Scrollable form */}
         <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
+          {/* Photo capture — primary entry point, OCR autofills fields below */}
+          <Field label="Фото чека">
+            <p className="text-xs text-slate-400 -mt-1 mb-1.5">
+              Сфотографируйте чек — сумма, дата и категория заполнятся автоматически
+            </p>
+            <input
+              ref={photo.inputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={photo.handleChange}
+            />
+            <PhotoPicker
+              imageUrl={form.imageUrl}
+              loading={photo.loading}
+              error={photo.error}
+              ocrStatus={ocr.status}
+              onOpen={photo.open}
+              onRemove={handleRemovePhoto}
+              label="Сфотографировать чек"
+            />
+          </Field>
+
+          {/* Manual fallback divider */}
+          {!form.imageUrl && (
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span className="text-xs text-slate-400 font-medium">или заполните вручную</span>
+              <div className="flex-1 h-px bg-slate-100" />
+            </div>
+          )}
+
           {/* Amount + Date */}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Сумма, ₽" error={amountError}>
@@ -140,7 +173,6 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
                 value={form.amount}
                 onChange={(e) => set({ amount: e.target.value })}
                 placeholder="0"
-                autoFocus
                 className={fieldClass(!!amountError)}
               />
             </Field>
@@ -187,26 +219,6 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
               />
               <VoiceMicButton onResult={(t) => set({ description: t })} />
             </div>
-          </Field>
-
-          {/* Photo capture */}
-          <Field label="Фото чека (необязательно)">
-            <input
-              ref={photo.inputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={photo.handleChange}
-            />
-            <PhotoPicker
-              imageUrl={form.imageUrl}
-              loading={photo.loading}
-              error={photo.error}
-              ocrStatus={ocr.status}
-              onOpen={photo.open}
-              onRemove={handleRemovePhoto}
-            />
           </Field>
 
           <div className="h-2" />

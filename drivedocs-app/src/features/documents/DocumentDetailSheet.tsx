@@ -160,8 +160,11 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
 
           {/* Scan attachment */}
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-              Скан / фото документа
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+              Скан подписанного документа
+            </p>
+            <p className="text-xs text-slate-400 mb-2">
+              Когда подпишете «{doc.title}» — приложите фото или скан для архива
             </p>
             <input
               ref={photo.inputRef}
@@ -177,7 +180,7 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
               error={photo.error}
               onOpen={photo.open}
               onRemove={() => updateDocumentImage(doc.id, undefined)}
-              label="Прикрепить скан документа"
+              label="Прикрепить фото подписанного документа"
             />
           </div>
 
