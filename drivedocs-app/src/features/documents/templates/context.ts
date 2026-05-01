@@ -39,8 +39,10 @@ export function buildTemplateContext(
     orgName: org?.organizationName || workspace.name,
     ownerFullName: org?.ownerFullName || vehicle?.ownerFullName || '',
     inn: org?.inn || '',
+    orgInn: org?.inn || '',
     ogrn: org?.ogrn || '',
-    city: '',
+    city: org?.city || '',
+    accountantName: org?.accountantName || '',
 
     // Авто
     vehicleMake: vehicle?.make || '',

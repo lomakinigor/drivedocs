@@ -36,6 +36,7 @@ import {
 import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
 import { VehicleProfileSheet } from '@/features/workspace/VehicleProfileSheet'
 import { DriversSheet } from '@/features/workspace/DriversSheet'
+import { OrgProfileSheet } from '@/features/workspace/OrgProfileSheet'
 import { useVehicleProfile, useDrivers } from '@/app/store/workspaceStore'
 import type { VehicleUsageModel } from '@/entities/types/domain'
 
@@ -410,6 +411,7 @@ export function SettingsPage() {
   const resetTour = useWorkspaceStore((s) => s.resetTour)
   const updateWorkspaceFn = useWorkspaceStore((s) => s.updateWorkspace)
   const [schemeSheetOpen, setSchemeSheetOpen] = useState(false)
+  const [orgProfileSheetOpen, setOrgProfileSheetOpen] = useState(false)
 
   const billingResult = searchParams.get('billing')
   const [renameOpen, setRenameOpen] = useState(false)
@@ -527,6 +529,39 @@ export function SettingsPage() {
               />
             )}
           </div>
+        </Card>
+      </section>
+
+      {/* ── Org profile ── */}
+      <section>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+          Реквизиты {workspace.entityType === 'IP' ? 'ИП' : 'организации'}
+        </h2>
+        <Card
+          className="p-4 flex items-center gap-3"
+          onClick={() => setOrgProfileSheetOpen(true)}
+        >
+          <div className="p-2 bg-slate-100 rounded-xl shrink-0">
+            <Building2 size={18} className="text-slate-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            {orgProfile?.organizationName || orgProfile?.ownerFullName ? (
+              <>
+                <p className="text-sm font-semibold text-slate-900 truncate">
+                  {orgProfile.organizationName || orgProfile.ownerFullName}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {[
+                    orgProfile.inn && `ИНН ${orgProfile.inn}`,
+                    orgProfile.city,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400">Заполнить реквизиты</p>
+            )}
+          </div>
+          <span className="text-slate-300 text-lg shrink-0">›</span>
         </Card>
       </section>
 
@@ -693,6 +728,15 @@ export function SettingsPage() {
             updateWorkspaceFn(id, { vehicleUsageModel: model })
           }
           onClose={() => setSchemeSheetOpen(false)}
+        />
+      )}
+
+      {/* Org profile sheet */}
+      {orgProfileSheetOpen && (
+        <OrgProfileSheet
+          workspaceId={id}
+          entityType={workspace.entityType}
+          onClose={() => setOrgProfileSheetOpen(false)}
         />
       )}
     </div>

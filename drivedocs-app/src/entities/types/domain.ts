@@ -66,10 +66,20 @@ export interface Workspace {
 export interface OrganizationProfile {
   workspaceId: string
   entityType: EntityType
-  inn?: string
-  ogrn?: string
   organizationName?: string
-  ownerFullName?: string     // ФИО owner for ИП
+  ownerFullName?: string     // ФИО owner для ИП / руководитель для ООО
+  inn?: string
+  kpp?: string               // КПП (только для ООО)
+  ogrn?: string              // ОГРН (ООО) или ОГРНИП (ИП)
+  address?: string           // Юридический адрес
+  city?: string              // Город (используется в документах)
+  phone?: string
+  email?: string
+  bankName?: string          // Наименование банка
+  bankBik?: string           // БИК банка
+  bankAccount?: string       // Расчётный счёт
+  bankCorAccount?: string    // Корреспондентский счёт
+  accountantName?: string    // ФИО главного бухгалтера
 }
 
 // ─── Tax profile ─────────────────────────────────────────────────────────────
