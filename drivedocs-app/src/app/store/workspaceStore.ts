@@ -639,18 +639,21 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
     }),
     {
       name: 'drivedocs-workspace',
+      version: 1,
+      // v1: strip base64 imageUrl from receipts/documents before persisting
+      //     to prevent localStorage quota overflow (~5 MB limit).
+      //     Images are session-only; user re-attaches if needed.
       partialize: (state) => ({
         // Auth state is NOT persisted — Supabase manages its own session in localStorage.
-        // isAuthenticated, authUserId, authChecked are always recomputed from auth events.
         currentWorkspaceId: state.currentWorkspaceId,
         workspaces: state.workspaces,
         orgProfiles: state.orgProfiles,
         vehicleProfiles: state.vehicleProfiles,
         drivers: state.drivers,
         trips: state.trips,
-        documents: state.documents,
+        documents: state.documents.map((d) => ({ ...d, imageUrl: undefined })),
         events: state.events,
-        receipts: state.receipts,
+        receipts: state.receipts.map((r) => ({ ...r, imageUrl: undefined })),
         subscriptions: state.subscriptions,
         hasSeenTour: state.hasSeenTour,
       }),
