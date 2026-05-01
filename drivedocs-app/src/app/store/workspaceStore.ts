@@ -792,7 +792,9 @@ export const useWorkspaceSubscription = (workspaceId: string) =>
 export const useIsProWorkspace = (_workspaceId: string) => true
 
 export const useDrivers = (workspaceId: string) =>
-  useWorkspaceStore((s) => s.drivers.filter((d) => d.workspaceId === workspaceId))
+  useWorkspaceStore(
+    useShallow((s) => s.drivers.filter((d) => d.workspaceId === workspaceId)),
+  )
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
