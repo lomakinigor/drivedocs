@@ -7,6 +7,7 @@ import { TodayPage } from '@/pages/TodayPage'
 import { DocumentsPage } from '@/pages/DocumentsPage'
 import { TripsPage } from '@/pages/TripsPage'
 import { ReceiptsPage } from '@/pages/ReceiptsPage'
+import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { EventsPage } from '@/pages/EventsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -91,6 +92,7 @@ const router = createBrowserRouter([
       { path: 'documents', element: <DocumentsPage /> },
       { path: 'trips', element: <TripsPage /> },
       { path: 'receipts', element: <ReceiptsPage /> },
+      { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'events', element: <EventsPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
