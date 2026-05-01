@@ -118,7 +118,7 @@ export function AnalyticsPage() {
   // Compensation estimate (Постановление Правительства № 92)
   const engineCc = vehicle?.engineVolume ?? 0
   const pp92Rate = engineCc > 0 && engineCc <= 2000 ? 1200 : engineCc > 2000 ? 1500 : null
-  const showCompensation = workspace?.vehicleUsageModel === 'compensation' && pp92Rate !== null
+  const showCompensation = workspace?.vehicleUsageModel === 'COMPENSATION' && pp92Rate !== null
 
   // Receipts by category
   const byCategory = useMemo(() => {

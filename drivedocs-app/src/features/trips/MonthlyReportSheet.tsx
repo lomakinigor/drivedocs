@@ -8,7 +8,7 @@ import {
 } from '@/app/store/workspaceStore'
 import { openPrintWindow } from '@/features/documents/templates/printUtils'
 import { RECEIPT_CATEGORY_LABELS } from '@/entities/constants/labels'
-import type { Trip, Receipt, ReceiptCategory } from '@/entities/types/domain'
+import type { Trip, ReceiptCategory } from '@/entities/types/domain'
 
 // ─── Period ───────────────────────────────────────────────────────────────────
 
@@ -72,7 +72,6 @@ function buildReportHtml(
   orgName: string,
   periodLabel: string,
   trips: Trip[],
-  receipts: Receipt[],
   byCategory: Record<ReceiptCategory, number>,
   totalExpenses: number,
   compensation: { rate: number; fuelLitres?: number } | null,
@@ -172,7 +171,6 @@ function buildTextReport(
   orgName: string,
   periodLabel: string,
   trips: Trip[],
-  receipts: Receipt[],
   byCategory: Record<ReceiptCategory, number>,
   totalExpenses: number,
   compensation: { rate: number } | null,
@@ -241,7 +239,7 @@ export function MonthlyReportSheet({ workspaceId, onClose }: MonthlyReportSheetP
   }, [receipts])
 
   const orgName = workspace?.name ?? ''
-  const showCompensation = workspace?.vehicleUsageModel === 'compensation'
+  const showCompensation = workspace?.vehicleUsageModel === 'COMPENSATION'
   const rate = pp92Rate(vehicle?.engineVolume)
   const fuelLitres =
     vehicle?.fuelConsumptionPer100km && totalKm > 0
@@ -254,11 +252,11 @@ export function MonthlyReportSheet({ workspaceId, onClose }: MonthlyReportSheetP
       : null
 
   const handlePrintPdf = () => {
-    const html = buildReportHtml(orgName, periodLabel, trips, receipts, byCategory, totalExpenses, compensation)
+    const html = buildReportHtml(orgName, periodLabel, trips, byCategory, totalExpenses, compensation)
     openPrintWindow(html, `Отчёт ${periodLabel} — ${orgName}`)
   }
 
-  const reportText = buildTextReport(orgName, periodLabel, trips, receipts, byCategory, totalExpenses, compensation)
+  const reportText = buildTextReport(orgName, periodLabel, trips, byCategory, totalExpenses, compensation)
 
   const handleCopy = async () => {
     try {

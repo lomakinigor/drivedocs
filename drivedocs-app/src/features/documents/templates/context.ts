@@ -95,6 +95,5 @@ export function buildTemplateContext(
     totalMileage: '',
     fuelFact: '',
     fuelPrice: '',
-    accountantName: '',
   }
 }
