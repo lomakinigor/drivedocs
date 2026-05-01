@@ -107,6 +107,8 @@ export async function exportWaybillPdf(data: MonthlyWaybillData): Promise<void> 
 
   doc.addFileToVFS('Roboto-Regular.ttf', fontBase64)
   doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
+  // jspdf-autotable v5 ищет вариант 'bold' при расчёте ширин — регистрируем тот же файл как алиас
+  doc.addFont('Roboto-Regular.ttf', 'Roboto', 'bold')
   doc.setFont('Roboto', 'normal')
 
   let y = 18
