@@ -38,7 +38,6 @@ export function HomePage() {
     }
   }
 
-  // ── Guard: workspace not fully configured ─────────────────────────────────
   if (!data.isConfigured) {
     return (
       <div className="flex flex-col items-center justify-center h-full px-6 text-center py-16">
@@ -62,28 +61,28 @@ export function HomePage() {
 
   return (
     <div className="px-4 py-5 space-y-5">
-      {/* ── Config strip ─────────────────────────────────────────────────── */}
+      {/* Config strip */}
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="blue">{TAX_MODE_LABELS[workspace.taxMode]}</Badge>
         <Badge variant="slate">{VEHICLE_USAGE_MODEL_LABELS[workspace.vehicleUsageModel]}</Badge>
       </div>
 
-      {/* ── Today CTA — only when no trips logged today ──────────────────── */}
+      {/* Today CTA */}
       {!data.hasTodayTrips && (
         <TodayCta onAdd={openQuickTrip} />
       )}
 
-      {/* ── Monthly stats ────────────────────────────────────────────────── */}
+      {/* Monthly stats */}
       <MonthlyStatsSection stats={data.monthlyStats} />
 
-      {/* ── Tax benefit banner ───────────────────────────────────────────── */}
+      {/* Tax benefit banner */}
       <TaxBenefitBanner
         monthlyExpenseTotal={data.monthlyExpenseTotal}
         vehicleUsageModel={workspace.vehicleUsageModel}
         monthLabel={data.monthlyStats.monthLabel}
       />
 
-      {/* ── Attention items ──────────────────────────────────────────────── */}
+      {/* Attention items */}
       {data.attentionItems.length > 0 && (
         <AttentionSection
           items={data.attentionItems}
@@ -92,7 +91,7 @@ export function HomePage() {
         />
       )}
 
-      {/* ── Recent trips ─────────────────────────────────────────────────── */}
+      {/* Recent trips */}
       <RecentTripsSection
         trips={data.recentTrips}
         workspaceId={id}
@@ -117,23 +116,32 @@ export function HomePage() {
   )
 }
 
-// ─── Sub-sections ─────────────────────────────────────────────────────────────
-// These are file-private components — used only by HomePage.
+// ─── Sub-sections ──────────────────────────────────────────────────────────────
 
 function TodayCta({ onAdd }: { onAdd: () => void }) {
   return (
     <button
       onClick={onAdd}
-      className="flex items-center gap-3 w-full bg-blue-600 text-white rounded-2xl px-4 py-3.5 text-left active:bg-blue-700 transition-colors"
+      className="flex items-center gap-3.5 w-full bg-white rounded-2xl px-4 py-3.5 text-left
+        border border-slate-100/70 active:scale-[0.99] active:bg-slate-50/50 transition-all duration-150
+        shadow-[0_2px_12px_oklch(22%_0.028_280/0.06),_0_1px_3px_oklch(22%_0.028_280/0.04)]"
     >
-      <div className="p-2 bg-white/20 rounded-xl shrink-0">
-        <Car size={20} className="text-white" />
+      <div
+        className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+        style={{
+          background: 'oklch(52% 0.225 285)',
+          boxShadow: '0 3px 10px oklch(52% 0.225 285 / 0.30)',
+        }}
+      >
+        <Car size={21} className="text-white" strokeWidth={1.8} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold leading-snug">Добавить поездку</p>
-        <p className="text-xs text-blue-100 mt-0.5">Сегодня поездок ещё нет</p>
+        <p className="text-sm font-semibold text-slate-900 leading-snug">Добавить поездку</p>
+        <p className="text-xs text-slate-400 mt-0.5">Сегодня поездок ещё нет</p>
       </div>
-      <Plus size={20} className="text-white/70 shrink-0" />
+      <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+        <Plus size={15} className="text-slate-500" strokeWidth={2.2} />
+      </div>
     </button>
   )
 }
@@ -141,7 +149,7 @@ function TodayCta({ onAdd }: { onAdd: () => void }) {
 function MonthlyStatsSection({ stats }: { stats: MonthlyStats }) {
   return (
     <section>
-      <div className="flex items-center gap-1.5 mb-2">
+      <div className="flex items-center gap-1.5 mb-3">
         <TrendingUp size={13} className="text-slate-400" />
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           За {stats.monthLabel}
@@ -173,15 +181,15 @@ function StatTile({
   isEmpty: boolean
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3.5">
+    <div className="bg-white rounded-2xl px-4 py-4
+      shadow-[0_2px_12px_oklch(22%_0.028_280/0.06),_0_1px_3px_oklch(22%_0.028_280/0.04)]">
       <p
-        className={`text-2xl font-bold leading-none ${
-          isEmpty ? 'text-slate-200' : 'text-slate-900'
-        }`}
+        className={`text-[2rem] font-bold leading-none tracking-tight ${isEmpty ? 'text-slate-200' : 'text-slate-900'}`}
+        style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
       >
         {value}
       </p>
-      <p className="text-xs text-slate-500 mt-1">{label}</p>
+      <p className="text-[11px] font-medium text-slate-400 mt-2 uppercase tracking-wide">{label}</p>
     </div>
   )
 }
@@ -200,10 +208,13 @@ function AttentionSection({
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          Требуют внимания
-        </h2>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <AlertTriangle size={13} className="text-amber-500" />
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Требуют внимания
+          </h2>
+        </div>
         {items.length > MAX && (
           <Link
             to={`/w/${workspaceId}/events`}
@@ -228,14 +239,15 @@ function AttentionSection({
             >
               <Card className="p-4">
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-xl shrink-0 ${isUrgent ? 'bg-red-50' : 'bg-yellow-50'}`}>
+                  <div className={`p-2 rounded-xl shrink-0 ${isUrgent ? 'bg-red-50' : 'bg-amber-50'}`}>
                     <Icon
                       size={18}
-                      className={isUrgent ? 'text-red-500' : 'text-yellow-500'}
+                      className={isUrgent ? 'text-red-500' : 'text-amber-500'}
+                      strokeWidth={1.8}
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-900 leading-snug">{item.title}</p>
+                    <p className="text-sm font-semibold text-slate-900 leading-snug">{item.title}</p>
                     {item.subtitle && (
                       <p className={`text-xs mt-0.5 line-clamp-1 ${isUrgent ? 'text-red-500' : 'text-slate-500'}`}>
                         {item.subtitle}
@@ -264,7 +276,6 @@ function TaxBenefitBanner({
   vehicleUsageModel: VehicleUsageModel
   monthLabel: string
 }) {
-  // Компенсация — расходы не уменьшают налог, баннер не актуален
   if (vehicleUsageModel === 'COMPENSATION') return null
 
   const fmt = (n: number) =>
@@ -273,17 +284,17 @@ function TaxBenefitBanner({
   if (monthlyExpenseTotal > 0) {
     const annualProjection = Math.round((monthlyExpenseTotal / new Date().getDate()) * 365)
     return (
-      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+      <div className="bg-emerald-50 border border-emerald-100/80 rounded-2xl p-4">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-emerald-100 rounded-xl shrink-0">
-            <Wallet size={18} className="text-emerald-700" />
+          <div className="p-2.5 bg-emerald-100 rounded-xl shrink-0">
+            <Wallet size={18} className="text-emerald-700" strokeWidth={1.8} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-base font-bold text-emerald-900 leading-snug">
+            <p className="text-[15px] font-bold text-emerald-900 leading-snug">
               {fmt(monthlyExpenseTotal)} за {monthLabel} — уже расходы бизнеса
             </p>
             <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
-              При таком темпе ~{fmt(annualProjection)} в год выходят из бизнеса, а не из вашего кармана.
+              При таком темпе ~{fmt(annualProjection)} в год выходят из бизнеса, а не из кармана.
             </p>
           </div>
         </div>
@@ -292,10 +303,11 @@ function TaxBenefitBanner({
   }
 
   return (
-    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+    <div className="rounded-2xl p-4"
+      style={{ background: 'oklch(97.5% 0.022 285)', border: '1px solid oklch(94% 0.044 285)' }}>
       <div className="flex items-start gap-3">
-        <div className="p-2 bg-blue-100 rounded-xl shrink-0">
-          <Wallet size={18} className="text-blue-700" />
+        <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'oklch(94% 0.044 285)' }}>
+          <Wallet size={18} className="text-blue-700" strokeWidth={1.8} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-blue-900 leading-snug">
@@ -323,11 +335,14 @@ function RecentTripsSection({
   onOpen: (trip: Trip) => void
 }) {
   return (
-    <section>
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          Последние поездки
-        </h2>
+    <section className="pb-2">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <Car size={13} className="text-slate-400" />
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Последние поездки
+          </h2>
+        </div>
         {trips.length > 0 && (
           <Link
             to={`/w/${workspaceId}/trips`}
@@ -341,16 +356,16 @@ function RecentTripsSection({
       {trips.length === 0 ? (
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-50 rounded-xl shrink-0">
-              <Car size={18} className="text-slate-400" />
+            <div className="p-2.5 bg-slate-50 rounded-xl shrink-0">
+              <Car size={18} className="text-slate-300" strokeWidth={1.8} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-slate-500">Поездок пока нет</p>
+              <p className="text-sm font-medium text-slate-500">Поездок пока нет</p>
               <button
                 onClick={onAdd}
-                className="text-xs text-blue-600 font-medium mt-0.5"
+                className="text-xs text-blue-600 font-semibold mt-0.5"
               >
-                Записать первую поездку →
+                Записать первую →
               </button>
             </div>
           </div>
