@@ -13,6 +13,7 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard'
+import { WelcomePage } from '@/pages/WelcomePage'
 import { AuthPage } from '@/features/auth/AuthPage'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { subscribeToAuthChanges } from '@/lib/supabase'
@@ -24,7 +25,7 @@ function RootRedirect() {
   const workspaces = useWorkspaceStore((s) => s.workspaces)
   const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)
   if (!workspaces.length) {
-    return <Navigate to="/onboarding" replace />
+    return <Navigate to="/welcome" replace />
   }
   const id = currentWorkspaceId ?? workspaces[0].id
   return <Navigate to={`/w/${id}/home`} replace />
@@ -67,6 +68,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <RootRedirect />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/welcome',
+    element: (
+      <ProtectedRoute>
+        <WelcomePage />
       </ProtectedRoute>
     ),
   },

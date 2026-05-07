@@ -113,7 +113,7 @@ export function OnboardingWizard() {
 
   const handleBack = () => {
     if (stepIndex === 0) {
-      navigate('/')
+      navigate(targetWsId ? '/' : '/welcome')
     } else {
       setCurrentStep(STEP_ORDER[stepIndex - 1])
     }
