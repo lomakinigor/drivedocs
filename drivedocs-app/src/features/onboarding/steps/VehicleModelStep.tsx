@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, AlertTriangle, CheckCircle } from 'lucide-react'
+import { X, AlertTriangle, CheckCircle, Building2, User } from 'lucide-react'
 import type { EntityType, VehicleUsageModel } from '@/entities/types/domain'
 
 interface VehicleModelStepProps {
@@ -7,6 +7,8 @@ interface VehicleModelStepProps {
   onSelect: (model: VehicleUsageModel) => void
   entityType?: EntityType
 }
+
+type CarOwnership = 'org' | 'personal'
 
 // ─── Plain-language config ────────────────────────────────────────────────────
 
@@ -57,9 +59,11 @@ const MODEL_CONFIG: ModelConfig[] = [
   },
   {
     model: 'BALANCE',
-    title: 'Автомобиль принадлежит организации',
+    title: 'Автомобиль на балансе организации',
     plain:
-      'Компания купила авто на своё имя и поставила на баланс. Нужны путевые листы и учёт расхода топлива.',
+      'Компания купила автомобиль на своё имя и поставила на баланс. Все расходы на авто — топливо, ТО, страховка — полностью идут в затраты организации. Требуется оформлять путевые листы и вести учёт расхода ГСМ.',
+    note: 'Все расходы на авто — в затраты организации',
+    noteType: 'info',
     pros: [
       'Все расходы на авто — в затраты организации',
       'Амортизация снижает налог',
@@ -87,24 +91,136 @@ const MODEL_CONFIG: ModelConfig[] = [
   },
 ]
 
-// ─── Recommendation logic ─────────────────────────────────────────────────────
+// ─── Recommendation & order logic ─────────────────────────────────────────────
 
-function getRecommended(entityType?: EntityType): VehicleUsageModel {
-  return entityType === 'IP' ? 'OWN_IP' : 'RENT'
+function getRecommended(entityType?: EntityType, carOwner?: CarOwnership): VehicleUsageModel {
+  if (entityType === 'IP') return 'OWN_IP'
+  if (carOwner === 'org') return 'BALANCE'
+  return 'RENT'
 }
 
-function getOrder(entityType?: EntityType): VehicleUsageModel[] {
-  if (entityType === 'IP') {
-    return ['OWN_IP', 'COMPENSATION', 'RENT', 'BALANCE', 'FREE_USE']
-  }
-  // ООО — OWN_IP убираем: это схема только для ИП
-  return ['COMPENSATION', 'RENT', 'BALANCE', 'FREE_USE']
+function getOrder(entityType?: EntityType, carOwner?: CarOwnership): VehicleUsageModel[] {
+  if (entityType === 'IP') return ['OWN_IP', 'COMPENSATION', 'RENT']
+  if (carOwner === 'org') return ['BALANCE']
+  return ['RENT', 'COMPENSATION', 'FREE_USE']
+}
+
+// ─── Phase 1: ownership question (OOO only) ───────────────────────────────────
+
+function OwnershipQuestion({ onSelect }: { onSelect: (v: CarOwnership) => void }) {
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => onSelect('org')}
+        className="flex items-start gap-4 w-full p-4 rounded-2xl border-2 border-slate-200 bg-white active:bg-slate-50 text-left"
+      >
+        <div className="p-2.5 bg-blue-50 rounded-xl shrink-0">
+          <Building2 size={22} className="text-blue-600" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-900">Автомобиль принадлежит ООО</p>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+            Машина куплена на организацию и стоит на балансе
+          </p>
+        </div>
+      </button>
+
+      <button
+        onClick={() => onSelect('personal')}
+        className="flex items-start gap-4 w-full p-4 rounded-2xl border-2 border-slate-200 bg-white active:bg-slate-50 text-left"
+      >
+        <div className="p-2.5 bg-slate-100 rounded-xl shrink-0">
+          <User size={22} className="text-slate-600" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-900">Личный автомобиль сотрудника или руководителя</p>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+            Машина зарегистрирована на физическое лицо и используется в интересах ООО
+          </p>
+        </div>
+      </button>
+    </div>
+  )
+}
+
+// ─── Phase 2 for org-owned car: single BALANCE card ──────────────────────────
+
+function BalanceOnlyView({
+  selected,
+  onSelect,
+}: {
+  selected?: VehicleUsageModel
+  onSelect: (m: VehicleUsageModel) => void
+}) {
+  const cfg = MODEL_CONFIG.find((c) => c.model === 'BALANCE')!
+  const isSelected = selected === 'BALANCE'
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+        <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
+          Единственный вариант для этого случая
+        </p>
+        <p className="text-sm text-blue-800 leading-relaxed">
+          Если автомобиль принадлежит ООО, он должен стоять на балансе организации.
+          Это позволяет учитывать все расходы на авто как расходы бизнеса.
+        </p>
+      </div>
+
+      <button
+        onClick={() => onSelect('BALANCE')}
+        className={`flex items-start gap-3 w-full p-4 rounded-2xl border-2 transition-colors text-left ${
+          isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white active:bg-slate-50'
+        }`}
+      >
+        <div
+          className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${
+            isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-300'
+          }`}
+        >
+          {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-semibold text-slate-900">{cfg.title}</p>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 shrink-0">
+              Рекомендовано
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{cfg.plain}</p>
+          {cfg.note && (
+            <div className="flex items-start gap-1.5 mt-2 text-blue-600">
+              <CheckCircle size={11} className="shrink-0 mt-0.5" />
+              <p className="text-[11px] font-medium leading-snug">{cfg.note}</p>
+            </div>
+          )}
+        </div>
+      </button>
+
+      {!isSelected && (
+        <button
+          onClick={() => onSelect('BALANCE')}
+          className="w-full py-3 text-sm font-semibold text-blue-600 active:text-blue-800"
+        >
+          Выбрать и продолжить →
+        </button>
+      )}
+    </div>
+  )
 }
 
 // ─── Help sheet ───────────────────────────────────────────────────────────────
 
-function HelpSheet({ onClose, entityType }: { onClose: () => void; entityType?: EntityType }) {
-  const order = getOrder(entityType)
+function HelpSheet({
+  onClose,
+  entityType,
+  carOwner,
+}: {
+  onClose: () => void
+  entityType?: EntityType
+  carOwner?: CarOwnership
+}) {
+  const order = getOrder(entityType, carOwner)
   const items = order.map((m) => MODEL_CONFIG.find((c) => c.model === m)!)
 
   return (
@@ -156,19 +272,42 @@ function HelpSheet({ onClose, entityType }: { onClose: () => void; entityType?: 
 
 export function VehicleModelStep({ selected, onSelect, entityType }: VehicleModelStepProps) {
   const [showHelp, setShowHelp] = useState(false)
+  const [carOwner, setCarOwner] = useState<CarOwnership | undefined>(undefined)
 
-  const recommended = getRecommended(entityType)
-  const order = getOrder(entityType)
+  const isIP = entityType === 'IP'
+
+  // ── Phase 1: ООО — спросить чья машина ──────────────────────────────────────
+  if (!isIP && carOwner === undefined) {
+    return <OwnershipQuestion onSelect={setCarOwner} />
+  }
+
+  // ── Phase 2a: ООО, авто на балансе — единственный вариант ───────────────────
+  if (!isIP && carOwner === 'org') {
+    return <BalanceOnlyView selected={selected} onSelect={onSelect} />
+  }
+
+  // ── Phase 2b: ИП или ООО с личным авто — выбор из нескольких вариантов ──────
+  const recommended = getRecommended(entityType, carOwner)
+  const order = getOrder(entityType, carOwner)
   const items = order.map((m) => MODEL_CONFIG.find((c) => c.model === m)!)
-
   const recConfig = MODEL_CONFIG.find((c) => c.model === recommended)!
 
   return (
     <>
+      {/* Кнопка "назад" к вопросу о владельце (только для ООО) */}
+      {!isIP && (
+        <button
+          onClick={() => setCarOwner(undefined)}
+          className="text-xs text-slate-400 font-medium mb-4 active:text-slate-600"
+        >
+          ← Изменить: чья машина
+        </button>
+      )}
+
       {/* ── Персональная рекомендация ── */}
       <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-4">
         <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
-          Рекомендуем для {entityType === 'IP' ? 'ИП' : 'ООО'}
+          Рекомендуем для {isIP ? 'ИП' : 'ООО'}
         </p>
         <p className="text-sm font-semibold text-blue-900 mb-0.5">{recConfig.title}</p>
         <p className="text-xs text-blue-700 leading-relaxed">{recConfig.plain}</p>
@@ -180,15 +319,17 @@ export function VehicleModelStep({ selected, onSelect, entityType }: VehicleMode
         </button>
       </div>
 
-      {/* ── Все варианты ── */}
+      {/* ── Остальные варианты ── */}
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-semibold text-slate-500">Или выберите другую схему:</p>
-        <button
-          onClick={() => setShowHelp(true)}
-          className="text-xs text-blue-600 font-medium active:text-blue-800"
-        >
-          Сравнить все →
-        </button>
+        {items.length > 1 && (
+          <button
+            onClick={() => setShowHelp(true)}
+            className="text-xs text-blue-600 font-medium active:text-blue-800"
+          >
+            Сравнить все →
+          </button>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -206,7 +347,6 @@ export function VehicleModelStep({ selected, onSelect, entityType }: VehicleMode
                   : 'border-slate-200 bg-white active:bg-slate-50'
               }`}
             >
-              {/* Radio */}
               <div
                 className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${
                   isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-300'
@@ -214,8 +354,6 @@ export function VehicleModelStep({ selected, onSelect, entityType }: VehicleMode
               >
                 {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
               </div>
-
-              {/* Text */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-semibold text-slate-900">{item.title}</p>
@@ -241,7 +379,13 @@ export function VehicleModelStep({ selected, onSelect, entityType }: VehicleMode
         })}
       </div>
 
-      {showHelp && <HelpSheet onClose={() => setShowHelp(false)} entityType={entityType} />}
+      {showHelp && (
+        <HelpSheet
+          onClose={() => setShowHelp(false)}
+          entityType={entityType}
+          carOwner={carOwner}
+        />
+      )}
     </>
   )
 }
