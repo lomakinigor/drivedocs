@@ -1,129 +1,126 @@
 import { useState } from 'react'
-import { HelpCircle, X } from 'lucide-react'
-import type { VehicleUsageModel } from '@/entities/types/domain'
-import {
-  VEHICLE_USAGE_MODEL_LABELS,
-  VEHICLE_USAGE_MODEL_DESCRIPTIONS,
-} from '@/entities/constants/labels'
+import { X, AlertTriangle, CheckCircle } from 'lucide-react'
+import type { EntityType, VehicleUsageModel } from '@/entities/types/domain'
 
 interface VehicleModelStepProps {
   selected?: VehicleUsageModel
   onSelect: (model: VehicleUsageModel) => void
+  entityType?: EntityType
 }
 
-const ALL_MODELS: VehicleUsageModel[] = ['COMPENSATION', 'RENT', 'FREE_USE', 'OWN_IP', 'BALANCE']
+// ─── Plain-language config ────────────────────────────────────────────────────
 
-// Short helper text shown under each option title
-const MODEL_HINTS: Record<VehicleUsageModel, string> = {
-  COMPENSATION: 'Самый простой вариант для большинства ИП и ООО',
-  RENT: 'Нужен договор аренды. С выплат удерживается НДФЛ 13%',
-  FREE_USE: 'Автомобиль "передаётся" без оплаты. Есть налоговые риски',
-  OWN_IP: 'ИП использует свой авто напрямую, без компенсаций',
-  BALANCE: 'Авто куплено организацией. Нужны путевые листы и учёт ГСМ',
-}
-
-// Content for the help bottom sheet
-const HELP_ITEMS: Array<{
+interface ModelConfig {
   model: VehicleUsageModel
   title: string
+  plain: string
+  note?: string
+  noteType?: 'info' | 'warning'
   pros: string[]
   cons: string[]
-}> = [
+}
+
+const MODEL_CONFIG: ModelConfig[] = [
+  {
+    model: 'OWN_IP',
+    title: 'Личный автомобиль ИП',
+    plain:
+      'Вы ИП и ездите на своей машине по рабочим делам. Расходы на бензин, ТО и страховку можно включать в затраты. Никаких договоров не нужно.',
+    note: 'Самый простой вариант для ИП',
+    noteType: 'info',
+    pros: ['Никаких договоров', 'Расходы на авто идут в затраты', 'Минимум документов'],
+    cons: ['Только для ИП — для ООО не подходит'],
+  },
   {
     model: 'COMPENSATION',
-    title: 'Компенсация',
-    pros: [
-      'Не нужен договор аренды',
-      'Минимум документов',
-      'Подходит и ИП, и ООО',
-    ],
+    title: 'Компенсация за личный автомобиль',
+    plain:
+      'Вы (или сотрудник) ездите на личной машине по работе, а организация выплачивает фиксированную компенсацию. Договор аренды не нужен.',
+    note: 'Самый простой вариант для ООО',
+    noteType: 'info',
+    pros: ['Не нужен договор аренды', 'Минимум бумаг', 'Подходит и ИП, и ООО'],
     cons: [
-      'Лимит для ООО: 1 200 ₽/мес для авто до 2 000 куб. см',
-      'Сверхлимитная часть — не расход для налога',
+      'Лимит компенсации: до 1 500 ₽/мес (для авто до 2 000 куб. см)',
+      'Сверх лимита — не учитывается как расход',
     ],
   },
   {
     model: 'RENT',
-    title: 'Аренда',
+    title: 'Аренда — организация берёт авто у сотрудника',
+    plain:
+      'Организация официально арендует вашу машину по договору. Вы получаете арендную плату любого размера. Из выплат удерживается налог 13% (НДФЛ).',
+    pros: ['Сумма аренды — любая по договору', 'Расходы на авто признаются полностью'],
+    cons: ['Нужен договор аренды', 'С выплат удерживается НДФЛ 13%', 'Больше бухгалтерии'],
+  },
+  {
+    model: 'BALANCE',
+    title: 'Автомобиль принадлежит организации',
+    plain:
+      'Компания купила авто на своё имя и поставила на баланс. Нужны путевые листы и учёт расхода топлива.',
     pros: [
-      'Сумма аренды любая — по договору',
-      'Расходы признаются полностью',
+      'Все расходы на авто — в затраты организации',
+      'Амортизация снижает налог',
+      'Подходит для нескольких машин',
     ],
     cons: [
-      'Нужен договор аренды',
-      'НДФЛ 13% удерживается из выплат физлицу',
-      'Больше бухгалтерии',
+      'Нужны ежедневные путевые листы',
+      'Обязателен учёт расхода ГСМ',
+      'Больше документов по ТО',
     ],
   },
   {
     model: 'FREE_USE',
-    title: 'Безвозмездное пользование',
-    pros: [
-      'Не надо платить за аренду',
-    ],
+    title: 'Бесплатное использование (редко)',
+    plain:
+      'Вы передаёте машину организации без договора аренды и без оплаты. Налоговая может расценить это как скрытый доход и начислить дополнительный налог.',
+    note: 'Есть налоговые риски — лучше проконсультируйтесь с бухгалтером',
+    noteType: 'warning',
+    pros: ['Не нужно платить за аренду'],
     cons: [
-      'ФНС может признать это доходом организации',
+      'ФНС может признать это скрытым доходом',
       'Риск доначисления налога',
-      'Редко используется на практике',
-    ],
-  },
-  {
-    model: 'BALANCE',
-    title: 'Авто на балансе предприятия',
-    pros: [
-      'Авто — актив организации, амортизация снижает налог',
-      'Расходы на ГСМ, ТО, страховку — полностью в затраты',
-      'Подходит для парка машин любого размера',
-    ],
-    cons: [
-      'Обязательны ежедневные путевые листы с медосмотром и техконтролем',
-      'Нужны: приказ о нормах ГСМ, учёт ТО, акты списания топлива',
-      'Больше бухгалтерской нагрузки по сравнению с компенсацией',
+      'Редко применяется на практике',
     ],
   },
 ]
 
-function HelpSheet({ onClose }: { onClose: () => void }) {
+// ─── Recommendation logic ─────────────────────────────────────────────────────
+
+function getRecommended(entityType?: EntityType): VehicleUsageModel {
+  return entityType === 'IP' ? 'OWN_IP' : 'COMPENSATION'
+}
+
+function getOrder(entityType?: EntityType): VehicleUsageModel[] {
+  if (entityType === 'IP') {
+    return ['OWN_IP', 'COMPENSATION', 'RENT', 'BALANCE', 'FREE_USE']
+  }
+  // ООО — OWN_IP убираем: это схема только для ИП
+  return ['COMPENSATION', 'RENT', 'BALANCE', 'FREE_USE']
+}
+
+// ─── Help sheet ───────────────────────────────────────────────────────────────
+
+function HelpSheet({ onClose, entityType }: { onClose: () => void; entityType?: EntityType }) {
+  const order = getOrder(entityType)
+  const items = order.map((m) => MODEL_CONFIG.find((c) => c.model === m)!)
+
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/40"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Sheet */}
+      <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-h-[85dvh] flex flex-col">
-        {/* Handle */}
         <div className="flex justify-center pt-3 pb-2 shrink-0">
           <div className="w-10 h-1 bg-slate-200 rounded-full" />
         </div>
-
-        {/* Header */}
         <div className="flex items-center justify-between px-5 pb-3 shrink-0">
-          <h2 className="text-base font-semibold text-slate-900">Как выбрать модель?</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 active:bg-slate-100"
-            aria-label="Закрыть"
-          >
+          <h2 className="text-base font-semibold text-slate-900">Сравнение вариантов</h2>
+          <button onClick={onClose} className="p-1.5 rounded-xl text-slate-400 active:bg-slate-100" aria-label="Закрыть">
             <X size={18} />
           </button>
         </div>
-
-        {/* Content */}
         <div className="overflow-y-auto px-5 pb-8 space-y-5">
-          <p className="text-sm text-slate-500 leading-relaxed">
-            Правовая модель определяет, как оформлено использование автомобиля и какие документы нужны.
-            Большинству подходит компенсация — она проще всего.
-          </p>
-
-          {HELP_ITEMS.map((item) => (
-            <div key={item.model} className="space-y-2">
-              <p className="text-sm font-semibold text-slate-800">
-                {VEHICLE_USAGE_MODEL_LABELS[item.model]}
-              </p>
+          {items.map((item) => (
+            <div key={item.model} className="space-y-2 pb-4 border-b border-slate-100 last:border-0">
+              <p className="text-sm font-semibold text-slate-900">{item.title}</p>
               <div className="space-y-1">
                 {item.pros.map((pro) => (
                   <div key={pro} className="flex items-start gap-2">
@@ -140,11 +137,10 @@ function HelpSheet({ onClose }: { onClose: () => void }) {
               </div>
             </div>
           ))}
-
           <div className="bg-blue-50 rounded-2xl p-4">
-            <p className="text-xs font-semibold text-blue-700 mb-1">Подсказка</p>
+            <p className="text-xs font-semibold text-blue-700 mb-1">Можно изменить позже</p>
             <p className="text-sm text-blue-800 leading-relaxed">
-              Если авто личное — выбирайте компенсацию. Если организация купила авто и поставила на баланс — выбирайте «Авто на балансе». Модель можно сменить позже в настройках.
+              Схему использования авто можно поменять в Настройках в любой момент — список документов пересчитается автоматически.
             </p>
           </div>
         </div>
@@ -153,65 +149,96 @@ function HelpSheet({ onClose }: { onClose: () => void }) {
   )
 }
 
-export function VehicleModelStep({ selected, onSelect }: VehicleModelStepProps) {
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export function VehicleModelStep({ selected, onSelect, entityType }: VehicleModelStepProps) {
   const [showHelp, setShowHelp] = useState(false)
+
+  const recommended = getRecommended(entityType)
+  const order = getOrder(entityType)
+  const items = order.map((m) => MODEL_CONFIG.find((c) => c.model === m)!)
+
+  const recConfig = MODEL_CONFIG.find((c) => c.model === recommended)!
 
   return (
     <>
-      {/* "Как выбрать?" link */}
-      <div className="flex items-center justify-end mb-3">
+      {/* ── Персональная рекомендация ── */}
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-4">
+        <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
+          Рекомендуем для {entityType === 'IP' ? 'ИП' : 'ООО'}
+        </p>
+        <p className="text-sm font-semibold text-blue-900 mb-0.5">{recConfig.title}</p>
+        <p className="text-xs text-blue-700 leading-relaxed">{recConfig.plain}</p>
+        <button
+          onClick={() => onSelect(recommended)}
+          className="mt-3 text-xs font-semibold text-blue-600 underline underline-offset-2 active:text-blue-800"
+        >
+          Выбрать этот вариант →
+        </button>
+      </div>
+
+      {/* ── Все варианты ── */}
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold text-slate-500">Или выберите другую схему:</p>
         <button
           onClick={() => setShowHelp(true)}
-          className="flex items-center gap-1 text-xs text-blue-600 font-medium active:text-blue-800"
+          className="text-xs text-blue-600 font-medium active:text-blue-800"
         >
-          <HelpCircle size={13} />
-          Как выбрать?
+          Сравнить все →
         </button>
       </div>
 
       <div className="space-y-2">
-        {ALL_MODELS.map((model) => (
-          <button
-            key={model}
-            onClick={() => onSelect(model)}
-            className={`flex items-start gap-3 w-full p-4 rounded-2xl border-2 transition-colors text-left ${
-              selected === model
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-slate-200 bg-white active:bg-slate-50'
-            }`}
-          >
-            {/* Radio dot */}
-            <div
-              className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${
-                selected === model ? 'border-blue-500 bg-blue-500' : 'border-slate-300'
+        {items.map((item) => {
+          const isSelected = selected === item.model
+          const isRec = item.model === recommended
+
+          return (
+            <button
+              key={item.model}
+              onClick={() => onSelect(item.model)}
+              className={`flex items-start gap-3 w-full p-4 rounded-2xl border-2 transition-colors text-left ${
+                isSelected
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-slate-200 bg-white active:bg-slate-50'
               }`}
             >
-              {selected === model && (
-                <div className="w-1.5 h-1.5 bg-white rounded-full" />
-              )}
-            </div>
-
-            {/* Text */}
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900">
-                {VEHICLE_USAGE_MODEL_LABELS[model]}
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                {VEHICLE_USAGE_MODEL_DESCRIPTIONS[model]}
-              </p>
-              <p
-                className={`text-xs mt-1.5 font-medium ${
-                  model === 'FREE_USE' ? 'text-yellow-600' : 'text-blue-600'
+              {/* Radio */}
+              <div
+                className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${
+                  isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-300'
                 }`}
               >
-                {MODEL_HINTS[model]}
-              </p>
-            </div>
-          </button>
-        ))}
+                {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+              </div>
+
+              {/* Text */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                  {isRec && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 shrink-0">
+                      Рекомендовано
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{item.plain}</p>
+                {item.note && (
+                  <div className={`flex items-start gap-1.5 mt-2 ${item.noteType === 'warning' ? 'text-yellow-600' : 'text-blue-600'}`}>
+                    {item.noteType === 'warning'
+                      ? <AlertTriangle size={11} className="shrink-0 mt-0.5" />
+                      : <CheckCircle size={11} className="shrink-0 mt-0.5" />
+                    }
+                    <p className="text-[11px] font-medium leading-snug">{item.note}</p>
+                  </div>
+                )}
+              </div>
+            </button>
+          )
+        })}
       </div>
 
-      {showHelp && <HelpSheet onClose={() => setShowHelp(false)} />}
+      {showHelp && <HelpSheet onClose={() => setShowHelp(false)} entityType={entityType} />}
     </>
   )
 }

@@ -299,6 +299,7 @@ export function OnboardingWizard() {
           <VehicleModelStep
             selected={state.vehicleUsageModel}
             onSelect={(model) => setState((s) => ({ ...s, vehicleUsageModel: model }))}
+            entityType={state.entityType}
           />
         )}
 
