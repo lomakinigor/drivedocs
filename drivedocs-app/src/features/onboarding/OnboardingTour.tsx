@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Car, Navigation, Receipt, Printer, Mic, ChevronRight, X, Building2, FileText, Settings } from 'lucide-react'
+import { Car, Navigation, Receipt, Printer, Mic, ChevronRight, X, Building2, FileText, Settings, Camera, ScanLine } from 'lucide-react'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 
 const STEPS = [
@@ -8,7 +8,7 @@ const STEPS = [
     iconBg: 'bg-slate-100',
     iconColor: 'text-slate-700',
     title: 'Добро пожаловать',
-    body: 'DriveDocs ведёт учёт служебного транспорта: путевые листы, расходы, компенсации и пакет печатных документов. Пройдите короткий тур из 8 шагов — за минуту разберётесь.',
+    body: 'DriveDocs ведёт учёт служебного транспорта: путевые листы, расходы, компенсации и пакет печатных документов. Пройдите короткий тур из 11 шагов — за минуту разберётесь.',
   },
   {
     icon: Car,
@@ -32,6 +32,13 @@ const STEPS = [
     body: 'На вкладке «Документы» выберите шаблон — например, договор аренды или приказ о закреплении ТС. Поля автоматически заполнятся данными из профиля.',
   },
   {
+    icon: ScanLine,
+    iconBg: 'bg-teal-100',
+    iconColor: 'text-teal-700',
+    title: 'Все нужные документы — уже в приложении',
+    body: 'Договор аренды, приказ о закреплении ТС, акт приёма-передачи — всё есть как готовые шаблоны. Откройте документ, заполните форму или сфотографируйте бумажный оригинал — данные подставятся автоматически.',
+  },
+  {
     icon: Car,
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
@@ -51,6 +58,13 @@ const STEPS = [
     iconColor: 'text-green-600',
     title: 'Сохраняйте чеки',
     body: 'Кнопка «Чек» — добавьте расходы на топливо, парковку или ремонт. Можно привязать чек к конкретной поездке.',
+  },
+  {
+    icon: Camera,
+    iconBg: 'bg-lime-100',
+    iconColor: 'text-lime-700',
+    title: 'Чек — просто сфотографируйте',
+    body: 'Нажмите «Чек» → «Сфотографировать чек» — приложение само распознает сумму, дату и категорию. Ничего вводить руками не нужно. Ручной ввод — только если фото нечёткое.',
   },
   {
     icon: Printer,
