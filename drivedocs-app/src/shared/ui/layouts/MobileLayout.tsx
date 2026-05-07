@@ -52,7 +52,7 @@ useEffect(() => {
 
   return (
     <GeoTripProvider>
-    <div className="flex flex-col h-full bg-slate-50">
+    <div className="flex flex-col h-full" style={{ background: 'oklch(98.8% 0.005 80)' }}>
       <MobileHeader
         onOpenSwitcher={() => setSwitcherOpen(true)}
         onOpenNotifications={() => setNotifOpen(true)}
