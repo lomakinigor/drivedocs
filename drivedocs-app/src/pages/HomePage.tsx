@@ -279,15 +279,11 @@ function TaxBenefitBanner({
             <Wallet size={18} className="text-emerald-700" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-0.5">
-              Расходы бизнеса
-            </p>
             <p className="text-base font-bold text-emerald-900 leading-snug">
-              {fmt(monthlyExpenseTotal)} за {monthLabel}
+              {fmt(monthlyExpenseTotal)} за {monthLabel} — уже расходы бизнеса
             </p>
             <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
-              Это деньги бизнеса — не ваш личный карман.
-              При таком темпе ~{fmt(annualProjection)} в год уйдут в расходы бизнеса и уменьшат налог.
+              При таком темпе ~{fmt(annualProjection)} в год выходят из бизнеса, а не из вашего кармана.
             </p>
           </div>
         </div>
@@ -302,15 +298,12 @@ function TaxBenefitBanner({
           <Wallet size={18} className="text-blue-700" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-0.5">
-            Ваша выгода
-          </p>
-          <p className="text-sm font-semibold text-blue-900 leading-snug">
-            Расходы на авто — из бизнеса, не из кармана
+          <p className="text-sm font-bold text-blue-900 leading-snug">
+            Расходы на авто идут из кармана — а могли бы из бизнеса
           </p>
           <p className="text-xs text-blue-700 mt-1 leading-relaxed">
-            Добавляйте чеки на топливо, ТО и страховку — они становятся расходами бизнеса
-            и уменьшают налог. Средний предприниматель переводит так до 180 000 ₽ в год.
+            Добавьте чек на топливо, ТО или страховку — он станет расходом бизнеса.
+            До 180 000 ₽ в год перестают быть вашими личными потерями.
           </p>
         </div>
       </div>
