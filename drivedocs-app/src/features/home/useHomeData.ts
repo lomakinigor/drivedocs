@@ -29,6 +29,8 @@ export interface HomeData {
   recentTrips: Trip[]
   hasTodayTrips: boolean
   todayTripCount: number
+  /** Sum of all receipts for the current calendar month */
+  monthlyExpenseTotal: number
 }
 
 export type { AttentionItem }
@@ -47,6 +49,10 @@ function daysAgoISO(n: number): string {
 function currentMonthPrefix(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+function currentMonthStart(): string {
+  return `${currentMonthPrefix()}-01`
 }
 
 function currentMonthLabel(): string {
@@ -76,6 +82,10 @@ export function useHomeData(workspaceId: string): HomeData {
   )
   const unattachedReceipts = recentReceipts.filter((r) => !r.tripId)
 
+  // All receipts for current month (for expense banner)
+  const monthReceipts = useReceiptsForPeriod(workspaceId, currentMonthStart(), todayISO())
+  const monthlyExpenseTotal = monthReceipts.reduce((sum, r) => sum + r.amount, 0)
+
   // Vehicle and drivers for expiry rules
   const vehicle = useVehicleProfile(workspaceId)
   const drivers = useDrivers(workspaceId)
@@ -102,5 +112,6 @@ export function useHomeData(workspaceId: string): HomeData {
     recentTrips: allTrips.slice(0, 3),
     hasTodayTrips: todayTrips.length > 0,
     todayTripCount: todayTrips.length,
+    monthlyExpenseTotal,
   }
 }

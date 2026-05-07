@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, FileText, AlertTriangle, Receipt, Car, Plus, Settings, TrendingUp } from 'lucide-react'
+import { ArrowRight, FileText, AlertTriangle, Receipt, Car, Plus, Settings, TrendingUp, Wallet } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Badge } from '@/shared/ui/components/Badge'
 import { Card } from '@/shared/ui/components/Card'
@@ -11,7 +11,7 @@ import { useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { useHomeData } from '@/features/home/useHomeData'
 import { TAX_MODE_LABELS, VEHICLE_USAGE_MODEL_LABELS } from '@/entities/constants/labels'
 import type { MonthlyStats, AttentionItem } from '@/features/home/useHomeData'
-import type { Trip, WorkspaceDocument } from '@/entities/types/domain'
+import type { Trip, WorkspaceDocument, VehicleUsageModel } from '@/entities/types/domain'
 
 export function HomePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
@@ -75,6 +75,13 @@ export function HomePage() {
 
       {/* ── Monthly stats ────────────────────────────────────────────────── */}
       <MonthlyStatsSection stats={data.monthlyStats} />
+
+      {/* ── Tax benefit banner ───────────────────────────────────────────── */}
+      <TaxBenefitBanner
+        monthlyExpenseTotal={data.monthlyExpenseTotal}
+        vehicleUsageModel={workspace.vehicleUsageModel}
+        monthLabel={data.monthlyStats.monthLabel}
+      />
 
       {/* ── Attention items ──────────────────────────────────────────────── */}
       {data.attentionItems.length > 0 && (
@@ -245,6 +252,69 @@ function AttentionSection({
         })}
       </div>
     </section>
+  )
+}
+
+function TaxBenefitBanner({
+  monthlyExpenseTotal,
+  vehicleUsageModel,
+  monthLabel,
+}: {
+  monthlyExpenseTotal: number
+  vehicleUsageModel: VehicleUsageModel
+  monthLabel: string
+}) {
+  // Компенсация — расходы не уменьшают налог, баннер не актуален
+  if (vehicleUsageModel === 'COMPENSATION') return null
+
+  const fmt = (n: number) =>
+    n.toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ₽'
+
+  if (monthlyExpenseTotal > 0) {
+    const annualProjection = Math.round((monthlyExpenseTotal / new Date().getDate()) * 365)
+    return (
+      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-emerald-100 rounded-xl shrink-0">
+            <Wallet size={18} className="text-emerald-700" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-0.5">
+              Расходы бизнеса
+            </p>
+            <p className="text-base font-bold text-emerald-900 leading-snug">
+              {fmt(monthlyExpenseTotal)} за {monthLabel}
+            </p>
+            <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
+              Это деньги бизнеса — не ваш личный карман.
+              При таком темпе ~{fmt(annualProjection)} в год уйдут в расходы бизнеса и уменьшат налог.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+      <div className="flex items-start gap-3">
+        <div className="p-2 bg-blue-100 rounded-xl shrink-0">
+          <Wallet size={18} className="text-blue-700" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-0.5">
+            Ваша выгода
+          </p>
+          <p className="text-sm font-semibold text-blue-900 leading-snug">
+            Расходы на авто — из бизнеса, не из кармана
+          </p>
+          <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+            Добавляйте чеки на топливо, ТО и страховку — они становятся расходами бизнеса
+            и уменьшают налог. Средний предприниматель переводит так до 180 000 ₽ в год.
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }
 
