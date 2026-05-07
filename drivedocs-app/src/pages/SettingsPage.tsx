@@ -89,7 +89,7 @@ function RenameSheet({ currentName, onSave, onClose }: RenameSheetProps) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            placeholder="Название рабочего пространства"
+            placeholder="Название предприятия"
             className="w-full px-3.5 py-3 text-sm text-slate-900 placeholder-slate-300 bg-white border-2 border-blue-500 rounded-xl outline-none"
           />
         </div>
@@ -479,7 +479,7 @@ export function SettingsPage() {
       {/* ── Current workspace card ── */}
       <section>
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-          Текущее рабочее пространство
+          Ваш профиль
         </h2>
         <Card className="px-4 pt-4 pb-2">
           {/* Name row */}
@@ -610,7 +610,7 @@ export function SettingsPage() {
             className="flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 active:border-blue-300 active:text-blue-500 transition-colors"
           >
             <Plus size={18} />
-            <span className="text-sm font-medium">Добавить рабочее пространство</span>
+            <span className="text-sm font-medium">Добавить другое предприятие</span>
           </button>
         </div>
       </section>
@@ -663,7 +663,7 @@ export function SettingsPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-red-600">Начать настройку заново</p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Сбрасывает конфигурацию текущего пространства. Поездки и документы сохранятся.
+                  Сбрасывает настройки профиля. Поездки и документы сохранятся.
                 </p>
               </div>
             </button>

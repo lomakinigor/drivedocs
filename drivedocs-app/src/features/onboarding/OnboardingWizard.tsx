@@ -83,7 +83,7 @@ function canProceed(step: Step, state: WizardState): boolean {
 
 function ctaLabel(step: Step, isUpdate: boolean): string {
   if (step === 'inn') return 'Далее'
-  if (step === 'summary') return isUpdate ? 'Сохранить конфигурацию' : 'Создать рабочее пространство'
+  if (step === 'summary') return isUpdate ? 'Сохранить настройки' : 'Готово, начать работу'
   return 'Далее'
 }
 
