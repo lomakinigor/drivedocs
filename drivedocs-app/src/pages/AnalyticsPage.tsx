@@ -142,15 +142,15 @@ export function AnalyticsPage() {
       </div>
 
       {/* Period selector */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 p-1 bg-slate-100/70 rounded-2xl">
         {PERIODS.map(({ value, label: lbl }) => (
           <button
             key={value}
             onClick={() => setPeriod(value)}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors ${
+            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
               period === value
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-slate-200 bg-white text-slate-600 active:bg-slate-50'
+                ? 'bg-white text-blue-700 shadow-[0_1px_4px_oklch(22%_0.028_280/0.10)]'
+                : 'text-slate-500 active:text-slate-700'
             }`}
           >
             {lbl}
@@ -288,8 +288,9 @@ function StatCard({
       <div className="grid grid-cols-2 gap-2">
         {items.map((item) => (
           <div key={item.label} className="bg-slate-50 rounded-xl p-3">
-            <p className="text-xs text-slate-500 mb-0.5">{item.label}</p>
-            <p className="text-base font-bold text-slate-900">{item.value}</p>
+            <p className="text-[11px] font-medium text-slate-400 mb-1 uppercase tracking-wide">{item.label}</p>
+            <p className="text-[17px] font-bold text-slate-900 leading-none"
+              style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>{item.value}</p>
           </div>
         ))}
       </div>

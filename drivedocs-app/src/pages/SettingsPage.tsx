@@ -4,6 +4,7 @@ import {
   Building2,
   CreditCard,
   Car,
+  Users,
   Check,
   Pencil,
   Plus,
@@ -355,7 +356,7 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
           onClick={() => setDriversSheetOpen(true)}
         >
           <div className="p-2 bg-slate-100 rounded-xl shrink-0">
-            <Car size={18} className="text-slate-500" />
+            <Users size={18} className="text-slate-500" strokeWidth={1.8} />
           </div>
           <div className="flex-1 min-w-0">
             {drivers.length > 0 ? (
@@ -571,7 +572,7 @@ export function SettingsPage() {
       {/* ── Workspace list ── */}
       <section>
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-          Рабочие пространства
+          Предприятия
         </h2>
         <div className="space-y-2">
           {allWorkspaces.map((ws) => {

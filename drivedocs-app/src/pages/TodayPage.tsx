@@ -85,29 +85,35 @@ export function TodayPage() {
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-3">
           <Card
-            className="p-4 flex flex-col items-center justify-center gap-2 min-h-[100px]"
+            className="p-4 flex flex-col items-center justify-center gap-2.5 min-h-[112px]"
             onClick={openQuickTrip}
           >
-            <div className="p-2.5 bg-blue-100 rounded-2xl">
-              <Car size={22} className="text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+              <Car size={24} className="text-blue-600" strokeWidth={1.8} />
             </div>
-            <span className="text-sm font-semibold text-slate-800">Поездка</span>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-slate-900">Поездка</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">+ записать маршрут</p>
+            </div>
           </Card>
 
           <Card
-            className="p-4 flex flex-col items-center justify-center gap-2 min-h-[100px]"
+            className="p-4 flex flex-col items-center justify-center gap-2.5 min-h-[112px]"
             onClick={() => setShowReceiptSheet(true)}
           >
-            <div className="p-2.5 bg-green-100 rounded-2xl">
-              <ReceiptIcon size={22} className="text-green-600" />
+            <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
+              <ReceiptIcon size={24} className="text-emerald-600" strokeWidth={1.8} />
             </div>
-            <span className="text-sm font-semibold text-slate-800">Чек</span>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-slate-900">Чек</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">+ расход бизнеса</p>
+            </div>
           </Card>
         </div>
         <div className="flex justify-end">
           <Link
             to={`/w/${id}/receipts`}
-            className="text-xs text-blue-600 font-medium py-1 px-0.5"
+            className="text-xs text-blue-600 font-semibold py-1"
           >
             История чеков →
           </Link>
@@ -119,17 +125,18 @@ export function TodayPage() {
         <button
           onClick={handleStartTracking}
           disabled={geoLoading}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-blue-200 bg-blue-50 active:bg-blue-100 disabled:opacity-60"
+          className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl disabled:opacity-60 active:opacity-80 transition-opacity"
+          style={{ background: 'oklch(97.5% 0.022 285)', border: '1px solid oklch(88% 0.080 285)' }}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-xl shrink-0">
+            <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'oklch(94% 0.044 285)' }}>
               {geoLoading
-                ? <Loader size={18} className="text-blue-500 animate-spin" />
-                : <Navigation size={18} className="text-blue-500" />}
+                ? <Loader size={18} className="text-blue-600 animate-spin" strokeWidth={1.8} />
+                : <Navigation size={18} className="text-blue-600" strokeWidth={1.8} />}
             </div>
             <div className="text-left">
-              <p className="text-sm font-semibold text-blue-800">Отслеживать маршрут</p>
-              <p className="text-xs text-blue-400 mt-0.5">GPS · реальный километраж</p>
+              <p className="text-sm font-semibold text-blue-900">Отслеживать маршрут</p>
+              <p className="text-xs text-blue-500 mt-0.5">GPS · реальный километраж</p>
             </div>
           </div>
           <span className="text-blue-300 text-lg leading-none">›</span>
@@ -142,11 +149,12 @@ export function TodayPage() {
       {/* Daily waybill button */}
       <button
         onClick={() => setShowWaybill(true)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-white active:bg-slate-50"
+        className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl bg-white border border-slate-100/70 active:bg-slate-50/50 active:scale-[0.99] transition-all duration-150
+          shadow-[0_2px_12px_oklch(22%_0.028_280/0.06),_0_1px_3px_oklch(22%_0.028_280/0.04)]"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-50 rounded-xl shrink-0">
-            <Printer size={18} className="text-indigo-500" />
+          <div className="p-2.5 bg-blue-50 rounded-xl shrink-0">
+            <Printer size={18} className="text-blue-600" strokeWidth={1.8} />
           </div>
           <div className="text-left">
             <p className="text-sm font-semibold text-slate-900">Путевой лист за сегодня</p>
@@ -158,9 +166,12 @@ export function TodayPage() {
 
       {/* Journal */}
       <section>
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-          Журнал за сегодня
-        </h2>
+        <div className="flex items-center gap-1.5 mb-3">
+          <Car size={13} className="text-slate-400" />
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Журнал за сегодня
+          </h2>
+        </div>
 
         {todayTrips.length === 0 ? (
           <Card className="p-6 flex flex-col items-center text-center">

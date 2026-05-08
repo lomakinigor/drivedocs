@@ -48,23 +48,24 @@ export function TripsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setWaybillOpen(true)}
-            className="flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 text-sm font-medium px-3 py-2 rounded-xl active:bg-slate-50"
+            className="flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 text-sm font-medium px-3 py-2 rounded-2xl active:bg-slate-50 shadow-sm"
           >
-            <ClipboardList size={16} />
-            Путевой лист
+            <ClipboardList size={15} strokeWidth={1.8} />
+            Лист
           </button>
           <button
             onClick={() => setReportOpen(true)}
-            className="flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 text-sm font-medium px-3 py-2 rounded-xl active:bg-slate-50"
+            className="flex items-center gap-1.5 border border-slate-200 bg-white text-slate-600 text-sm font-medium px-3 py-2 rounded-2xl active:bg-slate-50 shadow-sm"
           >
-            <FileText size={16} />
+            <FileText size={15} strokeWidth={1.8} />
             Отчёт
           </button>
           <button
             onClick={openQuickTrip}
-            className="flex items-center gap-1.5 bg-blue-600 text-white text-sm font-medium px-3 py-2 rounded-xl active:bg-blue-700"
+            className="flex items-center gap-1.5 text-white text-sm font-semibold px-3 py-2 rounded-2xl active:opacity-90 transition-opacity"
+            style={{ background: 'oklch(52% 0.225 285)', boxShadow: '0 2px 8px oklch(52% 0.225 285 / 0.35)' }}
           >
-            <Plus size={16} />
+            <Plus size={16} strokeWidth={2.2} />
             Добавить
           </button>
         </div>

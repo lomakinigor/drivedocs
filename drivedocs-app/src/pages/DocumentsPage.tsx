@@ -268,11 +268,19 @@ function DocSection({
   selectedIds?: Set<string>
   onToggle?: (id: string) => void
 }) {
+  const sectionIcon =
+    title === 'Нужны' ? <AlertCircle size={13} className="text-red-400" /> :
+    title === 'В работе' ? <Clock size={13} className="text-amber-500" /> :
+    <CheckCircle size={13} className="text-emerald-500" />
+
   return (
     <section>
-      <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-        {title}
-      </h2>
+      <div className="flex items-center gap-1.5 mb-2">
+        {sectionIcon}
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          {title}
+        </h2>
+      </div>
       <div className="space-y-2">
         {docs.map((doc) => (
           <DocCard
@@ -323,9 +331,10 @@ function DocCard({
 
   return (
     <div
-      className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-colors ${
-        isSelected ? 'border-blue-400' : 'border-slate-100'
-      } ${selectMode && !hasTemplate ? 'opacity-40' : ''}`}
+      className={`bg-white rounded-2xl border overflow-hidden transition-all
+        shadow-[0_2px_12px_oklch(22%_0.028_280/0.06),_0_1px_3px_oklch(22%_0.028_280/0.04)]
+        ${isSelected ? 'border-blue-400' : 'border-slate-100/70'}
+        ${selectMode && !hasTemplate ? 'opacity-40' : ''}`}
     >
       <div className="flex items-start gap-3 p-4">
         {/* Select checkbox OR status icon */}
