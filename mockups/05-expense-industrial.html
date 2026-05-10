@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DriveDocs — Новый расход · Industrial</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #F1EEE5;
+    --grid: rgba(28,52,82,0.06);
+    --ink: #1C3452;
+    --ink-soft: rgba(28,52,82,0.65);
+    --muted: rgba(28,52,82,0.50);
+    --line: rgba(28,52,82,0.20);
+    --accent: #D9531E;
+    --green: #2D7A3E;
+  }
+  body { font-family: 'JetBrains Mono', monospace; background: #d6d3d1; min-height: 100vh; padding: 32px 16px 64px; -webkit-font-smoothing: antialiased; color: var(--ink); }
+  .wrap { max-width: 480px; margin: 0 auto; }
+  .title { text-align: center; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 18px; color: var(--ink); margin-bottom: 4px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .sub { text-align: center; font-family: 'JetBrains Mono'; font-size: 11px; color: var(--ink-soft); margin-bottom: 24px; letter-spacing: 0.04em; }
+  .phone {
+    width: 390px; height: 844px;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      var(--paper);
+    background-size: 16px 16px;
+    border-radius: 48px; border: 12px solid #18181b; box-shadow: 0 20px 60px rgba(0,0,0,0.18); overflow: hidden; position: relative; display: flex; flex-direction: column; margin: 0 auto;
+  }
+  .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 120px; height: 30px; background: #18181b; border-radius: 18px; z-index: 10; }
+  .status { height: 44px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono'; font-weight: 600; font-size: 14px; color: var(--ink); }
+  .content { flex:1; padding: 8px 18px 24px; display:flex; flex-direction:column; }
+  h1.h { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 40px; line-height: 0.95; letter-spacing: -0.03em; color: var(--ink); text-transform: uppercase; }
+  .corner { position:relative; }
+  .corner::before, .corner::after { content:""; position:absolute; width:8px; height:8px; border: 2px solid var(--ink); }
+  .corner::before { top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .corner::after { bottom:-1px; right:-1px; border-left:none; border-top:none; }
+  .btn-primary { width:100%; padding: 16px; background: var(--ink); color: var(--paper); font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 0.16em; text-transform: uppercase; cursor:pointer; }
+  .icons { display:flex; gap:6px; align-items:center; }
+  .field { padding: 11px 14px; border-bottom: 1px dashed var(--line); display:flex; align-items:center; gap:10px; }
+  .field:last-child { border-bottom:none; }
+  .field .lbl { font-family:'JetBrains Mono'; font-weight:700; font-size:10px; letter-spacing:0.12em; color:var(--muted); width: 84px; }
+  .field .val { font-family:'JetBrains Mono'; font-weight:600; font-size:13px; color:var(--ink); flex:1; letter-spacing:0.02em; }
+  .scan-btn { width:100%; border:1.5px solid var(--ink); background: rgba(255,255,255,0.85); padding: 18px; display:flex; align-items:center; gap:14px; font-family:'JetBrains Mono'; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink); cursor:pointer; }
+  .scan-icon { width:48px; height:48px; border:1.5px solid var(--ink); display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .divider { display:flex; align-items:center; gap:10px; margin: 12px 0; }
+  .divider span { font-family:'JetBrains Mono'; font-weight:700; font-size:10px; color:var(--muted); letter-spacing:0.18em; }
+  .divider .line { flex:1; height:1px; background: var(--line); }
+
+  .app::-webkit-scrollbar, .phone::-webkit-scrollbar, .content::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .app, .phone, .content { scrollbar-width: none; -ms-overflow-style: none; }
+
+  @media (max-width: 430px) {
+    body { padding: 0 !important; background: #000 !important; }
+    .wrap { max-width: none !important; }
+    .title, .sub, .phone-label { display: none !important; }
+    .phone {
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+    }
+    .notch { display: none !important; }
+    .status {
+      padding-top: env(safe-area-inset-top, 0px) !important;
+      height: calc(44px + env(safe-area-inset-top, 0px)) !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">[ 05 — новый расход · industrial ]</div>
+  <div class="sub">скан чека / ручной ввод</div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="status">
+      <span>09:41:00</span>
+      <div class="icons">
+        <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" fill="#1C3452"/><rect x="5" y="6" width="3" height="6" fill="#1C3452"/><rect x="10" y="3" width="3" height="9" fill="#1C3452"/><rect x="15" y="0" width="3" height="12" fill="#1C3452"/></svg>
+        <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="22" height="11" rx="2.5" stroke="#1C3452" opacity="0.5"/><rect x="2" y="2" width="19" height="8" fill="#1C3452"/></svg>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 0; border-bottom: 2px solid var(--ink); margin-bottom: 14px;">
+        <span style="font-family:'JetBrains Mono'; font-weight:700; font-size:11px; letter-spacing:0.1em;">DRIVEDOCS / РАСХОД.НОВ</span>
+        <span style="font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); letter-spacing:0.1em;">[× ОТМЕНА]</span>
+      </div>
+
+      <div style="font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); letter-spacing:0.12em; margin-bottom:6px;">// ФОРМА.РАСХОД #128</div>
+      <h1 class="h">Новый<br>расход</h1>
+
+      <div style="height:14px;"></div>
+
+      <button class="scan-btn corner">
+        <span class="scan-icon">[📷]</span>
+        <span>СФОТОГРАФИРОВАТЬ<br>ЧЕК</span>
+      </button>
+
+      <div class="divider"><div class="line"></div><span>──── ИЛИ ────</span><div class="line"></div></div>
+
+      <div class="corner" style="border:1px solid var(--ink); background: rgba(255,255,255,0.85); margin-bottom: 14px;">
+        <div style="padding:10px 14px; border-bottom:1px solid var(--ink); font-family:'JetBrains Mono'; font-weight:700; font-size:10px; letter-spacing:0.1em;">→ РУЧНОЙ ВВОД</div>
+        <div class="field">
+          <span class="lbl">КАТЕГОРИЯ</span>
+          <span class="val">БЕНЗИН ▼</span>
+        </div>
+        <div class="field" style="background: rgba(217,83,30,0.06);">
+          <span class="lbl">СУММА</span>
+          <span class="val" style="font-size:24px; font-weight:700; color:var(--accent);">650₽</span>
+        </div>
+        <div class="field">
+          <span class="lbl">ДАТА</span>
+          <span class="val">08.05.2026</span>
+        </div>
+        <div class="field">
+          <span class="lbl">ПРИМ</span>
+          <span class="val" style="font-size:11px;">АЗС ЛУКОЙЛ, 30Л АИ-95</span>
+        </div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <button class="btn-primary">СОХРАНИТЬ →</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

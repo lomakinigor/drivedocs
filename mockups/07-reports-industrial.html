@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DriveDocs — Отчёты · Industrial</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #F1EEE5;
+    --grid: rgba(28,52,82,0.06);
+    --ink: #1C3452;
+    --ink-soft: rgba(28,52,82,0.65);
+    --muted: rgba(28,52,82,0.50);
+    --line: rgba(28,52,82,0.20);
+    --accent: #D9531E;
+    --green: #2D7A3E;
+  }
+  body { font-family: 'JetBrains Mono', monospace; background: #d6d3d1; min-height: 100vh; padding: 32px 16px 64px; -webkit-font-smoothing: antialiased; color: var(--ink); }
+  .wrap { max-width: 480px; margin: 0 auto; }
+  .title { text-align: center; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 18px; color: var(--ink); margin-bottom: 4px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .sub { text-align: center; font-family: 'JetBrains Mono'; font-size: 11px; color: var(--ink-soft); margin-bottom: 24px; letter-spacing: 0.04em; }
+  .phone {
+    width: 390px; height: 844px;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      var(--paper);
+    background-size: 16px 16px;
+    border-radius: 48px; border: 12px solid #18181b; box-shadow: 0 20px 60px rgba(0,0,0,0.18); overflow: hidden; position: relative; display: flex; flex-direction: column; margin: 0 auto;
+  }
+  .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 120px; height: 30px; background: #18181b; border-radius: 18px; z-index: 10; }
+  .status { height: 44px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono'; font-weight: 600; font-size: 14px; color: var(--ink); }
+  .app { flex:1; display:flex; flex-direction:column; }
+  .content { flex: 1; padding: 6px 18px 12px; display:flex; flex-direction:column; }
+  h1.h { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 40px; line-height: 0.95; letter-spacing: -0.03em; color: var(--ink); text-transform: uppercase; }
+  .corner { position:relative; }
+  .corner::before, .corner::after { content:""; position:absolute; width:8px; height:8px; border: 2px solid var(--ink); }
+  .corner::before { top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .corner::after { bottom:-1px; right:-1px; border-left:none; border-top:none; }
+  .btn-primary { width:100%; padding: 14px; background: var(--ink); color: var(--paper); font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 0.14em; text-transform: uppercase; cursor:pointer; }
+  .nav { height: 78px; background: var(--paper); border-top: 2px solid var(--ink); display: flex; padding: 8px 0 24px; }
+  .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px; color: var(--muted); font-family: 'JetBrains Mono'; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-right: 1px solid var(--line); }
+  .nav-i:last-child { border-right: none; }
+  .nav-i.on { color: var(--accent); }
+  .nav-i svg { width: 22px; height: 22px; }
+  .icons { display:flex; gap:6px; align-items:center; }
+  .num { font-family: 'JetBrains Mono'; font-weight: 700; font-feature-settings: "tnum"; }
+  .pill { display:inline-flex; padding: 5px 10px; font-family:'JetBrains Mono'; font-weight:600; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; border:1px solid var(--ink); }
+
+  .app::-webkit-scrollbar, .phone::-webkit-scrollbar, .content::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .app, .phone, .content { scrollbar-width: none; -ms-overflow-style: none; }
+
+  @media (max-width: 430px) {
+    body { padding: 0 !important; background: #000 !important; }
+    .wrap { max-width: none !important; }
+    .title, .sub, .phone-label { display: none !important; }
+    .phone {
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+    }
+    .notch { display: none !important; }
+    .status {
+      padding-top: env(safe-area-inset-top, 0px) !important;
+      height: calc(44px + env(safe-area-inset-top, 0px)) !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">[ 07 — отчёты · industrial ]</div>
+  <div class="sub">апрель готов · май текущий</div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="status">
+      <span>09:41:00</span>
+      <div class="icons">
+        <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" fill="#1C3452"/><rect x="5" y="6" width="3" height="6" fill="#1C3452"/><rect x="10" y="3" width="3" height="9" fill="#1C3452"/><rect x="15" y="0" width="3" height="12" fill="#1C3452"/></svg>
+        <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="22" height="11" rx="2.5" stroke="#1C3452" opacity="0.5"/><rect x="2" y="2" width="19" height="8" fill="#1C3452"/></svg>
+      </div>
+    </div>
+
+    <div class="app">
+      <div class="content">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0; border-bottom: 2px solid var(--ink); margin-bottom: 12px;">
+          <span style="font-family:'JetBrains Mono'; font-weight:700; font-size:11px; letter-spacing:0.1em;">DRIVEDOCS / v1.0</span>
+          <span style="font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); letter-spacing:0.1em;">РЕД. 08-05-2026</span>
+        </div>
+
+        <h1 class="h">Отчёты</h1>
+        <div style="font-family:'JetBrains Mono'; font-size:11px; color:var(--ink-soft); margin-top:4px; letter-spacing:0.04em;">// сводка по периодам</div>
+
+        <div style="height:12px;"></div>
+
+        <div class="corner" style="border:1.5px solid var(--ink); background:rgba(255,255,255,0.95); margin-bottom: 12px;">
+          <div style="padding:10px 14px; border-bottom:1px solid var(--ink); display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono'; font-weight:700; font-size:11px; letter-spacing:0.1em;">
+            <span>АПР_2026</span>
+            <span style="color:var(--green);">● ГОТОВ</span>
+          </div>
+          <div style="padding: 14px; display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="border-right:1px solid var(--line); padding-right:10px;">
+              <div style="font-family:'JetBrains Mono'; font-size:9px; color:var(--muted); letter-spacing:0.1em;">[01] ПОЕЗДОК</div>
+              <div class="num" style="font-size:32px; line-height:1;">032</div>
+            </div>
+            <div>
+              <div style="font-family:'JetBrains Mono'; font-size:9px; color:var(--muted); letter-spacing:0.1em;">[02] К СПИСАНИЮ</div>
+              <div class="num" style="font-size:28px; line-height:1; color:var(--accent);">14 200₽</div>
+            </div>
+          </div>
+          <div style="padding: 0 14px 14px;">
+            <button class="btn-primary">[↓] ВЫГРУЗИТЬ В БУХГАЛТЕРИЮ</button>
+          </div>
+        </div>
+
+        <div class="corner" style="border:1px solid var(--ink); background:rgba(255,255,255,0.85); margin-bottom: 14px;">
+          <div style="padding:10px 14px; border-bottom:1px solid var(--ink); display:flex; justify-content:space-between; font-family:'JetBrains Mono'; font-weight:700; font-size:11px; letter-spacing:0.1em;">
+            <span>МАЙ_2026</span>
+            <span style="color:var(--accent);">○ ТЕКУЩИЙ</span>
+          </div>
+          <div style="padding: 12px 14px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-family:'JetBrains Mono'; font-size:9px; color:var(--muted); letter-spacing:0.1em;">// 8 / ~30 поездок</div>
+              <div class="num" style="font-size:24px; line-height:1; margin-top:2px;">4 800₽</div>
+            </div>
+            <span style="font-family:'JetBrains Mono'; font-weight:700; color:var(--ink);">→</span>
+          </div>
+          <div style="height:6px; border-top:1px solid var(--line); background: linear-gradient(to right, var(--accent) 27%, transparent 27%);"></div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-family:'JetBrains Mono'; font-weight:700; font-size:10px; letter-spacing:0.1em;">→ АРХИВ</span>
+          <div style="flex:1; height:1px; background:var(--ink);"></div>
+        </div>
+
+        <div style="display:flex; gap:6px;">
+          <span class="pill">[МАР]</span>
+          <span class="pill">[ФЕВ]</span>
+          <span class="pill">[ЯНВ]</span>
+          <span class="pill" style="border-style:dashed; color:var(--muted);">[+ ВСЕ]</span>
+        </div>
+
+      </div>
+
+      <div class="nav">
+        <div class="nav-i">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          сегодня
+        </div>
+        <div class="nav-i">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+          поездки
+        </div>
+        <div class="nav-i on">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          отчёты
+        </div>
+        <div class="nav-i">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          настройки
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

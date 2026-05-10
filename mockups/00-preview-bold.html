@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DriveDocs — Bold & Bright — Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #FF5722; --primary-dark: #E64A19; --accent: #FFC107;
+    --bg: #FFF8F3; --ink: #0A0A0A;
+    --slate-500: #6B7280; --slate-300: #D1D5DB; --slate-100: #F3F4F6;
+    --green: #00C853; --red: #FF1744;
+  }
+  body { font-family: 'Inter', sans-serif; background: #d6d3d1; min-height: 100vh; padding: 32px 16px 64px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 480px; margin: 0 auto; }
+  .title { text-align: center; font-family: 'Space Grotesk'; font-weight: 700; font-size: 22px; color: #292524; margin-bottom: 4px; }
+  .sub { text-align: center; font-size: 13px; color: #78716c; margin-bottom: 24px; }
+  .phone { width: 390px; height: 844px; background: var(--bg); border-radius: 48px; border: 12px solid #18181b; box-shadow: 0 20px 60px rgba(0,0,0,0.25); overflow: hidden; position: relative; display: flex; flex-direction: column; margin: 0 auto; }
+  .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 120px; height: 30px; background: #18181b; border-radius: 18px; z-index: 10; }
+  .status { height: 44px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; font-family: 'Space Grotesk'; font-weight: 600; font-size: 15px; }
+  .app { flex: 1; display: flex; flex-direction: column; }
+  .content { flex: 1; padding: 16px 24px 24px; display: flex; flex-direction: column; }
+  .icons { display:flex; gap:6px; align-items:center; }
+  h1.h { font-family: 'Space Grotesk'; font-weight: 700; font-size: 34px; letter-spacing: -0.02em; line-height: 1.05; text-transform: uppercase; }
+  .btn-primary { width:100%; padding: 18px; border-radius: 22px; background: var(--ink); color: white; font-weight: 700; font-size: 16px; font-family: 'Space Grotesk'; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 6px 6px 0 var(--primary); text-transform: uppercase; }
+
+  .app::-webkit-scrollbar, .phone::-webkit-scrollbar, .content::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .app, .phone, .content { scrollbar-width: none; -ms-overflow-style: none; }
+
+  @media (max-width: 430px) {
+    body { padding: 0 !important; background: #000 !important; }
+    .wrap { max-width: none !important; }
+    .title, .sub, .phone-label { display: none !important; }
+    .phone {
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+    }
+    .notch { display: none !important; }
+    .status {
+      padding-top: env(safe-area-inset-top, 0px) !important;
+      height: calc(44px + env(safe-area-inset-top, 0px)) !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">Слайд 2/4 — Документы автоматически</div>
+  <div class="sub">Bold &amp; Bright — onboarding preview</div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="status">
+      <span>9:41</span>
+      <div class="icons">
+        <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" fill="#0A0A0A"/><rect x="5" y="6" width="3" height="6" fill="#0A0A0A"/><rect x="10" y="3" width="3" height="9" fill="#0A0A0A"/><rect x="15" y="0" width="3" height="12" fill="#0A0A0A"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5l1.5-1.5a2.12 2.12 0 0 0-3 0L8 11.5zM4 7.5L5.5 9a3.54 3.54 0 0 1 5 0L12 7.5a5.66 5.66 0 0 0-8 0zM1 4.5L2.5 6a7.78 7.78 0 0 1 11 0L15 4.5a9.9 9.9 0 0 0-14 0z" fill="#0A0A0A"/></svg>
+        <svg width="26" height="12" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="22" height="11" rx="2.5" stroke="#0A0A0A" opacity="0.4"/><rect x="2" y="2" width="19" height="8" fill="#0A0A0A"/><rect x="23.5" y="4" width="2" height="4" fill="#0A0A0A" opacity="0.4"/></svg>
+      </div>
+    </div>
+
+    <div class="app">
+      <div class="content">
+        <!-- Skip top right -->
+        <div style="display:flex; justify-content:flex-end; margin-bottom: 16px;">
+          <button style="background:none; border:none; font-family:'Space Grotesk'; font-weight:600; font-size:13px; color:var(--slate-500); text-transform:uppercase; letter-spacing:0.04em;">Пропустить →</button>
+        </div>
+
+        <!-- Hero block: orange with ink icon and offset shadow -->
+        <div style="background: var(--primary); border: 2px solid var(--ink); border-radius: 28px; height: 240px; display:flex; align-items:center; justify-content:center; box-shadow: 8px 8px 0 var(--ink); margin-bottom: 28px; position: relative;">
+          <div style="width: 110px; height: 110px; background: var(--bg); border: 2px solid var(--ink); border-radius: 28px; display:flex; align-items:center; justify-content:center;">
+            <svg width="58" height="58" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13l2 2 4-4"/></svg>
+          </div>
+          <div style="position:absolute; top:-10px; right:-10px; background: var(--accent); border:2px solid var(--ink); border-radius: 999px; padding: 6px 14px; font-family:'Space Grotesk'; font-weight:700; font-size:12px; text-transform:uppercase; transform: rotate(8deg);">PDF · 1 КЛИК</div>
+        </div>
+
+        <!-- Title -->
+        <h1 class="h" style="margin-bottom: 14px;">Документы —<br>автоматически</h1>
+        <div style="font-size: 15px; color: var(--slate-500); line-height: 1.5; font-weight: 500; margin-bottom: 28px;">
+          Приказ, путевой лист, договор и согласие — формируются из ваших данных. Бухгалтер получит готовый PDF.
+        </div>
+
+        <!-- Dot progress -->
+        <div style="display:flex; gap:10px; justify-content:center; margin-bottom: 24px;">
+          <div style="width: 10px; height: 10px; border-radius:999px; background: var(--ink); border: 2px solid var(--ink);"></div>
+          <div style="width: 32px; height: 10px; border-radius:999px; background: var(--primary); border: 2px solid var(--ink);"></div>
+          <div style="width: 10px; height: 10px; border-radius:999px; background: var(--bg); border: 2px solid var(--ink);"></div>
+          <div style="width: 10px; height: 10px; border-radius:999px; background: var(--bg); border: 2px solid var(--ink);"></div>
+        </div>
+
+        <div style="margin-top:auto;">
+          <button class="btn-primary">Далее →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
