@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, CheckCircle, Clock, AlertCircle, Car, Printer, Square, CheckSquare } from 'lucide-react'
+import { FileText, CheckCircle, Clock, AlertCircle, Car, Printer, Square, CheckSquare, ArrowLeft } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Badge } from '@/shared/ui/components/Badge'
 import { EmptyState } from '@/shared/ui/components/EmptyState'
@@ -88,10 +88,19 @@ export function DocumentsPage() {
   return (
     <>
       <div className="px-4 py-5 space-y-5">
+        {/* Back to Settings (T-130) */}
+        <button
+          onClick={() => navigate(`/w/${id}/settings`)}
+          className="flex items-center gap-1.5 text-sm font-medium text-slate-500 active:text-slate-700 -ml-1"
+        >
+          <ArrowLeft size={16} />
+          Настройки
+        </button>
+
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Документы</h1>
+            <h1 className="text-xl font-bold text-slate-900">Документы предприятия</h1>
             <p className="text-sm text-slate-500 mt-0.5">
               {total === 0
                 ? 'Нет документов для этого предприятия'

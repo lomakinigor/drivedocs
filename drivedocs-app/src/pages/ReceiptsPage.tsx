@@ -30,7 +30,13 @@ function daysAgoISO(n: number): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ReceiptsPage() {
+interface ReceiptsPageProps {
+  /** When true, hides the page header (back-button + title) so the component
+   * can be embedded inside TripsPage as «Чеки» режим (T-133). */
+  embedded?: boolean
+}
+
+export function ReceiptsPage({ embedded = false }: ReceiptsPageProps = {}) {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const id = workspaceId ?? ''
   const navigate = useNavigate()
@@ -52,25 +58,27 @@ export function ReceiptsPage() {
   const enhanced = buildEnhancedAnalytics(receipts, prevReceipts)
 
   return (
-    <div className="px-4 py-5 space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 -ml-2 rounded-xl text-slate-500 active:bg-slate-100"
-          aria-label="Назад"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">История чеков</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            {receipts.length > 0
-              ? `${receipts.length} за ${period} дн.`
-              : `За последние ${period} дней`}
-          </p>
+    <div className={embedded ? 'space-y-5' : 'px-4 py-5 space-y-5'}>
+      {/* Header — скрыт в embedded-режиме (TripsPage показывает свой) */}
+      {!embedded && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 rounded-xl text-slate-500 active:bg-slate-100"
+            aria-label="Назад"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">История чеков</h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              {receipts.length > 0
+                ? `${receipts.length} за ${period} дн.`
+                : `За последние ${period} дней`}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Period selector */}
       <div className="flex gap-2">

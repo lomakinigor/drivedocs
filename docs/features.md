@@ -316,6 +316,39 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-022 — IA reshape (4-tab bottom navigation)
+
+**Description:** Перестройка нижней навигации с 6 вкладок на 4: Сегодня · Поездки · Отчёты · Настройки. Документы и Чеки переезжают внутрь существующих экранов; Лента событий — в Центр уведомлений за иконкой колокольчика. См. `docs/spec-9screens.md`.
+
+**Screens/Flows:** BottomNav, SettingsPage (новая секция «Документы предприятия»), TripDetailSheet (документы поездки), TripsPage (режим «Чеки»), NotificationsPage
+**User Stories:** US-001..US-013
+**Tasks:** T-127..T-135
+**Status:** in_progress
+
+---
+
+## F-023 — Reports page (закрытие месяца + экспорт)
+
+**Description:** AnalyticsPage преобразуется в ReportsPage. Главная карточка — предыдущий закрытый месяц с CTA «Выгрузить в бухгалтерию» (Excel/PDF/CSV). Текущий месяц как card-tonal. Чипы для просмотра прошлых месяцев. См. макет `mockups/07-reports-warm.html`.
+
+**Screens/Flows:** ReportsPage, экспорт-sheet
+**User Stories:** US-008
+**Tasks:** T-136..T-139
+**Status:** planned
+
+---
+
+## F-024 — Preview onboarding (Welcome carousel)
+
+**Description:** 4-слайдовая карусель перед Wizard'ом для новых пользователей. Объясняет что делает приложение, до запроса любых данных. См. макет `mockups/00-preview-warm.html`.
+
+**Screens/Flows:** `OnboardingPreview`, WelcomePage интеграция
+**User Stories:** US-001
+**Tasks:** T-140..T-142
+**Status:** planned
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |

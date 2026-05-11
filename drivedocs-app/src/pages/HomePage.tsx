@@ -34,7 +34,7 @@ export function HomePage() {
     } else if (item.kind === 'expiry') {
       navigate(`/w/${id}/settings`)
     } else {
-      navigate(`/w/${id}/events`)
+      navigate(`/w/${id}/notifications`)
     }
   }
 
@@ -217,7 +217,7 @@ function AttentionSection({
         </div>
         {items.length > MAX && (
           <Link
-            to={`/w/${workspaceId}/events`}
+            to={`/w/${workspaceId}/notifications`}
             className="text-xs text-blue-600 font-medium flex items-center gap-0.5"
           >
             Все <ArrowRight size={12} />

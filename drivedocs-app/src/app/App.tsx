@@ -3,10 +3,10 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { InstallPrompt } from '@/shared/components/InstallPrompt'
 import { MobileLayout } from '@/shared/ui/layouts/MobileLayout'
 import { HomePage } from '@/pages/HomePage'
-import { TodayPage } from '@/pages/TodayPage'
+// import { TodayPage } from '@/pages/TodayPage' // T-134: использован только редиректом на /home, компонент-файл сохраняется в codebase
 import { DocumentsPage } from '@/pages/DocumentsPage'
 import { TripsPage } from '@/pages/TripsPage'
-import { ReceiptsPage } from '@/pages/ReceiptsPage'
+// import { ReceiptsPage } from '@/pages/ReceiptsPage' // T-133: рендерится внутри TripsPage (mode=receipts), отдельного роута больше нет
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { EventsPage } from '@/pages/EventsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -95,15 +95,22 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      // T-127, T-128, T-129 · F-022 · D-023 — 4-tab IA + старые редиректы
       { index: true, element: <Navigate to="home" replace /> },
       { path: 'home', element: <HomePage /> },
-      { path: 'today', element: <TodayPage /> },
-      { path: 'documents', element: <DocumentsPage /> },
       { path: 'trips', element: <TripsPage /> },
-      { path: 'receipts', element: <ReceiptsPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> },
-      { path: 'events', element: <EventsPage /> },
+      { path: 'analytics', element: <AnalyticsPage /> }, // → переименуется в Reports в Phase B
       { path: 'settings', element: <SettingsPage /> },
+      // T-130 · Документы предприятия — sub-страница настроек, не в BottomNav
+      { path: 'settings/documents', element: <DocumentsPage /> },
+      // Центр уведомлений — не в нав, только через 🔔
+      { path: 'notifications', element: <EventsPage /> },
+
+      // Редиректы старых роутов (Phase A — оставляем минимум на 30 дней)
+      { path: 'today', element: <Navigate to="../home" replace /> },
+      { path: 'documents', element: <Navigate to="../settings" replace /> },
+      { path: 'receipts', element: <Navigate to="../trips?mode=receipts" replace /> },
+      { path: 'events', element: <Navigate to="../notifications" replace /> },
     ],
   },
   {
