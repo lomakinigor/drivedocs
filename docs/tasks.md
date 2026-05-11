@@ -618,3 +618,64 @@ Supabase Edge Function (Deno). Принимает POST `{ workspaceId, returnUrl
 - В SettingsPage перед «Опасной зоной» секция «Справка по документам» с двумя пунктами.
 - Все тексты на русском, без юр-жаргона. Help не блокирует wizard.
 - TypeScript noEmit — 0 ошибок.
+
+---
+
+## Phase 16 — 9-screen IA reshape (Phase A)
+
+### T-127 — BottomNav: 4 вкладки
+**Type:** impl | **Status:** in_progress | **Owner:** AI
+Сократить нижнюю навигацию с 6 пунктов до 4: Сегодня (→/home) · Поездки (→/trips) · Отчёты (→/analytics) · Настройки (→/settings).
+**Files/Areas:** `src/shared/ui/navigation/BottomNav.tsx`
+**Features:** F-022
+
+### T-128 — Редиректы старых роутов
+**Type:** impl | **Status:** planned | **Owner:** AI
+`/documents` → `/settings`, `/receipts` → `/trips?mode=receipts`, `/today` → `/home`. Старые URL открываются без 404.
+**Files/Areas:** роутер
+**Features:** F-022
+
+### T-129 — NotificationsPage (бывшая EventsPage)
+**Type:** impl | **Status:** planned | **Owner:** AI
+Переименование EventsPage → NotificationsPage. Доступ только через 🔔 в MobileHeader, не из нав.
+**Files/Areas:** `src/pages/EventsPage.tsx`, роутер
+**Features:** F-022
+
+### T-130 — Документы предприятия в SettingsPage
+**Type:** impl | **Status:** planned | **Owner:** AI
+Перенести одноразовые документы предприятия (приказы, договоры) из DocumentsPage в новую секцию SettingsPage.
+**Files/Areas:** `src/pages/SettingsPage.tsx`, `src/features/documents/*`
+**Features:** F-022
+
+### T-131 — Документы поездки в TripDetailSheet
+**Type:** impl | **Status:** planned | **Owner:** AI
+Перенести «документы конкретной поездки» (путевой/маршрутный лист) в TripDetailSheet.
+**Files/Areas:** `src/features/trips/TripDetailSheet.tsx`
+**Features:** F-022
+
+### T-132 — Удаление DocumentsPage из роутов
+**Type:** impl | **Status:** planned | **Owner:** AI
+После T-130/T-131 убрать `/documents` роут (оставить редирект).
+**Features:** F-022
+
+### T-133 — TripsPage режим «Чеки»
+**Type:** impl | **Status:** planned | **Owner:** AI
+Переключатель «Поездки / Чеки» в TripsPage. В режиме «Чеки» — содержимое бывшего ReceiptsPage.
+**Files/Areas:** `src/pages/TripsPage.tsx`, `src/pages/ReceiptsPage.tsx`
+**Features:** F-022
+
+### T-134 — TodayPage → HomePage объединение
+**Type:** impl | **Status:** planned | **Owner:** AI
+Первый таб = «Сегодня» = `/home`. TodayPage становится редиректом на /home.
+**Files/Areas:** `src/pages/HomePage.tsx`, `src/pages/TodayPage.tsx`
+**Features:** F-022
+
+### T-135 — TypeScript + smoke-тест + редеплой
+**Type:** verify | **Status:** planned | **Owner:** AI
+TS clean. Smoke: создать поездку → закрыть → 4 таба без regression. Мёрдж в master.
+**Features:** F-022
+**Acceptance:**
+- 4 вкладки открываются
+- Старые роуты редиректят
+- Документы предприятия в Настройках; документы поездки в TripDetailSheet
+- TypeScript 0 ошибок

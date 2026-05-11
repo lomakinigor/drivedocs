@@ -95,15 +95,20 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      // T-127, T-128, T-129 · F-022 · D-023 — 4-tab IA + старые редиректы
       { index: true, element: <Navigate to="home" replace /> },
       { path: 'home', element: <HomePage /> },
-      { path: 'today', element: <TodayPage /> },
-      { path: 'documents', element: <DocumentsPage /> },
       { path: 'trips', element: <TripsPage /> },
-      { path: 'receipts', element: <ReceiptsPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> },
-      { path: 'events', element: <EventsPage /> },
+      { path: 'analytics', element: <AnalyticsPage /> }, // → переименуется в Reports в Phase B
       { path: 'settings', element: <SettingsPage /> },
+      // Центр уведомлений — не в нав, только через 🔔
+      { path: 'notifications', element: <EventsPage /> },
+
+      // Редиректы старых роутов (Phase A — оставляем минимум на 30 дней)
+      { path: 'today', element: <Navigate to="../home" replace /> },
+      { path: 'documents', element: <Navigate to="../settings" replace /> },
+      { path: 'receipts', element: <Navigate to="../trips?mode=receipts" replace /> },
+      { path: 'events', element: <Navigate to="../notifications" replace /> },
     ],
   },
   {

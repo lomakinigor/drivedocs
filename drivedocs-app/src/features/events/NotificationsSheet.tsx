@@ -42,7 +42,7 @@ export function NotificationsSheet({ workspaceId, onClose }: NotificationsSheetP
 
   const handleOpenAll = () => {
     onClose()
-    navigate(`/w/${workspaceId}/events`)
+    navigate(`/w/${workspaceId}/notifications`)
   }
 
   const handleMarkRead = (id: string) => {
