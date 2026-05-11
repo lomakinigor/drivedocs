@@ -1,17 +1,36 @@
 import { useState } from 'react'
-import { ArrowRight, FileText, AlertTriangle, Receipt, Car, Plus, Settings, TrendingUp, Wallet } from 'lucide-react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Badge } from '@/shared/ui/components/Badge'
-import { Card } from '@/shared/ui/components/Card'
-import { TripCard } from '@/features/trips/TripCard'
+import { Car, Bell, FileText, AlertTriangle, Receipt, Settings, ChevronRight, MapPin, Check } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
 import { DocumentDetailSheet } from '@/features/documents/DocumentDetailSheet'
+import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import { useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { useHomeData } from '@/features/home/useHomeData'
-import { TAX_MODE_LABELS, VEHICLE_USAGE_MODEL_LABELS } from '@/entities/constants/labels'
-import type { MonthlyStats, AttentionItem } from '@/features/home/useHomeData'
-import type { Trip, WorkspaceDocument, VehicleUsageModel } from '@/entities/types/domain'
+import type { AttentionItem } from '@/features/home/useHomeData'
+import type { Trip, WorkspaceDocument } from '@/entities/types/domain'
+
+// T-143 · F-025 · D-025 — HomePage redesign под mockup 02-home.html (Warm).
+// TaxBenefitBanner намеренно удалён (решение пользователя 2026-05-11).
+
+const WEEKDAYS = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота']
+const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+
+function todayLabel(): string {
+  const d = new Date()
+  const wd = WEEKDAYS[d.getDay()]
+  return `${wd[0].toUpperCase() + wd.slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`
+}
+
+function initials(name: string): string {
+  const parts = name.replace(/[«»"]/g, '').split(/\s+/).filter(Boolean)
+  const letters = parts
+    .filter((p) => /\p{L}/u.test(p[0]))
+    .map((p) => p[0])
+    .join('')
+    .toUpperCase()
+  return letters.slice(0, 2) || 'W'
+}
 
 export function HomePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
@@ -21,22 +40,12 @@ export function HomePage() {
   const data = useHomeData(id)
   const navigate = useNavigate()
   const openQuickTrip = useOpenQuickTrip()
+
   const [selectedDoc, setSelectedDoc] = useState<WorkspaceDocument | null>(null)
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
+  const [receiptOpen, setReceiptOpen] = useState(false)
 
   if (!workspace) return null
-
-  const handleAttentionItemTap = (item: AttentionItem) => {
-    if (item.kind === 'document' && item.document) {
-      setSelectedDoc(item.document)
-    } else if (item.kind === 'receipt') {
-      navigate(`/w/${id}/receipts`)
-    } else if (item.kind === 'expiry') {
-      navigate(`/w/${id}/settings`)
-    } else {
-      navigate(`/w/${id}/notifications`)
-    }
-  }
 
   if (!data.isConfigured) {
     return (
@@ -46,12 +55,12 @@ export function HomePage() {
         </div>
         <h2 className="text-lg font-bold text-slate-900 mb-2">Настройка не завершена</h2>
         <p className="text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
-          Укажите налоговый режим и правовую модель, чтобы приложение смогло настроить
-          документы и подсказки.
+          Укажите налоговый режим и правовую модель, чтобы приложение смогло настроить документы и подсказки.
         </p>
         <button
           onClick={() => navigate('/onboarding')}
-          className="bg-blue-600 text-white text-sm font-semibold px-6 py-3 rounded-2xl active:bg-blue-700"
+          className="text-white text-sm font-semibold px-6 py-3 rounded-2xl active:opacity-90"
+          style={{ background: 'oklch(52% 0.225 285)' }}
         >
           Завершить настройку
         </button>
@@ -59,324 +68,247 @@ export function HomePage() {
     )
   }
 
-  return (
-    <div className="px-4 py-5 space-y-5">
-      {/* Config strip */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant="blue">{TAX_MODE_LABELS[workspace.taxMode]}</Badge>
-        <Badge variant="slate">{VEHICLE_USAGE_MODEL_LABELS[workspace.vehicleUsageModel]}</Badge>
-      </div>
-
-      {/* Today CTA */}
-      {!data.hasTodayTrips && (
-        <TodayCta onAdd={openQuickTrip} />
-      )}
-
-      {/* Monthly stats */}
-      <MonthlyStatsSection stats={data.monthlyStats} />
-
-      {/* Tax benefit banner */}
-      <TaxBenefitBanner
-        monthlyExpenseTotal={data.monthlyExpenseTotal}
-        vehicleUsageModel={workspace.vehicleUsageModel}
-        monthLabel={data.monthlyStats.monthLabel}
-      />
-
-      {/* Attention items */}
-      {data.attentionItems.length > 0 && (
-        <AttentionSection
-          items={data.attentionItems}
-          workspaceId={id}
-          onItemTap={handleAttentionItemTap}
-        />
-      )}
-
-      {/* Recent trips */}
-      <RecentTripsSection
-        trips={data.recentTrips}
-        workspaceId={id}
-        onAdd={openQuickTrip}
-        onOpen={setSelectedTrip}
-      />
-
-      {selectedDoc && (
-        <DocumentDetailSheet
-          doc={selectedDoc}
-          onClose={() => setSelectedDoc(null)}
-        />
-      )}
-
-      {selectedTrip && (
-        <TripDetailSheet
-          trip={selectedTrip}
-          onClose={() => setSelectedTrip(null)}
-        />
-      )}
-    </div>
-  )
-}
-
-// ─── Sub-sections ──────────────────────────────────────────────────────────────
-
-function TodayCta({ onAdd }: { onAdd: () => void }) {
-  return (
-    <button
-      onClick={onAdd}
-      className="flex items-center gap-3.5 w-full bg-white rounded-2xl px-4 py-3.5 text-left
-        border border-slate-100/70 active:scale-[0.99] active:bg-slate-50/50 transition-all duration-150
-        shadow-[0_2px_12px_oklch(22%_0.028_280/0.06),_0_1px_3px_oklch(22%_0.028_280/0.04)]"
-    >
-      <div
-        className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
-        style={{
-          background: 'oklch(52% 0.225 285)',
-          boxShadow: '0 3px 10px oklch(52% 0.225 285 / 0.30)',
-        }}
-      >
-        <Car size={21} className="text-white" strokeWidth={1.8} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-900 leading-snug">Добавить поездку</p>
-        <p className="text-xs text-slate-400 mt-0.5">Сегодня поездок ещё нет</p>
-      </div>
-      <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-        <Plus size={15} className="text-slate-500" strokeWidth={2.2} />
-      </div>
-    </button>
-  )
-}
-
-function MonthlyStatsSection({ stats }: { stats: MonthlyStats }) {
-  return (
-    <section>
-      <div className="flex items-center gap-1.5 mb-3">
-        <TrendingUp size={13} className="text-slate-400" />
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          За {stats.monthLabel}
-        </h2>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <StatTile
-          value={String(stats.tripCount)}
-          label="поездок"
-          isEmpty={stats.tripCount === 0}
-        />
-        <StatTile
-          value={stats.totalKm % 1 === 0 ? String(stats.totalKm) : stats.totalKm.toFixed(1)}
-          label="км"
-          isEmpty={stats.totalKm === 0}
-        />
-      </div>
-    </section>
-  )
-}
-
-function StatTile({
-  value,
-  label,
-  isEmpty,
-}: {
-  value: string
-  label: string
-  isEmpty: boolean
-}) {
-  return (
-    <div className="bg-white rounded-2xl px-4 py-4
-      shadow-[0_2px_12px_oklch(22%_0.028_280/0.06),_0_1px_3px_oklch(22%_0.028_280/0.04)]">
-      <p
-        className={`text-[2rem] font-bold leading-none tracking-tight ${isEmpty ? 'text-slate-200' : 'text-slate-900'}`}
-        style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
-      >
-        {value}
-      </p>
-      <p className="text-[11px] font-medium text-slate-400 mt-2 uppercase tracking-wide">{label}</p>
-    </div>
-  )
-}
-
-function AttentionSection({
-  items,
-  workspaceId,
-  onItemTap,
-}: {
-  items: AttentionItem[]
-  workspaceId: string
-  onItemTap: (item: AttentionItem) => void
-}) {
-  const MAX = 3
-  const shown = items.slice(0, MAX)
-
-  return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5">
-          <AlertTriangle size={13} className="text-amber-500" />
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-            Требуют внимания
-          </h2>
-        </div>
-        {items.length > MAX && (
-          <Link
-            to={`/w/${workspaceId}/notifications`}
-            className="text-xs text-blue-600 font-medium flex items-center gap-0.5"
-          >
-            Все <ArrowRight size={12} />
-          </Link>
-        )}
-      </div>
-      <div className="space-y-2">
-        {shown.map((item) => {
-          const isUrgent = item.severity === 'urgent'
-          const Icon =
-            item.kind === 'document' ? FileText :
-            item.kind === 'receipt' ? Receipt :
-            AlertTriangle
-          return (
-            <button
-              key={item.id}
-              onClick={() => onItemTap(item)}
-              className="w-full text-left"
-            >
-              <Card className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-xl shrink-0 ${isUrgent ? 'bg-red-50' : 'bg-amber-50'}`}>
-                    <Icon
-                      size={18}
-                      className={isUrgent ? 'text-red-500' : 'text-amber-500'}
-                      strokeWidth={1.8}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-900 leading-snug">{item.title}</p>
-                    {item.subtitle && (
-                      <p className={`text-xs mt-0.5 line-clamp-1 ${isUrgent ? 'text-red-500' : 'text-slate-500'}`}>
-                        {item.subtitle}
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-xs text-blue-600 font-medium shrink-0 mt-0.5">
-                    {item.kind === 'document' ? 'Открыть →' : '→'}
-                  </span>
-                </div>
-              </Card>
-            </button>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-function TaxBenefitBanner({
-  monthlyExpenseTotal,
-  vehicleUsageModel,
-  monthLabel,
-}: {
-  monthlyExpenseTotal: number
-  vehicleUsageModel: VehicleUsageModel
-  monthLabel: string
-}) {
-  if (vehicleUsageModel === 'COMPENSATION') return null
-
-  const fmt = (n: number) =>
-    n.toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ₽'
-
-  if (monthlyExpenseTotal > 0) {
-    const annualProjection = Math.round((monthlyExpenseTotal / new Date().getDate()) * 365)
-    return (
-      <div className="bg-emerald-50 border border-emerald-100/80 rounded-2xl p-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2.5 bg-emerald-100 rounded-xl shrink-0">
-            <Wallet size={18} className="text-emerald-700" strokeWidth={1.8} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-bold text-emerald-900 leading-snug">
-              {fmt(monthlyExpenseTotal)} за {monthLabel} — уже расходы бизнеса
-            </p>
-            <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
-              При таком темпе ~{fmt(annualProjection)} в год выходят из бизнеса, а не из кармана.
-            </p>
-          </div>
-        </div>
-      </div>
-    )
+  const topUrgent = data.attentionItems.find((i) => i.severity === 'urgent') ?? null
+  const handleAttentionTap = (item: AttentionItem) => {
+    if (item.kind === 'document' && item.document) setSelectedDoc(item.document)
+    else if (item.kind === 'receipt') navigate(`/w/${id}/trips?mode=receipts`)
+    else if (item.kind === 'expiry') navigate(`/w/${id}/settings`)
+    else navigate(`/w/${id}/notifications`)
   }
 
+  const bellCount = data.attentionItems.length
+
   return (
-    <div className="rounded-2xl p-4"
-      style={{ background: 'oklch(97.5% 0.022 285)', border: '1px solid oklch(94% 0.044 285)' }}>
-      <div className="flex items-start gap-3">
-        <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'oklch(94% 0.044 285)' }}>
-          <Wallet size={18} className="text-blue-700" strokeWidth={1.8} />
-        </div>
+    <div className="px-4 pt-2 pb-6">
+      {/* Header */}
+      <div className="flex items-start justify-between pb-4 pt-1">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-blue-900 leading-snug">
-            Расходы на авто идут из кармана — а могли бы из бизнеса
-          </p>
-          <p className="text-xs text-blue-700 mt-1 leading-relaxed">
-            Добавьте чек на топливо, ТО или страховку — он станет расходом бизнеса.
-            До 180 000 ₽ в год перестают быть вашими личными потерями.
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function RecentTripsSection({
-  trips,
-  workspaceId,
-  onAdd,
-  onOpen,
-}: {
-  trips: ReturnType<typeof useHomeData>['recentTrips']
-  workspaceId: string
-  onAdd: () => void
-  onOpen: (trip: Trip) => void
-}) {
-  return (
-    <section className="pb-2">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5">
-          <Car size={13} className="text-slate-400" />
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-            Последние поездки
-          </h2>
-        </div>
-        {trips.length > 0 && (
-          <Link
-            to={`/w/${workspaceId}/trips`}
-            className="text-xs text-blue-600 font-medium flex items-center gap-0.5"
+          <div
+            className="text-[12px] font-bold text-slate-500 uppercase tracking-wider truncate"
+            style={{ fontFamily: 'Sora, system-ui, sans-serif', letterSpacing: '0.04em' }}
           >
-            Все <ArrowRight size={12} />
-          </Link>
-        )}
+            {workspace.name}
+          </div>
+          <h1
+            className="text-[28px] font-bold text-slate-900 mt-0.5 leading-tight"
+            style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
+          >
+            Сегодня
+          </h1>
+          <div className="text-[13px] text-slate-500 mt-0.5">{todayLabel()}</div>
+        </div>
+        <div className="flex items-center gap-2.5 shrink-0 pt-1">
+          <button
+            onClick={() => navigate(`/w/${id}/notifications`)}
+            className="relative w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-[0_2px_12px_oklch(22%_0.028_280/0.06)] active:bg-slate-50"
+            aria-label="Уведомления"
+          >
+            <Bell size={18} className="text-slate-600" strokeWidth={2} />
+            {bellCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
+                style={{ background: 'oklch(60% 0.21 25)' }}
+              >
+                {bellCount > 9 ? '9+' : bellCount}
+              </span>
+            )}
+          </button>
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-[12px] font-bold"
+            style={{
+              background: 'linear-gradient(135deg, oklch(52% 0.225 285) 0%, oklch(46% 0.235 285) 100%)',
+              fontFamily: 'Sora, system-ui, sans-serif',
+            }}
+          >
+            {initials(workspace.name)}
+          </div>
+        </div>
       </div>
 
-      {trips.length === 0 ? (
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-slate-50 rounded-xl shrink-0">
-              <Car size={18} className="text-slate-300" strokeWidth={1.8} />
+      {/* KPI tiles — today */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <KpiTile label="Поездок сегодня" value={String(data.todayTripCount)} isEmpty={data.todayTripCount === 0} />
+        <KpiTile
+          label="Пробег"
+          value={data.todayKm % 1 === 0 ? String(data.todayKm) : data.todayKm.toFixed(1)}
+          unit="км"
+          isEmpty={data.todayKm === 0}
+        />
+      </div>
+
+      {/* Primary CTA */}
+      <button
+        onClick={openQuickTrip}
+        className="w-full flex items-center justify-center gap-2.5 text-white font-semibold text-[15px] py-[18px] rounded-[22px] active:opacity-90 transition-opacity mb-3"
+        style={{
+          background: 'oklch(52% 0.225 285)',
+          boxShadow: '0 8px 24px oklch(52% 0.225 285 / 0.32)',
+          fontFamily: 'Sora, system-ui, sans-serif',
+        }}
+      >
+        <Car size={22} strokeWidth={2} />
+        Создать поездку
+      </button>
+
+      {/* Secondary CTA */}
+      <button
+        onClick={() => setReceiptOpen(true)}
+        className="w-full bg-white flex items-center gap-3 py-4 px-4 rounded-[22px] border border-slate-100 active:bg-slate-50 shadow-[0_2px_12px_oklch(22%_0.028_280/0.06)] mb-5"
+      >
+        <span
+          className="w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0"
+          style={{ background: 'oklch(94% 0.05 155)' }}
+        >
+          <Receipt size={16} style={{ color: 'oklch(50% 0.13 155)' }} strokeWidth={2} />
+        </span>
+        <span
+          className="flex-1 text-left text-slate-700 font-semibold text-[14px]"
+          style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
+        >
+          Добавить расход
+        </span>
+        <ChevronRight size={16} className="text-slate-300" />
+      </button>
+
+      {/* Top urgent alert */}
+      {topUrgent && (
+        <button
+          onClick={() => handleAttentionTap(topUrgent)}
+          className="w-full flex items-center gap-3 px-4 py-3.5 rounded-[18px] mb-6 text-left active:opacity-90"
+          style={{ background: 'oklch(97% 0.022 25)', border: '1px solid oklch(92% 0.04 25)' }}
+        >
+          <span
+            className="w-9 h-9 rounded-[12px] bg-white flex items-center justify-center shrink-0 shadow-[0_1px_3px_oklch(22%_0.028_280/0.05)]"
+          >
+            <AlertTriangle size={18} style={{ color: 'oklch(58% 0.21 25)' }} strokeWidth={2.2} />
+          </span>
+          <div className="flex-1 min-w-0">
+            <div
+              className="font-semibold text-[14px] leading-snug"
+              style={{ color: 'oklch(50% 0.21 25)' }}
+            >
+              {topUrgent.title}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-500">Поездок пока нет</p>
-              <button
-                onClick={onAdd}
-                className="text-xs text-blue-600 font-semibold mt-0.5"
-              >
-                Записать первую →
-              </button>
-            </div>
+            {topUrgent.subtitle && (
+              <div className="text-[12px] text-slate-500 mt-0.5 line-clamp-1">{topUrgent.subtitle}</div>
+            )}
           </div>
-        </Card>
+          <ChevronRight size={18} style={{ color: 'oklch(70% 0.15 25)' }} />
+        </button>
+      )}
+
+      {/* Journal — today's trips */}
+      <SectionLabel icon={<Car size={13} />} text="Журнал за сегодня" />
+
+      {data.todayTrips.length === 0 ? (
+        <div className="bg-white rounded-[18px] p-4 flex items-center gap-3 shadow-[0_2px_12px_oklch(22%_0.028_280/0.06)]">
+          <div className="w-10 h-10 rounded-[12px] bg-slate-50 flex items-center justify-center shrink-0">
+            <Car size={18} className="text-slate-300" strokeWidth={1.8} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[14px] font-medium text-slate-500">Поездок за сегодня ещё нет</p>
+            <button onClick={openQuickTrip} className="text-[12px] font-semibold mt-0.5" style={{ color: 'oklch(52% 0.225 285)' }}>
+              Записать первую →
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="space-y-2">
-          {trips.map((trip) => (
-            <TripCard key={trip.id} trip={trip} showDate onClick={() => onOpen(trip)} />
+          {data.todayTrips.map((trip) => (
+            <TodayTripCard key={trip.id} trip={trip} onOpen={() => setSelectedTrip(trip)} />
           ))}
         </div>
       )}
-    </section>
+
+      {selectedDoc && <DocumentDetailSheet doc={selectedDoc} onClose={() => setSelectedDoc(null)} />}
+      {selectedTrip && <TripDetailSheet trip={selectedTrip} onClose={() => setSelectedTrip(null)} />}
+      {receiptOpen && <QuickReceiptSheet workspaceId={id} onClose={() => setReceiptOpen(false)} />}
+    </div>
+  )
+}
+
+// ─── Sub-components ─────────────────────────────────────────────────────────────
+
+function KpiTile({ label, value, unit, isEmpty }: { label: string; value: string; unit?: string; isEmpty: boolean }) {
+  return (
+    <div className="bg-white rounded-[18px] px-4 py-3.5 shadow-[0_2px_12px_oklch(22%_0.028_280/0.06)]">
+      <div
+        className="text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+        style={{ letterSpacing: '0.08em' }}
+      >
+        {label}
+      </div>
+      <div
+        className={`text-[30px] font-bold mt-1 leading-none ${isEmpty ? 'text-slate-200' : 'text-slate-900'}`}
+        style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
+      >
+        {value}
+        {unit && <span className="text-[14px] text-slate-400 font-medium ml-1">{unit}</span>}
+      </div>
+    </div>
+  )
+}
+
+function SectionLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div
+      className="flex items-center gap-1.5 mb-2.5 text-slate-500"
+      style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
+    >
+      <span className="text-slate-400">{icon}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-wider">{text}</span>
+    </div>
+  )
+}
+
+function TodayTripCard({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
+  const time = trip.createdAt ? new Date(trip.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : ''
+  return (
+    <div className="bg-white rounded-[18px] overflow-hidden shadow-[0_2px_12px_oklch(22%_0.028_280/0.06)]">
+      <button onClick={onOpen} className="w-full text-left p-4 flex items-start gap-3 active:bg-slate-50">
+        <div
+          className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0"
+          style={{ background: 'oklch(94% 0.044 285)' }}
+        >
+          <MapPin size={18} style={{ color: 'oklch(52% 0.225 285)' }} strokeWidth={2} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[14px] font-semibold text-slate-900 truncate">
+            {trip.startLocation} → {trip.endLocation}
+          </div>
+          <div className="text-[12px] text-slate-500 mt-0.5 truncate">
+            {time && <>{time} · </>}
+            {trip.purpose || 'Без цели'}
+          </div>
+          <div className="flex gap-1.5 mt-2 flex-wrap">
+            <span
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+              style={{ background: 'oklch(94% 0.044 285)', color: 'oklch(52% 0.225 285)' }}
+            >
+              {trip.distanceKm} км
+            </span>
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+              style={{ background: 'oklch(94% 0.05 155)', color: 'oklch(48% 0.14 155)' }}
+            >
+              <Check size={11} strokeWidth={3} />
+              Документы готовы
+            </span>
+          </div>
+        </div>
+      </button>
+      <div className="border-t border-slate-100 px-4 py-2.5 flex justify-between items-center">
+        <button
+          onClick={onOpen}
+          className="flex items-center gap-1.5 text-[13px] font-medium text-slate-600 active:opacity-70"
+        >
+          <FileText size={14} strokeWidth={2} />
+          Документы
+        </button>
+        <button onClick={onOpen} className="text-[13px] text-slate-400 active:text-slate-600">
+          Подробнее →
+        </button>
+      </div>
+    </div>
   )
 }

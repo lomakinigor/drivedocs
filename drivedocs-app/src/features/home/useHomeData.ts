@@ -27,8 +27,12 @@ export interface HomeData {
   /** Unified attention items — produced by rule engine, reactive to store changes */
   attentionItems: AttentionItem[]
   recentTrips: Trip[]
+  /** Trips dated today, full Trip objects (T-143: home shows today's journal) */
+  todayTrips: Trip[]
   hasTodayTrips: boolean
   todayTripCount: number
+  /** Total km for today's trips */
+  todayKm: number
   /** Sum of all receipts for the current calendar month */
   monthlyExpenseTotal: number
 }
@@ -110,8 +114,10 @@ export function useHomeData(workspaceId: string): HomeData {
     monthlyStats,
     attentionItems,
     recentTrips: allTrips.slice(0, 3),
+    todayTrips,
     hasTodayTrips: todayTrips.length > 0,
     todayTripCount: todayTrips.length,
+    todayKm: Math.round(todayTrips.reduce((sum, t) => sum + t.distanceKm, 0) * 10) / 10,
     monthlyExpenseTotal,
   }
 }
