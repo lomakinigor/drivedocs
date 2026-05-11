@@ -1,16 +1,14 @@
 import { NavLink, useParams } from 'react-router-dom'
 import { Home, Car, BarChart2, Settings } from 'lucide-react'
 
-// T-127 · F-022 · D-023
-// Bottom navigation reduced from 6 to 4 tabs as per 9-screen IA spec.
-// Phase A: первый таб ведёт на /home (HomePage становится «Сегодня»);
-// в Phase B `analytics` будет переименован в `reports`.
+// T-127 · T-136 · F-022 · D-023 · D-024
+// 4-tab nav per 9-screen IA spec. Phase B: `analytics` переименован в `reports`.
 
 const NAV_ITEMS = [
-  { to: 'home',      icon: Home,      label: 'Сегодня' },
-  { to: 'trips',     icon: Car,       label: 'Поездки' },
-  { to: 'analytics', icon: BarChart2, label: 'Отчёты' },
-  { to: 'settings',  icon: Settings,  label: 'Настройки' },
+  { to: 'home',     icon: Home,      label: 'Сегодня' },
+  { to: 'trips',    icon: Car,       label: 'Поездки' },
+  { to: 'reports',  icon: BarChart2, label: 'Отчёты' },
+  { to: 'settings', icon: Settings,  label: 'Настройки' },
 ] as const
 
 export function BottomNav() {

@@ -7,7 +7,8 @@ import { HomePage } from '@/pages/HomePage'
 import { DocumentsPage } from '@/pages/DocumentsPage'
 import { TripsPage } from '@/pages/TripsPage'
 // import { ReceiptsPage } from '@/pages/ReceiptsPage' // T-133: рендерится внутри TripsPage (mode=receipts), отдельного роута больше нет
-import { AnalyticsPage } from '@/pages/AnalyticsPage'
+// import { AnalyticsPage } from '@/pages/AnalyticsPage' // T-136: заменён на ReportsPage; файл сохраняется временно для возможного отката
+import { ReportsPage } from '@/pages/ReportsPage'
 import { EventsPage } from '@/pages/EventsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -99,7 +100,7 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="home" replace /> },
       { path: 'home', element: <HomePage /> },
       { path: 'trips', element: <TripsPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> }, // → переименуется в Reports в Phase B
+      { path: 'reports', element: <ReportsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       // T-130 · Документы предприятия — sub-страница настроек, не в BottomNav
       { path: 'settings/documents', element: <DocumentsPage /> },
@@ -111,6 +112,7 @@ const router = createBrowserRouter([
       { path: 'documents', element: <Navigate to="../settings" replace /> },
       { path: 'receipts', element: <Navigate to="../trips?mode=receipts" replace /> },
       { path: 'events', element: <Navigate to="../notifications" replace /> },
+      { path: 'analytics', element: <Navigate to="../reports" replace /> },
     ],
   },
   {
