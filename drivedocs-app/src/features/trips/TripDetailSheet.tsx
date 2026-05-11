@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { X, MapPin, Car, Calendar, Target, Trash2, Receipt } from 'lucide-react'
+import { X, MapPin, Car, Calendar, Target, Trash2, Receipt, Printer } from 'lucide-react'
 import { useWorkspaceStore, useReceiptsByTrip } from '@/app/store/workspaceStore'
 import type { Trip } from '@/entities/types/domain'
+import { WaybillPreviewSheet } from './WaybillPreviewSheet'
 
 interface TripDetailSheetProps {
   trip: Trip
@@ -12,6 +13,9 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
   const deleteTrip = useWorkspaceStore((s) => s.deleteTrip)
   const linkedReceipts = useReceiptsByTrip(trip.id)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showWaybill, setShowWaybill] = useState(false)
+  // ISO дата поездки в формате YYYY-MM-DD
+  const tripDateIso = trip.date.slice(0, 10)
 
   const handleDelete = () => {
     deleteTrip(trip.id)
@@ -33,6 +37,16 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
         onClick={onClose}
         aria-hidden="true"
       />
+
+      {/* Waybill preview (T-131) */}
+      {showWaybill && (
+        <WaybillPreviewSheet
+          workspaceId={trip.workspaceId}
+          fromDate={tripDateIso}
+          toDate={tripDateIso}
+          onClose={() => setShowWaybill(false)}
+        />
+      )}
 
       {/* Sheet */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl flex flex-col max-h-[80dvh]">
@@ -103,6 +117,26 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
                 ₽
               </MetaRow>
             )}
+          </div>
+
+          {/* Документы поездки (T-131 · F-022) */}
+          <div className="pt-1">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              Документы поездки
+            </p>
+            <button
+              onClick={() => setShowWaybill(true)}
+              className="flex items-center gap-3 w-full p-3 rounded-2xl border border-slate-200 bg-white active:bg-slate-50 transition-colors text-left"
+            >
+              <div className="p-2 bg-blue-50 rounded-xl shrink-0">
+                <Printer size={16} className="text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900">Путевой лист за этот день</p>
+                <p className="text-xs text-slate-400 mt-0.5">PDF для печати или отправки</p>
+              </div>
+              <span className="text-slate-300 text-lg shrink-0">›</span>
+            </button>
           </div>
 
           {/* Delete section */}

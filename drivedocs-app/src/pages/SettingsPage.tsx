@@ -26,6 +26,7 @@ import {
   useOrgProfile,
   useWorkspaceSubscription,
   useIsProWorkspace,
+  useWorkspaceDocuments,
 } from '@/app/store/workspaceStore'
 import { isBackendConfigured } from '@/lib/supabase'
 import { createCheckoutSession, createPortalSession } from '@/lib/billing/billingService'
@@ -314,6 +315,70 @@ function BillingSection({ workspaceId }: BillingSectionProps) {
   )
 }
 
+// ─── Документы предприятия (T-130 · F-022) ────────────────────────────────────
+
+function WorkspaceDocumentsSection({
+  workspaceId,
+  onOpen,
+}: {
+  workspaceId: string
+  onOpen: () => void
+}) {
+  const docs = useWorkspaceDocuments(workspaceId)
+  const total = docs.length
+  const ready = docs.filter((d) => d.status === 'completed').length
+  const percent = total === 0 ? 0 : Math.round((ready / total) * 100)
+  const pending = total - ready
+
+  return (
+    <section>
+      <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+        Документы предприятия
+      </h2>
+      <Card className="p-4" onClick={onOpen}>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="p-2 bg-blue-50 rounded-xl shrink-0">
+            <FileText size={18} className="text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            {total === 0 ? (
+              <>
+                <p className="text-sm font-semibold text-slate-900">Документы ещё не сформированы</p>
+                <p className="text-xs text-slate-500 mt-0.5">Завершите настройку — список появится автоматически</p>
+              </>
+            ) : pending === 0 ? (
+              <>
+                <p className="text-sm font-semibold text-slate-900">Все документы готовы</p>
+                <p className="text-xs text-slate-500 mt-0.5">{total} из {total} оформлено</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-slate-900">{ready} из {total} готово</p>
+                <p className="text-xs text-slate-500 mt-0.5">Осталось {pending} {pluralDocs(pending)}</p>
+              </>
+            )}
+          </div>
+          <span className="text-slate-300 text-lg shrink-0">›</span>
+        </div>
+        {total > 0 && (
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 rounded-full transition-all duration-500"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+        )}
+      </Card>
+    </section>
+  )
+}
+
+function pluralDocs(n: number): string {
+  if (n % 10 === 1 && n % 100 !== 11) return 'документ'
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'документа'
+  return 'документов'
+}
+
 // ─── Vehicle & Drivers section ────────────────────────────────────────────────
 
 function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
@@ -574,6 +639,9 @@ export function SettingsPage() {
 
       {/* ── Vehicle & Drivers ── */}
       <VehicleAndDriversSection workspaceId={id} />
+
+      {/* ── Документы предприятия (T-130, F-022) ── */}
+      <WorkspaceDocumentsSection workspaceId={id} onOpen={() => navigate(`/w/${id}/settings/documents`)} />
 
       {/* ── Workspace list ── */}
       <section>

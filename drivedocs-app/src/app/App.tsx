@@ -101,6 +101,8 @@ const router = createBrowserRouter([
       { path: 'trips', element: <TripsPage /> },
       { path: 'analytics', element: <AnalyticsPage /> }, // → переименуется в Reports в Phase B
       { path: 'settings', element: <SettingsPage /> },
+      // T-130 · Документы предприятия — sub-страница настроек, не в BottomNav
+      { path: 'settings/documents', element: <DocumentsPage /> },
       // Центр уведомлений — не в нав, только через 🔔
       { path: 'notifications', element: <EventsPage /> },
 
