@@ -595,3 +595,26 @@ Supabase Edge Function (Deno). Принимает POST `{ workspaceId, returnUrl
 - Dev-режим: кнопка выполняет `refreshSubscription`, ошибок нет.
 - Нет `stripe_customer_id` → 404 с понятным русским сообщением.
 - TypeScript noEmit — 0 ошибок.
+
+---
+
+## Phase 15 — Help layer
+
+### T-126 — Help layer для onboarding и SettingsPage
+**Type:** impl | **Status:** done | **Owner:** AI
+Добавлен справочный контент plain-language: info-cards на шагах wizard'а (EntityType, VehicleModel, Summary) и секция «Справка по документам» на SettingsPage. Контент в `onboardingHelp.ts` (5 разделов: ENTITY_TYPE, VEHICLE_DOCS, PRE_TRIP, STORAGE, WAYBILL_VS_ROUTE), рендер через переиспользуемый `HelpInfoSheet` поверх существующего `BottomSheet`.
+**Files/Areas:**
+- `src/entities/config/onboardingHelp.ts` (новый) — типы `HelpContent`/`HelpSection` + 5 разделов
+- `src/shared/ui/components/HelpInfoSheet.tsx` (новый) — bottom sheet с заголовком, лидом, секциями (info/warning), footnote
+- `src/features/onboarding/steps/EntityTypeStep.tsx` — info-card «Чем отличаются ИП и ООО для документов?»
+- `src/features/onboarding/steps/VehicleModelStep.tsx` — info-card «Какие документы нужны при каждом варианте?»
+- `src/features/onboarding/steps/SummaryStep.tsx` — info-card «Как правильно оформить поездку»
+- `src/pages/SettingsPage.tsx` — секция «Справка по документам» с двумя пунктами
+**Features:** F-021 | **User Stories:** US-001, US-002, US-011
+**Acceptance:**
+- На шаге EntityType виден синий info-card с открытием bottom sheet про требования к медосмотру/техосмотру.
+- На шаге VehicleModel дополнительный info-card про документы по каждой схеме (рядом с существующим «Сравнить все»).
+- На шаге Summary info-card про правильное заполнение маршрута до выезда (одометр, медосмотр, техосмотр).
+- В SettingsPage перед «Опасной зоной» секция «Справка по документам» с двумя пунктами.
+- Все тексты на русском, без юр-жаргона. Help не блокирует wizard.
+- TypeScript noEmit — 0 ошибок.

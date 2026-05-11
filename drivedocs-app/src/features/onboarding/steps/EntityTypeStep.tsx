@@ -1,5 +1,9 @@
+import { useState } from 'react'
+import { Info } from 'lucide-react'
 import type { EntityType } from '@/entities/types/domain'
 import { ENTITY_TYPE_LABELS } from '@/entities/constants/labels'
+import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { HELP_ENTITY_TYPE } from '@/entities/config/onboardingHelp'
 
 interface EntityTypeStepProps {
   selected?: EntityType
@@ -18,6 +22,8 @@ const options: { type: EntityType; description: string }[] = [
 ]
 
 export function EntityTypeStep({ selected, onSelect }: EntityTypeStepProps) {
+  const [showHelp, setShowHelp] = useState(false)
+
   return (
     <div className="space-y-3">
       {options.map((opt) => (
@@ -45,6 +51,23 @@ export function EntityTypeStep({ selected, onSelect }: EntityTypeStepProps) {
           </div>
         </button>
       ))}
+
+      {/* Info-card: чем отличается ИП от ООО по требованиям к документам */}
+      <button
+        onClick={() => setShowHelp(true)}
+        className="flex items-center gap-3 w-full p-3.5 rounded-2xl bg-blue-50 border border-blue-100 active:bg-blue-100 text-left mt-1"
+      >
+        <Info size={18} className="text-blue-600 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-blue-900">Чем отличаются ИП и ООО для документов?</p>
+          <p className="text-xs text-blue-700 mt-0.5">Медосмотр, техосмотр, путевой лист</p>
+        </div>
+        <span className="text-blue-400 text-xs font-semibold shrink-0">Подробнее →</span>
+      </button>
+
+      {showHelp && (
+        <HelpInfoSheet content={HELP_ENTITY_TYPE} onClose={() => setShowHelp(false)} />
+      )}
     </div>
   )
 }

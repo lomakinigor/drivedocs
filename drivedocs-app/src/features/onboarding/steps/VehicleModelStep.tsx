@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { X, AlertTriangle, CheckCircle, Building2, User } from 'lucide-react'
+import { X, AlertTriangle, CheckCircle, Building2, User, Info } from 'lucide-react'
 import type { EntityType, VehicleUsageModel } from '@/entities/types/domain'
+import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { HELP_VEHICLE_DOCS } from '@/entities/config/onboardingHelp'
 
 interface VehicleModelStepProps {
   selected?: VehicleUsageModel
@@ -272,6 +274,7 @@ function HelpSheet({
 
 export function VehicleModelStep({ selected, onSelect, entityType }: VehicleModelStepProps) {
   const [showHelp, setShowHelp] = useState(false)
+  const [showDocsHelp, setShowDocsHelp] = useState(false)
   const [carOwner, setCarOwner] = useState<CarOwnership | undefined>(undefined)
 
   const isIP = entityType === 'IP'
@@ -379,12 +382,29 @@ export function VehicleModelStep({ selected, onSelect, entityType }: VehicleMode
         })}
       </div>
 
+      {/* Info-card: какие документы нужны при каждом варианте */}
+      <button
+        onClick={() => setShowDocsHelp(true)}
+        className="flex items-center gap-3 w-full p-3.5 rounded-2xl bg-blue-50 border border-blue-100 active:bg-blue-100 text-left mt-4"
+      >
+        <Info size={18} className="text-blue-600 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-blue-900">Какие документы нужны при каждом варианте?</p>
+          <p className="text-xs text-blue-700 mt-0.5">Путевой лист, договор аренды, доверенность</p>
+        </div>
+        <span className="text-blue-400 text-xs font-semibold shrink-0">Подробнее →</span>
+      </button>
+
       {showHelp && (
         <HelpSheet
           onClose={() => setShowHelp(false)}
           entityType={entityType}
           carOwner={carOwner}
         />
+      )}
+
+      {showDocsHelp && (
+        <HelpInfoSheet content={HELP_VEHICLE_DOCS} onClose={() => setShowDocsHelp(false)} />
       )}
     </>
   )

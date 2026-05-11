@@ -1,10 +1,13 @@
-import { Building2, Hash, CreditCard, Car, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { Building2, Hash, CreditCard, Car, ChevronRight, Info } from 'lucide-react'
 import type { EntityType, TaxMode, VehicleUsageModel } from '@/entities/types/domain'
 import {
   ENTITY_TYPE_LABELS,
   TAX_MODE_LABELS,
   VEHICLE_USAGE_MODEL_LABELS,
 } from '@/entities/constants/labels'
+import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { HELP_PRE_TRIP } from '@/entities/config/onboardingHelp'
 
 interface SummaryStepProps {
   workspaceName: string
@@ -56,6 +59,8 @@ export function SummaryStep({
   vehicleUsageModel,
   onEditStep,
 }: SummaryStepProps) {
+  const [showPreTripHelp, setShowPreTripHelp] = useState(false)
+
   return (
     <div className="space-y-4">
       {/* Summary card */}
@@ -106,6 +111,23 @@ export function SummaryStep({
           ))}
         </ul>
       </div>
+
+      {/* Pre-trip checklist — info card with bottom sheet */}
+      <button
+        onClick={() => setShowPreTripHelp(true)}
+        className="flex items-center gap-3 w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200 active:bg-slate-100 text-left"
+      >
+        <Info size={18} className="text-slate-500 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-slate-900">Как правильно оформить поездку</p>
+          <p className="text-xs text-slate-500 mt-0.5">Что фиксировать до выезда</p>
+        </div>
+        <span className="text-slate-400 text-xs font-semibold shrink-0">Подробнее →</span>
+      </button>
+
+      {showPreTripHelp && (
+        <HelpInfoSheet content={HELP_PRE_TRIP} onClose={() => setShowPreTripHelp(false)} />
+      )}
     </div>
   )
 }

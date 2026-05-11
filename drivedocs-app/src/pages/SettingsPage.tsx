@@ -15,6 +15,8 @@ import {
   Loader,
   CheckCircle,
   XCircle,
+  Archive,
+  FileText,
 } from 'lucide-react'
 import { Card } from '@/shared/ui/components/Card'
 import { Badge } from '@/shared/ui/components/Badge'
@@ -34,6 +36,9 @@ import {
   VEHICLE_USAGE_MODEL_LABELS,
   VEHICLE_USAGE_MODEL_DESCRIPTIONS,
 } from '@/entities/constants/labels'
+import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE } from '@/entities/config/onboardingHelp'
+import type { HelpContent } from '@/entities/config/onboardingHelp'
 import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
 import { VehicleProfileSheet } from '@/features/workspace/VehicleProfileSheet'
 import { DriversSheet } from '@/features/workspace/DriversSheet'
@@ -417,6 +422,7 @@ export function SettingsPage() {
   const billingResult = searchParams.get('billing')
   const [renameOpen, setRenameOpen] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [helpSheet, setHelpSheet] = useState<HelpContent | null>(null)
 
   // Handle Stripe return URLs
   useEffect(() => {
@@ -649,6 +655,41 @@ export function SettingsPage() {
         </Card>
       </section>
 
+      {/* ── Help / Reference ── */}
+      <section>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+          Справка по документам
+        </h2>
+        <Card className="px-4 py-1 divide-y divide-slate-100">
+          <button
+            onClick={() => setHelpSheet(HELP_STORAGE)}
+            className="flex items-center gap-3 w-full py-3.5 text-left active:bg-slate-50 transition-colors"
+          >
+            <div className="p-2 bg-slate-100 rounded-xl shrink-0">
+              <Archive size={16} className="text-slate-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900">Как хранить путевые листы и чеки</p>
+              <p className="text-xs text-slate-400 mt-0.5">Сроки, формат, где держать</p>
+            </div>
+            <span className="text-slate-300 text-lg shrink-0">›</span>
+          </button>
+          <button
+            onClick={() => setHelpSheet(HELP_WAYBILL_VS_ROUTE)}
+            className="flex items-center gap-3 w-full py-3.5 text-left active:bg-slate-50 transition-colors"
+          >
+            <div className="p-2 bg-slate-100 rounded-xl shrink-0">
+              <FileText size={16} className="text-slate-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900">Путевой и маршрутный лист</p>
+              <p className="text-xs text-slate-400 mt-0.5">В чём разница</p>
+            </div>
+            <span className="text-slate-300 text-lg shrink-0">›</span>
+          </button>
+        </Card>
+      </section>
+
       {/* ── Danger zone ── */}
       <section>
         <h2 className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-2">
@@ -739,6 +780,11 @@ export function SettingsPage() {
           entityType={workspace.entityType}
           onClose={() => setOrgProfileSheetOpen(false)}
         />
+      )}
+
+      {/* Help info sheet */}
+      {helpSheet && (
+        <HelpInfoSheet content={helpSheet} onClose={() => setHelpSheet(null)} />
       )}
     </div>
   )

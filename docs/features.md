@@ -305,6 +305,17 @@ Status: `draft` | `planned` | `in-dev` | `done`
 
 ---
 
+## F-021 — Help layer для onboarding и settings
+
+**Description:** Справочный контент plain-language, показываемый по тапу на info-cards в OnboardingWizard и SettingsPage. Не блокирует прохождение wizard'а, открывается в bottom sheet поверх текущего экрана. Контент централизован в `onboardingHelp.ts`, рендерится через переиспользуемый `HelpInfoSheet`. Покрывает 5 тем: различия требований ИП/ООО, документы по схемам использования ТС, правила оформления поездки до выезда, хранение документов, разница путевой/маршрутный лист.
+
+**Screens/Flows:** EntityTypeStep (info-card → bottom sheet «Что зависит от типа организации»), VehicleModelStep (info-card «Какие документы нужны при каждом варианте»), SummaryStep (info-card «Как правильно оформить поездку»), SettingsPage (секция «Справка по документам» с двумя пунктами)
+**User Stories:** US-001, US-002, US-011
+**Tasks:** T-126
+**Status:** done
+
+---
+
 ## Planned / upcoming
 
 | ID | Название | Статус |
