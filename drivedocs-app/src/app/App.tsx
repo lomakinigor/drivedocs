@@ -3,10 +3,10 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { InstallPrompt } from '@/shared/components/InstallPrompt'
 import { MobileLayout } from '@/shared/ui/layouts/MobileLayout'
 import { HomePage } from '@/pages/HomePage'
-import { TodayPage } from '@/pages/TodayPage'
+// import { TodayPage } from '@/pages/TodayPage' // T-134: использован только редиректом на /home, компонент-файл сохраняется в codebase
 import { DocumentsPage } from '@/pages/DocumentsPage'
 import { TripsPage } from '@/pages/TripsPage'
-import { ReceiptsPage } from '@/pages/ReceiptsPage'
+// import { ReceiptsPage } from '@/pages/ReceiptsPage' // T-133: рендерится внутри TripsPage (mode=receipts), отдельного роута больше нет
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { EventsPage } from '@/pages/EventsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
