@@ -1,11 +1,38 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, LocateFixed, Loader, HelpCircle } from 'lucide-react'
+import { X, LocateFixed, Loader, HelpCircle, Satellite } from 'lucide-react'
 import { useWorkspaceStore, todayISO, useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import { reverseGeocode } from '@/shared/lib/reverseGeocode'
 import { calcFuelNorm } from '@/entities/config/fuelNorms'
 import { HelpFuelNormsSheet } from '@/features/help/HelpFuelNorms'
-import type { Trip, TripMode, WorkspaceEvent } from '@/entities/types/domain'
+import { recordMetric } from '@/lib/metrics/featureMetrics'
+import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
+
+// F-028 — GLONASS toggle хранится в localStorage (per-user, не per-workspace).
+const GLONASS_KEY = 'drivedocs:glonass-enabled:v1'
+function readGlonass(): boolean {
+  if (typeof window === 'undefined') return false
+  try { return window.localStorage.getItem(GLONASS_KEY) === '1' } catch { return false }
+}
+function writeGlonass(on: boolean): void {
+  if (typeof window === 'undefined') return
+  try { window.localStorage.setItem(GLONASS_KEY, on ? '1' : '0') } catch { /* ignore */ }
+}
+
+// Найти адрес, который встречался ≥3 раз в последних поездках. Если нет — undefined.
+function frequentStart(trips: Trip[]): string | undefined {
+  const counts = new Map<string, number>()
+  for (const t of trips.slice(0, 20)) {
+    const key = t.startLocation?.trim()
+    if (!key) continue
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  let best: { addr: string; n: number } | undefined
+  for (const [addr, n] of counts) {
+    if (n >= 3 && (!best || n > best.n)) best = { addr, n }
+  }
+  return best?.addr
+}
 
 // ─── Purpose options ──────────────────────────────────────────────────────────
 
@@ -32,20 +59,18 @@ interface FormState {
   // F-027 — приказ 368: одометр обязателен для путевого
   odometerStart: string
   odometerEnd: string
-  tripMode: TripMode
 }
 
 function initialState(): FormState {
   return {
     date: todayISO(),
     from: '',
-    to: '',
+    to: 'По городу',                  // F-028 — дефолт «Куда»
     distanceKm: '',
-    purpose: 'Переговоры с партнёром', // F-027 — дефолт по решению пользователя 2026-05-12
+    purpose: 'Переговоры с партнёром', // F-027
     customPurpose: '',
     odometerStart: '',
     odometerEnd: '',
-    tripMode: 'city',
   }
 }
 
@@ -95,15 +120,21 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
     s.vehicleProfiles.find((v) => v.workspaceId === workspaceId),
   )
   const workspace = useCurrentWorkspace()
+  const trips = useWorkspaceStore((s) => s.trips.filter((t) => t.workspaceId === workspaceId))
   const fromRef = useRef<HTMLInputElement>(null)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [glonassOn, setGlonassOn] = useState(() => readGlonass())
 
-  const [form, setForm] = useState<FormState>(() => ({
-    ...initialState(),
-    from: prefill?.from ?? '',
-    to: prefill?.to ?? '',
-    distanceKm: prefill?.distanceKm ? String(prefill.distanceKm) : '',
-  }))
+  const [form, setForm] = useState<FormState>(() => {
+    const base = initialState()
+    const freqFrom = frequentStart(trips) // F-028 — повторный адрес ≥3 раз
+    return {
+      ...base,
+      from: prefill?.from ?? freqFrom ?? '',
+      to: prefill?.to ?? base.to,
+      distanceKm: prefill?.distanceKm ? String(prefill.distanceKm) : '',
+    }
+  })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [touched, setTouched] = useState(false)
   const [locatingFrom, setLocatingFrom] = useState(false)
@@ -114,6 +145,55 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
     const t = setTimeout(() => fromRef.current?.focus(), 150)
     return () => clearTimeout(t)
   }, [])
+
+  // F-028 — Если GLONASS включён, при открытии формы пытаемся определить адрес.
+  // Значение ГЛОНАСС всегда главное — перетирает frequent-fill, даже если уже стоит.
+  useEffect(() => {
+    if (!glonassOn || !navigator.geolocation) return
+    let cancelled = false
+    setLocatingFrom(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        if (cancelled) return
+        try {
+          const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
+          if (!cancelled && addr) {
+            setForm((prev) => ({ ...prev, from: addr }))
+            recordMetric('glonass.autofill', { source: 'opensheet' })
+          }
+        } finally {
+          if (!cancelled) setLocatingFrom(false)
+        }
+      },
+      () => { if (!cancelled) setLocatingFrom(false) },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const toggleGlonass = () => {
+    const next = !glonassOn
+    setGlonassOn(next)
+    writeGlonass(next)
+    recordMetric('glonass.toggle', { state: next ? 'on' : 'off' })
+    // При включении сразу пытаемся определить
+    if (next && navigator.geolocation) {
+      setLocatingFrom(true)
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
+          if (addr) {
+            set({ from: addr })
+            recordMetric('glonass.autofill', { source: 'toggle' })
+          }
+          setLocatingFrom(false)
+        },
+        () => setLocatingFrom(false),
+        { enableHighAccuracy: true, timeout: 10000 },
+      )
+    }
+  }
 
   const locateField = async (field: 'from' | 'to') => {
     if (!navigator.geolocation) return
@@ -163,7 +243,7 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
       distanceKm: km,
       purpose,
       createdAt: new Date().toISOString(),
-      tripMode: form.tripMode,
+      tripMode: 'city', // F-028 — по умолчанию city; chip удалён
       ...(isFinite(odoStart) && odoStart >= 0 ? { odometerStart: odoStart } : {}),
       ...(isFinite(odoEnd) && odoEnd >= 0 ? { odometerEnd: odoEnd } : {}),
     }
@@ -204,15 +284,29 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0">
+        <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0 gap-3">
           <h2 className="text-base font-semibold text-slate-900">Новая поездка</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100"
-            aria-label="Закрыть"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleGlonass}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[12px] font-semibold transition-colors ${
+                glonassOn ? 'text-white' : 'border border-slate-200 text-slate-600 active:bg-slate-50'
+              }`}
+              style={glonassOn ? { background: 'oklch(52% 0.225 285)' } : undefined}
+              aria-pressed={glonassOn}
+            >
+              <Satellite size={13} />
+              ГЛОНАСС
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
+              aria-label="Закрыть"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable form */}
@@ -336,71 +430,50 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
             </Field>
           </div>
 
-          {/* Trip mode + Fuel norm preview (F-027) */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-slate-600">Режим поездки</span>
-              <button
-                type="button"
-                onClick={() => setHelpOpen(true)}
-                className="flex items-center gap-1 text-[11px] text-slate-500 active:text-slate-700"
+          {/* Fuel norm preview (F-027) — режим всегда 'city' */}
+          {(() => {
+            const km = parseFloat(form.distanceKm.replace(',', '.'))
+            const baseRate = vehicleProfile?.fuelConsumptionPer100km
+            if (!baseRate || !isFinite(km) || km <= 0) return null
+            const vehicleAgeYears = vehicleProfile?.year
+              ? new Date().getFullYear() - vehicleProfile.year
+              : undefined
+            const profile = workspace?.fuelProfile
+            const result = calcFuelNorm({
+              baseRate,
+              distanceKm: km,
+              tripMode: 'city',
+              citySize: profile?.citySize,
+              winterRegion: profile?.winterRegion,
+              hasAC: profile?.hasAC,
+              vehicleAgeYears,
+              date: form.date ? new Date(form.date) : new Date(),
+            })
+            return (
+              <div
+                className="rounded-[12px] px-3 py-2.5 flex items-start gap-2"
+                style={{ background: 'oklch(94% 0.044 285)' }}
               >
-                <HelpCircle size={13} />
-                Как считается норма расхода
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {(['city', 'suburban'] as TripMode[]).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => set({ tripMode: m })}
-                  className={`py-2.5 rounded-xl text-[13px] font-semibold transition-colors ${
-                    form.tripMode === m
-                      ? 'text-white'
-                      : 'border border-slate-200 bg-white text-slate-600 active:bg-slate-50'
-                  }`}
-                  style={form.tripMode === m ? { background: 'oklch(52% 0.225 285)' } : undefined}
-                >
-                  {m === 'city' ? 'По городу' : 'Загородняя'}
-                </button>
-              ))}
-            </div>
-            {(() => {
-              const km = parseFloat(form.distanceKm.replace(',', '.'))
-              const baseRate = vehicleProfile?.fuelConsumptionPer100km
-              if (!baseRate || !isFinite(km) || km <= 0) return null
-              const vehicleAgeYears = vehicleProfile?.year
-                ? new Date().getFullYear() - vehicleProfile.year
-                : undefined
-              const profile = workspace?.fuelProfile
-              const result = calcFuelNorm({
-                baseRate,
-                distanceKm: km,
-                tripMode: form.tripMode,
-                citySize: profile?.citySize,
-                winterRegion: profile?.winterRegion,
-                hasAC: profile?.hasAC,
-                vehicleAgeYears,
-                date: form.date ? new Date(form.date) : new Date(),
-              })
-              return (
-                <div
-                  className="mt-2 rounded-[12px] px-3 py-2 text-[12px]"
-                  style={{ background: 'oklch(94% 0.044 285)', color: 'oklch(40% 0.18 285)' }}
-                >
+                <div className="flex-1 text-[12px]" style={{ color: 'oklch(40% 0.18 285)' }}>
                   Норма расхода по АМ-23-р: <b>{result.normLiters.toLocaleString('ru-RU')} л</b>
                   {result.totalBonusPct !== 0 && (
                     <span className="opacity-75">
-                      {' '}
-                      (база {baseRate} л/100 км × {result.totalBonusPct > 0 ? '+' : ''}
-                      {result.totalBonusPct}%)
+                      {' '}(база {baseRate} л/100 км × {result.totalBonusPct > 0 ? '+' : ''}{result.totalBonusPct}%)
                     </span>
                   )}
                 </div>
-              )
-            })()}
-          </div>
+                <button
+                  type="button"
+                  onClick={() => setHelpOpen(true)}
+                  className="shrink-0 p-1 -m-1 rounded-lg active:bg-white/40"
+                  style={{ color: 'oklch(52% 0.225 285)' }}
+                  aria-label="Справка по нормам расхода"
+                >
+                  <HelpCircle size={16} />
+                </button>
+              </div>
+            )
+          })()}
 
           {/* Purpose */}
           <Field label="Цель поездки" error={touched ? errors.purpose : undefined}>

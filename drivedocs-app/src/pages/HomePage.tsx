@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Car, Bell, FileText, AlertTriangle, Receipt, Settings, ChevronRight, MapPin, Check, Wallet } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
@@ -8,6 +8,7 @@ import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import { useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { useHomeData } from '@/features/home/useHomeData'
 import { EssentialsReminderCard, EssentialsSheet } from '@/features/home/EssentialsReminder'
+import { recordMetric } from '@/lib/metrics/featureMetrics'
 import type { AttentionItem } from '@/features/home/useHomeData'
 import type { Trip, WorkspaceDocument, VehicleUsageModel } from '@/entities/types/domain'
 
@@ -47,6 +48,9 @@ export function HomePage() {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [essentialsOpen, setEssentialsOpen] = useState(false)
+
+  // F-028 — фиксируем посещение редизайн-экрана
+  useEffect(() => { recordMetric('view.home') }, [])
 
   if (!workspace) return null
 
