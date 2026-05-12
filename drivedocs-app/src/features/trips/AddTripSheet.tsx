@@ -34,6 +34,21 @@ function frequentStart(trips: Trip[]): string | undefined {
   return best?.addr
 }
 
+// Одометр последней поездки на возврате — подставляется как «выезд» новой.
+function lastOdometerEnd(trips: Trip[]): number | undefined {
+  const sorted = [...trips].sort((a, b) => {
+    const dd = b.date.localeCompare(a.date)
+    if (dd !== 0) return dd
+    return (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
+  })
+  for (const t of sorted) {
+    if (typeof t.odometerEnd === 'number' && isFinite(t.odometerEnd) && t.odometerEnd > 0) {
+      return t.odometerEnd
+    }
+  }
+  return undefined
+}
+
 // ─── Purpose options ──────────────────────────────────────────────────────────
 
 const PURPOSES = [
@@ -128,11 +143,13 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
   const [form, setForm] = useState<FormState>(() => {
     const base = initialState()
     const freqFrom = frequentStart(trips) // F-028 — повторный адрес ≥3 раз
+    const prevOdo = lastOdometerEnd(trips) // F-028 — одометр возврата прошлой поездки
     return {
       ...base,
       from: prefill?.from ?? freqFrom ?? '',
       to: prefill?.to ?? base.to,
       distanceKm: prefill?.distanceKm ? String(prefill.distanceKm) : '',
+      odometerStart: prevOdo !== undefined ? String(prevOdo) : '',
     }
   })
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -366,10 +383,12 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
               <input
                 type="text"
                 inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
+                autoComplete="off"
                 value={form.odometerStart}
                 onChange={(e) => {
-                  const next = e.target.value
-                  // Авто-заполнение distanceKm если оба одометра заполнены
+                  // F-028 — допускаем только цифры и один разделитель (точка/запятая)
+                  const next = e.target.value.replace(/[^\d.,]/g, '').replace(/([.,]).*\1/g, '$1')
                   const s = parseFloat(next.replace(',', '.'))
                   const eVal = parseFloat(form.odometerEnd.replace(',', '.'))
                   set({
@@ -387,9 +406,11 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
               <input
                 type="text"
                 inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
+                autoComplete="off"
                 value={form.odometerEnd}
                 onChange={(e) => {
-                  const next = e.target.value
+                  const next = e.target.value.replace(/[^\d.,]/g, '').replace(/([.,]).*\1/g, '$1')
                   const s = parseFloat(form.odometerStart.replace(',', '.'))
                   const eVal = parseFloat(next.replace(',', '.'))
                   set({
