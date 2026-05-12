@@ -63,7 +63,25 @@ export interface Workspace {
    * Если false/undefined и набор essentials неполный → жёлтая напоминалка на /home.
    */
   essentialsAck?: boolean
+  /**
+   * F-027 — преднабор для расчёта нормы расхода АМ-23-р. Заполняется один раз
+   * в Settings; коэффициенты применяются автоматически к каждой поездке.
+   */
+  fuelProfile?: FuelProfile
   createdAt: string
+}
+
+// F-027 — Fuel norm profile (АМ-23-р)
+export type CitySize = 'mega' | 'large' | 'medium' | 'small' | 'tiny'
+export type WinterRegion = 'mild' | 'moderate' | 'severe' | 'extreme'
+
+export interface FuelProfile {
+  /** Размер города для городского режима. Если не задан — берём 'medium'. */
+  citySize?: CitySize
+  /** Зимний регион — для авто-надбавки в холодный сезон. */
+  winterRegion?: WinterRegion
+  /** Кондиционер/климат-контроль (+7% в тёплое время года). */
+  hasAC?: boolean
 }
 
 // ─── Organization profile ─────────────────────────────────────────────────────
@@ -146,6 +164,9 @@ export interface Driver {
 
 // ─── Trip ─────────────────────────────────────────────────────────────────────
 
+/** F-027 · приказ Минтранса 368 — режим поездки для расчёта нормы расхода */
+export type TripMode = 'city' | 'suburban'
+
 export interface Trip {
   id: string
   workspaceId: string
@@ -156,6 +177,11 @@ export interface Trip {
   purpose: string
   notes?: string
   createdAt: string
+
+  // F-027 — показания одометра (приказ 368 п. 6 — обязательное поле путевого)
+  odometerStart?: number    // км на момент выезда
+  odometerEnd?: number      // км на момент возврата
+  tripMode?: TripMode       // по умолчанию 'city'
 }
 
 // ─── Receipt ─────────────────────────────────────────────────────────────────

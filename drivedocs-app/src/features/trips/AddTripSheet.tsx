@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, LocateFixed, Loader } from 'lucide-react'
-import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
+import { X, LocateFixed, Loader, HelpCircle } from 'lucide-react'
+import { useWorkspaceStore, todayISO, useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import { reverseGeocode } from '@/shared/lib/reverseGeocode'
-import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
+import { calcFuelNorm } from '@/entities/config/fuelNorms'
+import { HelpFuelNormsSheet } from '@/features/help/HelpFuelNorms'
+import type { Trip, TripMode, WorkspaceEvent } from '@/entities/types/domain'
 
 // ─── Purpose options ──────────────────────────────────────────────────────────
 
@@ -27,6 +29,10 @@ interface FormState {
   distanceKm: string
   purpose: PurposeOption | ''
   customPurpose: string
+  // F-027 — приказ 368: одометр обязателен для путевого
+  odometerStart: string
+  odometerEnd: string
+  tripMode: TripMode
 }
 
 function initialState(): FormState {
@@ -35,8 +41,11 @@ function initialState(): FormState {
     from: '',
     to: '',
     distanceKm: '',
-    purpose: '',
+    purpose: 'Переговоры с партнёром', // F-027 — дефолт по решению пользователя 2026-05-12
     customPurpose: '',
+    odometerStart: '',
+    odometerEnd: '',
+    tripMode: 'city',
   }
 }
 
@@ -85,7 +94,9 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
   const vehicleProfile = useWorkspaceStore((s) =>
     s.vehicleProfiles.find((v) => v.workspaceId === workspaceId),
   )
+  const workspace = useCurrentWorkspace()
   const fromRef = useRef<HTMLInputElement>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const [form, setForm] = useState<FormState>(() => ({
     ...initialState(),
@@ -140,6 +151,9 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
     const km = parseFloat(form.distanceKm.replace(',', '.'))
     const purpose = form.purpose === 'Другое' ? form.customPurpose.trim() : form.purpose
 
+    const odoStart = parseFloat(form.odometerStart.replace(',', '.'))
+    const odoEnd = parseFloat(form.odometerEnd.replace(',', '.'))
+
     const trip: Trip = {
       id: `trip-${Date.now()}`,
       workspaceId,
@@ -149,6 +163,9 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
       distanceKm: km,
       purpose,
       createdAt: new Date().toISOString(),
+      tripMode: form.tripMode,
+      ...(isFinite(odoStart) && odoStart >= 0 ? { odometerStart: odoStart } : {}),
+      ...(isFinite(odoEnd) && odoEnd >= 0 ? { odometerEnd: odoEnd } : {}),
     }
 
     addTrip(trip)
@@ -249,7 +266,52 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
             </div>
           </Field>
 
-          {/* Distance + Date — side by side */}
+          {/* Odometer — пара (приказ 368, обязательное поле путевого) */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Одометр, выезд">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={form.odometerStart}
+                onChange={(e) => {
+                  const next = e.target.value
+                  // Авто-заполнение distanceKm если оба одометра заполнены
+                  const s = parseFloat(next.replace(',', '.'))
+                  const eVal = parseFloat(form.odometerEnd.replace(',', '.'))
+                  set({
+                    odometerStart: next,
+                    ...(isFinite(s) && isFinite(eVal) && eVal > s
+                      ? { distanceKm: String(+(eVal - s).toFixed(1)) }
+                      : {}),
+                  })
+                }}
+                placeholder="км"
+                className={fieldClass(false)}
+              />
+            </Field>
+            <Field label="Одометр, возврат">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={form.odometerEnd}
+                onChange={(e) => {
+                  const next = e.target.value
+                  const s = parseFloat(form.odometerStart.replace(',', '.'))
+                  const eVal = parseFloat(next.replace(',', '.'))
+                  set({
+                    odometerEnd: next,
+                    ...(isFinite(s) && isFinite(eVal) && eVal > s
+                      ? { distanceKm: String(+(eVal - s).toFixed(1)) }
+                      : {}),
+                  })
+                }}
+                placeholder="км"
+                className={fieldClass(false)}
+              />
+            </Field>
+          </div>
+
+          {/* Distance + Date */}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Расстояние, км" error={touched ? errors.distanceKm : undefined}>
               <input
@@ -261,17 +323,6 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
                 placeholder="0"
                 className={fieldClass(touched && !!errors.distanceKm)}
               />
-              {(() => {
-                const km = parseFloat(form.distanceKm.replace(',', '.'))
-                const rate = vehicleProfile?.fuelConsumptionPer100km
-                if (!rate || isNaN(km) || km <= 0) return null
-                const liters = (km * rate) / 100
-                return (
-                  <p className="text-xs text-slate-400 mt-1">
-                    ~{liters.toFixed(1)} л топлива
-                  </p>
-                )
-              })()}
             </Field>
 
             <Field label="Дата">
@@ -283,6 +334,72 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
                 className={fieldClass(false)}
               />
             </Field>
+          </div>
+
+          {/* Trip mode + Fuel norm preview (F-027) */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-medium text-slate-600">Режим поездки</span>
+              <button
+                type="button"
+                onClick={() => setHelpOpen(true)}
+                className="flex items-center gap-1 text-[11px] text-slate-500 active:text-slate-700"
+              >
+                <HelpCircle size={13} />
+                Как считается норма расхода
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {(['city', 'suburban'] as TripMode[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => set({ tripMode: m })}
+                  className={`py-2.5 rounded-xl text-[13px] font-semibold transition-colors ${
+                    form.tripMode === m
+                      ? 'text-white'
+                      : 'border border-slate-200 bg-white text-slate-600 active:bg-slate-50'
+                  }`}
+                  style={form.tripMode === m ? { background: 'oklch(52% 0.225 285)' } : undefined}
+                >
+                  {m === 'city' ? 'По городу' : 'Загородняя'}
+                </button>
+              ))}
+            </div>
+            {(() => {
+              const km = parseFloat(form.distanceKm.replace(',', '.'))
+              const baseRate = vehicleProfile?.fuelConsumptionPer100km
+              if (!baseRate || !isFinite(km) || km <= 0) return null
+              const vehicleAgeYears = vehicleProfile?.year
+                ? new Date().getFullYear() - vehicleProfile.year
+                : undefined
+              const profile = workspace?.fuelProfile
+              const result = calcFuelNorm({
+                baseRate,
+                distanceKm: km,
+                tripMode: form.tripMode,
+                citySize: profile?.citySize,
+                winterRegion: profile?.winterRegion,
+                hasAC: profile?.hasAC,
+                vehicleAgeYears,
+                date: form.date ? new Date(form.date) : new Date(),
+              })
+              return (
+                <div
+                  className="mt-2 rounded-[12px] px-3 py-2 text-[12px]"
+                  style={{ background: 'oklch(94% 0.044 285)', color: 'oklch(40% 0.18 285)' }}
+                >
+                  Норма расхода по АМ-23-р: <b>{result.normLiters.toLocaleString('ru-RU')} л</b>
+                  {result.totalBonusPct !== 0 && (
+                    <span className="opacity-75">
+                      {' '}
+                      (база {baseRate} л/100 км × {result.totalBonusPct > 0 ? '+' : ''}
+                      {result.totalBonusPct}%)
+                    </span>
+                  )}
+                </div>
+              )
+            })()}
           </div>
 
           {/* Purpose */}
@@ -353,6 +470,8 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
           </button>
         </div>
       </div>
+
+      {helpOpen && <HelpFuelNormsSheet onClose={() => setHelpOpen(false)} />}
     </>
   )
 }
