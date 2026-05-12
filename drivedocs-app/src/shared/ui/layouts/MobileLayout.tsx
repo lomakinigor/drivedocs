@@ -18,10 +18,13 @@ export function MobileLayout() {
   const location = useLocation()
   const setCurrentWorkspace = useWorkspaceStore((s) => s.setCurrentWorkspace)
 
-  // T-143 · F-025 — страницы Visual Phase владеют собственным header'ом;
+  // T-143 · T-144 · F-025 — страницы Visual Phase владеют собственным header'ом;
   // глобальный MobileHeader дублирует и должен быть скрыт на этих маршрутах.
   // По мере перерисовки добавлять сюда следующие пути.
-  const pageOwnsHeader = /\/w\/[^/]+\/home\/?$/.test(location.pathname)
+  const pageOwnsHeader =
+    /\/w\/[^/]+\/home\/?$/.test(location.pathname) ||
+    /\/w\/[^/]+\/settings\/?$/.test(location.pathname) ||
+    /\/w\/[^/]+\/reports\/?$/.test(location.pathname)
 
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
