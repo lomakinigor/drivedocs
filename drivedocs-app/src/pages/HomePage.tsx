@@ -7,8 +7,10 @@ import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import { useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { useHomeData } from '@/features/home/useHomeData'
-import { EssentialsReminderCard, EssentialsSheet } from '@/features/home/EssentialsReminder'
+import { EssentialsReminderCard, EssentialsSheet, useEssentialsStatus } from '@/features/home/EssentialsReminder'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
+
+const SESSION_ESSENTIALS_SHOWN = 'drivedocs:essentials-shown-session:v1'
 import type { AttentionItem } from '@/features/home/useHomeData'
 import type { Trip, WorkspaceDocument, VehicleUsageModel } from '@/entities/types/domain'
 
@@ -48,9 +50,23 @@ export function HomePage() {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [essentialsOpen, setEssentialsOpen] = useState(false)
+  const essentialsStatus = useEssentialsStatus(id)
 
   // F-028 — фиксируем посещение редизайн-экрана
   useEffect(() => { recordMetric('view.home') }, [])
+
+  // 2026-05-12 — Автооткрытие EssentialsSheet один раз за сессию,
+  // если документы для путевого не заполнены и пользователь не сказал «уже есть».
+  // Без этих данных приложение не выполняет свою главную задачу (формирование путевого).
+  useEffect(() => {
+    if (!essentialsStatus.shouldRemind) return
+    try {
+      if (sessionStorage.getItem(SESSION_ESSENTIALS_SHOWN) === '1') return
+      sessionStorage.setItem(SESSION_ESSENTIALS_SHOWN, '1')
+      setEssentialsOpen(true)
+      recordMetric('essentials.autoopen')
+    } catch { /* sessionStorage unavailable — silently skip */ }
+  }, [essentialsStatus.shouldRemind])
 
   if (!workspace) return null
 
@@ -188,30 +204,32 @@ export function HomePage() {
       {/* F-026 — Essentials reminder (выше urgent-alert: без этих данных путевой не сформируется) */}
       <EssentialsReminderCard workspaceId={id} onTap={() => setEssentialsOpen(true)} />
 
-      {/* Top urgent alert */}
+      {/* Top urgent alert — документы предприятия (приказы, договоры): ЖЁЛТЫЙ.
+          Это важные дедлайны, но не блокирующие поездку — водитель их с собой не возит. */}
       {topUrgent && (
         <button
           onClick={() => handleAttentionTap(topUrgent)}
           className="w-full flex items-center gap-3 px-4 py-3.5 rounded-[18px] mb-6 text-left active:opacity-90"
-          style={{ background: 'oklch(97% 0.022 25)', border: '1px solid oklch(92% 0.04 25)' }}
+          style={{ background: 'oklch(96% 0.08 90)', border: '1px solid oklch(88% 0.12 90)' }}
         >
           <span
-            className="w-9 h-9 rounded-[12px] bg-white flex items-center justify-center shrink-0 shadow-[0_1px_3px_oklch(22%_0.028_280/0.05)]"
+            className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0"
+            style={{ background: 'oklch(90% 0.12 90)' }}
           >
-            <AlertTriangle size={18} style={{ color: 'oklch(58% 0.21 25)' }} strokeWidth={2.2} />
+            <AlertTriangle size={18} style={{ color: 'oklch(40% 0.14 75)' }} strokeWidth={2.2} />
           </span>
           <div className="flex-1 min-w-0">
             <div
               className="font-semibold text-[14px] leading-snug"
-              style={{ color: 'oklch(50% 0.21 25)' }}
+              style={{ color: 'oklch(35% 0.14 75)' }}
             >
               {topUrgent.title}
             </div>
             {topUrgent.subtitle && (
-              <div className="text-[12px] text-slate-500 mt-0.5 line-clamp-1">{topUrgent.subtitle}</div>
+              <div className="text-[12px] mt-0.5 line-clamp-1" style={{ color: 'oklch(45% 0.13 75)' }}>{topUrgent.subtitle}</div>
             )}
           </div>
-          <ChevronRight size={18} style={{ color: 'oklch(70% 0.15 25)' }} />
+          <ChevronRight size={18} style={{ color: 'oklch(55% 0.13 75)' }} />
         </button>
       )}
 
