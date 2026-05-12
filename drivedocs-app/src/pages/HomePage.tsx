@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Car, Bell, FileText, AlertTriangle, Receipt, Settings, ChevronRight, MapPin, Check } from 'lucide-react'
+import { Car, Bell, FileText, AlertTriangle, Receipt, Settings, ChevronRight, MapPin, Check, Wallet } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
 import { DocumentDetailSheet } from '@/features/documents/DocumentDetailSheet'
@@ -8,10 +8,11 @@ import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import { useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { useHomeData } from '@/features/home/useHomeData'
 import type { AttentionItem } from '@/features/home/useHomeData'
-import type { Trip, WorkspaceDocument } from '@/entities/types/domain'
+import type { Trip, WorkspaceDocument, VehicleUsageModel } from '@/entities/types/domain'
 
 // T-143 · F-025 · D-025 — HomePage redesign под mockup 02-home.html (Warm).
-// TaxBenefitBanner намеренно удалён (решение пользователя 2026-05-11).
+// 2026-05-12: после UX-audit (audit 44% на принципе «Выгода») вернули
+// компактную строку tax-benefit под KPI — НЕ баннер, одна строка, 56px.
 
 const WEEKDAYS = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота']
 const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
@@ -126,7 +127,7 @@ export function HomePage() {
       </div>
 
       {/* KPI tiles — today */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
+      <div className="grid grid-cols-2 gap-3 mb-3">
         <KpiTile label="Поездок сегодня" value={String(data.todayTripCount)} isEmpty={data.todayTripCount === 0} />
         <KpiTile
           label="Пробег"
@@ -135,6 +136,14 @@ export function HomePage() {
           isEmpty={data.todayKm === 0}
         />
       </div>
+
+      {/* Tax benefit row — compact, под KPI */}
+      <TaxBenefitRow
+        monthlyExpenseTotal={data.monthlyExpenseTotal}
+        vehicleUsageModel={workspace.vehicleUsageModel}
+        monthLabel={data.monthlyStats.monthLabel}
+        onTap={() => navigate(`/w/${id}/reports`)}
+      />
 
       {/* Primary CTA */}
       <button
@@ -258,6 +267,73 @@ function SectionLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
       <span className="text-slate-400">{icon}</span>
       <span className="text-[11px] font-semibold uppercase tracking-wider">{text}</span>
     </div>
+  )
+}
+
+function TaxBenefitRow({
+  monthlyExpenseTotal,
+  vehicleUsageModel,
+  monthLabel,
+  onTap,
+}: {
+  monthlyExpenseTotal: number
+  vehicleUsageModel: VehicleUsageModel
+  monthLabel: string
+  onTap: () => void
+}) {
+  // Для модели «Компенсация» расходы не вычитаются — баннер вводит в заблуждение.
+  if (vehicleUsageModel === 'COMPENSATION') return null
+
+  const fmt = (n: number) => n.toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ₽'
+
+  if (monthlyExpenseTotal > 0) {
+    return (
+      <button
+        onClick={onTap}
+        className="w-full mb-5 rounded-[18px] px-4 py-3.5 flex items-center gap-3 text-left active:opacity-90"
+        style={{ background: 'oklch(96% 0.05 155)', border: '1px solid oklch(92% 0.06 155)' }}
+      >
+        <span
+          className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0"
+          style={{ background: 'oklch(92% 0.08 155)' }}
+        >
+          <Wallet size={18} style={{ color: 'oklch(45% 0.13 155)' }} strokeWidth={2} />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-[14px] font-semibold leading-snug" style={{ color: 'oklch(35% 0.12 155)' }}>
+            {fmt(monthlyExpenseTotal)} за {monthLabel} — расходы бизнеса
+          </div>
+          <div className="text-[11px] mt-0.5" style={{ color: 'oklch(48% 0.10 155)' }}>
+            Эти деньги уже не из вашего кармана
+          </div>
+        </div>
+        <ChevronRight size={18} style={{ color: 'oklch(60% 0.12 155)' }} />
+      </button>
+    )
+  }
+
+  return (
+    <button
+      onClick={onTap}
+      className="w-full mb-5 rounded-[18px] px-4 py-3.5 flex items-center gap-3 text-left active:opacity-90"
+      style={{ background: 'oklch(97.5% 0.022 285)', border: '1px solid oklch(94% 0.044 285)' }}
+    >
+      <span
+        className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0"
+        style={{ background: 'oklch(94% 0.044 285)' }}
+      >
+        <Wallet size={18} style={{ color: 'oklch(52% 0.225 285)' }} strokeWidth={2} />
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="text-[14px] font-semibold leading-snug text-slate-800">
+          Чеки → налоговый вычет
+        </div>
+        <div className="text-[11px] text-slate-500 mt-0.5">
+          До 180 000 ₽/год перестают быть личными расходами
+        </div>
+      </div>
+      <ChevronRight size={18} className="text-slate-300" />
+    </button>
   )
 }
 
