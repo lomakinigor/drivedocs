@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { X, LocateFixed, Loader, HelpCircle, Satellite } from 'lucide-react'
-import { useWorkspaceStore, todayISO, useCurrentWorkspace } from '@/app/store/workspaceStore'
+import { useWorkspaceStore, todayISO, useCurrentWorkspace, useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import { reverseGeocode } from '@/shared/lib/reverseGeocode'
 import { calcFuelNorm } from '@/entities/config/fuelNorms'
@@ -120,7 +120,7 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
     s.vehicleProfiles.find((v) => v.workspaceId === workspaceId),
   )
   const workspace = useCurrentWorkspace()
-  const trips = useWorkspaceStore((s) => s.trips.filter((t) => t.workspaceId === workspaceId))
+  const trips = useWorkspaceTrips(workspaceId) // мемоизированный селектор — критично, иначе infinite render
   const fromRef = useRef<HTMLInputElement>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [glonassOn, setGlonassOn] = useState(() => readGlonass())
