@@ -6,6 +6,7 @@ import { reverseGeocode } from '@/shared/lib/reverseGeocode'
 import { calcFuelNorm } from '@/entities/config/fuelNorms'
 import { HelpFuelNormsSheet } from '@/features/help/HelpFuelNorms'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
+import { getAutofillValue, recordFieldValue } from '@/lib/memory/fieldMemory'
 import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
 
 // F-028 — GLONASS toggle хранится в localStorage (per-user, не per-workspace).
@@ -19,20 +20,9 @@ function writeGlonass(on: boolean): void {
   try { window.localStorage.setItem(GLONASS_KEY, on ? '1' : '0') } catch { /* ignore */ }
 }
 
-// Найти адрес, который встречался ≥3 раз в последних поездках. Если нет — undefined.
-function frequentStart(trips: Trip[]): string | undefined {
-  const counts = new Map<string, number>()
-  for (const t of trips.slice(0, 20)) {
-    const key = t.startLocation?.trim()
-    if (!key) continue
-    counts.set(key, (counts.get(key) ?? 0) + 1)
-  }
-  let best: { addr: string; n: number } | undefined
-  for (const [addr, n] of counts) {
-    if (n >= 3 && (!best || n > best.n)) best = { addr, n }
-  }
-  return best?.addr
-}
+// Старый frequentStart удалён — заменён единым правилом «Запоминание»
+// (F-029, `src/lib/memory/fieldMemory.ts`): 3 одинаковых подряд → autofill,
+// 2 override → сброс. Работает для любых полей форм.
 
 // Одометр последней поездки на возврате — подставляется как «выезд» новой.
 function lastOdometerEnd(trips: Trip[]): number | undefined {
@@ -142,12 +132,14 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
 
   const [form, setForm] = useState<FormState>(() => {
     const base = initialState()
-    const freqFrom = frequentStart(trips) // F-028 — повторный адрес ≥3 раз
-    const prevOdo = lastOdometerEnd(trips) // F-028 — одометр возврата прошлой поездки
+    // F-029 — правило «Запоминание»: 3 одинаковых подряд → autofill
+    const memFrom = getAutofillValue(`${workspaceId}:addtrip.from`)
+    const memTo = getAutofillValue(`${workspaceId}:addtrip.to`)
+    const prevOdo = lastOdometerEnd(trips)
     return {
       ...base,
-      from: prefill?.from ?? freqFrom ?? '',
-      to: prefill?.to ?? base.to,
+      from: prefill?.from ?? memFrom ?? '',
+      to: prefill?.to ?? memTo ?? base.to,
       distanceKm: prefill?.distanceKm ? String(prefill.distanceKm) : '',
       odometerStart: prevOdo !== undefined ? String(prevOdo) : '',
     }
@@ -247,6 +239,10 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
     }
 
     addTrip(trip)
+
+    // F-029 — фиксируем введённые значения для правила «Запоминание»
+    recordFieldValue(`${workspaceId}:addtrip.from`, trip.startLocation)
+    recordFieldValue(`${workspaceId}:addtrip.to`, trip.endLocation)
 
     const event: WorkspaceEvent = {
       id: `ev-trip-${Date.now()}`,
