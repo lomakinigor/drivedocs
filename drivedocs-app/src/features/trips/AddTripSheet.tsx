@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, LocateFixed, Loader, HelpCircle, Satellite } from 'lucide-react'
+import { X, Loader, HelpCircle, Satellite } from 'lucide-react'
 import { useWorkspaceStore, todayISO, useCurrentWorkspace, useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import { reverseGeocode } from '@/shared/lib/reverseGeocode'
@@ -155,7 +155,7 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
   const [errors, setErrors] = useState<FieldErrors>({})
   const [touched, setTouched] = useState(false)
   const [locatingFrom, setLocatingFrom] = useState(false)
-  const [locatingTo, setLocatingTo] = useState(false)
+  // locatingTo / locateField удалены 2026-05-12 — функцию заменяет кнопка ГЛОНАСС в шапке.
 
   // Auto-focus first field after sheet animates in
   useEffect(() => {
@@ -210,25 +210,6 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
         { enableHighAccuracy: true, timeout: 10000 },
       )
     }
-  }
-
-  const locateField = async (field: 'from' | 'to') => {
-    if (!navigator.geolocation) return
-    if (field === 'from') setLocatingFrom(true)
-    else setLocatingTo(true)
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
-        set({ [field]: addr })
-        if (field === 'from') setLocatingFrom(false)
-        else setLocatingTo(false)
-      },
-      () => {
-        if (field === 'from') setLocatingFrom(false)
-        else setLocatingTo(false)
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    )
   }
 
   const set = (patch: Partial<FormState>) =>
@@ -337,20 +318,17 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
                 value={form.from}
                 onChange={(e) => set({ from: e.target.value })}
                 onBlur={handleBlur}
-                placeholder="Адрес или район"
+                placeholder="Введите адрес или нажмите ГЛОНАСС"
                 className={fieldClass(touched && !!errors.from)}
               />
               <VoiceMicButton onResult={(t) => set({ from: t })} />
-              <button
-                type="button"
-                onClick={() => locateField('from')}
-                disabled={locatingFrom}
-                className="shrink-0 p-2 rounded-xl text-slate-400 active:bg-slate-100 disabled:opacity-40"
-                aria-label="Определить местоположение"
-              >
-                {locatingFrom ? <Loader size={17} className="animate-spin" /> : <LocateFixed size={17} />}
-              </button>
             </div>
+            {locatingFrom && (
+              <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500">
+                <Loader size={12} className="animate-spin" />
+                Определяю местоположение…
+              </div>
+            )}
           </Field>
 
           {/* To */}
@@ -361,19 +339,10 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
                 value={form.to}
                 onChange={(e) => set({ to: e.target.value })}
                 onBlur={handleBlur}
-                placeholder="Адрес или район"
+                placeholder="Адрес назначения"
                 className={fieldClass(touched && !!errors.to)}
               />
               <VoiceMicButton onResult={(t) => set({ to: t })} />
-              <button
-                type="button"
-                onClick={() => locateField('to')}
-                disabled={locatingTo}
-                className="shrink-0 p-2 rounded-xl text-slate-400 active:bg-slate-100 disabled:opacity-40"
-                aria-label="Определить местоположение"
-              >
-                {locatingTo ? <Loader size={17} className="animate-spin" /> : <LocateFixed size={17} />}
-              </button>
             </div>
           </Field>
 
