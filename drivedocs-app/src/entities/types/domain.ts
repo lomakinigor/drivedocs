@@ -58,6 +58,11 @@ export interface Workspace {
   taxMode: TaxMode
   vehicleUsageModel: VehicleUsageModel
   isConfigured: boolean      // false until onboarding completed
+  /**
+   * F-026 — пользователь подтвердил «документы для путевого листа уже есть».
+   * Если false/undefined и набор essentials неполный → жёлтая напоминалка на /home.
+   */
+  essentialsAck?: boolean
   createdAt: string
 }
 

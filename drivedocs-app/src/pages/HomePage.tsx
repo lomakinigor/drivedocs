@@ -7,6 +7,7 @@ import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import { useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { useHomeData } from '@/features/home/useHomeData'
+import { EssentialsReminderCard, EssentialsSheet } from '@/features/home/EssentialsReminder'
 import type { AttentionItem } from '@/features/home/useHomeData'
 import type { Trip, WorkspaceDocument, VehicleUsageModel } from '@/entities/types/domain'
 
@@ -45,6 +46,7 @@ export function HomePage() {
   const [selectedDoc, setSelectedDoc] = useState<WorkspaceDocument | null>(null)
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [essentialsOpen, setEssentialsOpen] = useState(false)
 
   if (!workspace) return null
 
@@ -179,6 +181,9 @@ export function HomePage() {
         <ChevronRight size={16} className="text-slate-300" />
       </button>
 
+      {/* F-026 — Essentials reminder (выше urgent-alert: без этих данных путевой не сформируется) */}
+      <EssentialsReminderCard workspaceId={id} onTap={() => setEssentialsOpen(true)} />
+
       {/* Top urgent alert */}
       {topUrgent && (
         <button
@@ -232,6 +237,7 @@ export function HomePage() {
       {selectedDoc && <DocumentDetailSheet doc={selectedDoc} onClose={() => setSelectedDoc(null)} />}
       {selectedTrip && <TripDetailSheet trip={selectedTrip} onClose={() => setSelectedTrip(null)} />}
       {receiptOpen && <QuickReceiptSheet workspaceId={id} onClose={() => setReceiptOpen(false)} />}
+      {essentialsOpen && <EssentialsSheet workspaceId={id} onClose={() => setEssentialsOpen(false)} />}
     </div>
   )
 }
