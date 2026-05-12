@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Outlet, useParams, useNavigate } from 'react-router-dom'
+import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { MobileHeader } from '../navigation/MobileHeader'
 import { BottomNav } from '../navigation/BottomNav'
 import { WorkspaceSwitcher } from '@/features/workspace/WorkspaceSwitcher'
@@ -15,7 +15,13 @@ export function MobileLayout() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const id = workspaceId ?? ''
   const navigate = useNavigate()
+  const location = useLocation()
   const setCurrentWorkspace = useWorkspaceStore((s) => s.setCurrentWorkspace)
+
+  // T-143 · F-025 — страницы Visual Phase владеют собственным header'ом;
+  // глобальный MobileHeader дублирует и должен быть скрыт на этих маршрутах.
+  // По мере перерисовки добавлять сюда следующие пути.
+  const pageOwnsHeader = /\/w\/[^/]+\/home\/?$/.test(location.pathname)
 
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
@@ -53,11 +59,13 @@ useEffect(() => {
   return (
     <GeoTripProvider>
     <div className="flex flex-col h-full" style={{ background: 'oklch(98.8% 0.005 80)' }}>
-      <MobileHeader
-        onOpenSwitcher={() => setSwitcherOpen(true)}
-        onOpenNotifications={() => setNotifOpen(true)}
-        onOpenQuickTrip={() => setAddTripOpen(true)}
-      />
+      {!pageOwnsHeader && (
+        <MobileHeader
+          onOpenSwitcher={() => setSwitcherOpen(true)}
+          onOpenNotifications={() => setNotifOpen(true)}
+          onOpenQuickTrip={() => setAddTripOpen(true)}
+        />
+      )}
 
       {/* Scrollable main content */}
       <main className="flex-1 overflow-y-auto pb-[72px]">
