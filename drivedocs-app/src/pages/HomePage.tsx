@@ -129,6 +129,8 @@ export function HomePage() {
   const classify = (it: AttentionItem): 'red' | 'yellow' | 'white' => {
     if (it.event?.type === 'fine') return 'red'
     if (it.kind === 'event' && it.severity === 'urgent') return 'red'
+    // ОСАГО / ВУ / ТО / КАСКО — при ≤7 дней до истечения или уже истёк → красный
+    if (it.kind === 'expiry' && typeof it.daysLeft === 'number' && it.daysLeft <= 7) return 'red'
     if (it.kind === 'document' || it.kind === 'expiry') return 'yellow'
     return 'white'
   }

@@ -17,6 +17,9 @@ export interface AttentionItem {
   // Typed payloads — present based on kind
   document?: WorkspaceDocument
   event?: WorkspaceEvent
+  /** Сколько дней до истечения (только для kind='expiry'). Отрицательное = уже истёк.
+   *  Используется на главной для эскалации ОСАГО/ВУ за неделю в RED tier. */
+  daysLeft?: number
 }
 
 // ─── Rule engine ──────────────────────────────────────────────────────────────
@@ -135,6 +138,7 @@ export function buildExpiryItems(vehicle: VehicleProfile | null, drivers: Driver
       title: `${label} — срок ${expired ? 'истёк' : 'истекает'}`,
       subtitle,
       severity,
+      daysLeft,
     })
   }
 
