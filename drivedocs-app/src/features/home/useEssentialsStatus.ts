@@ -6,8 +6,11 @@ import {
 } from '@/app/store/workspaceStore'
 
 // F-026 — минимальный набор данных для формирования путевого листа РФ
-// (приказ Минтранса № 152). Если неполный и пользователь не нажал «всё уже есть»,
-// показываем напоминалку на /home до тех пор, пока не закроет одним из двух способов.
+// (приказ Минтранса № 152).
+//
+// Правило 2026-05-13: essentials критичны — без них путевой лист недействителен.
+// Пользователь НЕ может подтвердить «у меня уже есть» — только заполнить.
+// Поле workspace.essentialsAck больше не используется (оставлено для миграции).
 
 export interface EssentialBlock {
   key: 'org' | 'vehicle' | 'driver'
@@ -19,11 +22,9 @@ export interface EssentialBlock {
 export interface EssentialsStatus {
   blocks: EssentialBlock[]
   complete: boolean
-  /** Пользователь явно подтвердил «всё уже заполнено» (essentialsAck=true). */
-  acknowledged: boolean
-  /** Показывать напоминалку: !complete && !acknowledged */
+  /** Показывать напоминалку: пока не complete — всегда true. */
   shouldRemind: boolean
-  /** Сколько блоков не заполнено (для подписи под банером). */
+  /** Сколько блоков не заполнено. */
   missingCount: number
 }
 
@@ -61,14 +62,12 @@ export function useEssentialsStatus(workspaceId: string): EssentialsStatus {
   ]
 
   const complete = blocks.every((b) => b.done)
-  const acknowledged = Boolean(workspace?.essentialsAck)
   const missingCount = blocks.filter((b) => !b.done).length
 
   return {
     blocks,
     complete,
-    acknowledged,
-    shouldRemind: !complete && !acknowledged,
+    shouldRemind: !complete, // не зависит от ack — essentials либо заполнены, либо нет
     missingCount,
   }
 }

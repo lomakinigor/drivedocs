@@ -59,8 +59,9 @@ export interface Workspace {
   vehicleUsageModel: VehicleUsageModel
   isConfigured: boolean      // false until onboarding completed
   /**
-   * F-026 — пользователь подтвердил «документы для путевого листа уже есть».
-   * Если false/undefined и набор essentials неполный → жёлтая напоминалка на /home.
+   * @deprecated 2026-05-13 — essentials критичны, ack убран. Без них путевой
+   *   лист недействителен — пропустить нельзя. Поле сохранено только для
+   *   обратной совместимости с persisted localStorage (не используется в логике).
    */
   essentialsAck?: boolean
   /**

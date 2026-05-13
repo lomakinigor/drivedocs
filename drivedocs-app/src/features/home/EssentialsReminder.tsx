@@ -59,15 +59,9 @@ interface EssentialsSheetProps {
 
 export function EssentialsSheet({ workspaceId, onClose }: EssentialsSheetProps) {
   const status = useEssentialsStatus(workspaceId)
-  const updateWorkspace = useWorkspaceStore((s) => s.updateWorkspace)
   const vehicleProfile = useVehicleProfile(workspaceId)
 
   const [openSub, setOpenSub] = useState<null | 'org' | 'vehicle' | 'driver'>(null)
-
-  const handleAckAll = () => {
-    updateWorkspace(workspaceId, { essentialsAck: true })
-    onClose()
-  }
 
   const blockIcon = (key: EssentialBlock['key']) => {
     if (key === 'org') return <Building2 size={18} />
@@ -143,22 +137,18 @@ export function EssentialsSheet({ workspaceId, onClose }: EssentialsSheetProps) 
 
         {/* Footer actions */}
         <div className="border-t border-slate-100 px-5 pt-3 pb-6 space-y-2 shrink-0">
-          <button
-            onClick={handleAckAll}
-            className="w-full py-3 rounded-2xl text-[14px] font-semibold border-2 border-slate-200 text-slate-700 active:bg-slate-50 transition-colors"
-            style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
-          >
-            У меня уже есть документы
-          </button>
+          {/* 2026-05-13 — Кнопка «У меня уже есть документы» убрана:
+              essentials критичны (без них путевой лист недействителен),
+              их нельзя ack — только заполнить. */}
           <button
             onClick={onClose}
             className="w-full py-3 rounded-2xl text-[13px] font-medium text-slate-500 active:text-slate-700"
           >
-            Заполнить позже
+            Закрыть
           </button>
-          <p className="text-[11px] text-slate-400 text-center pt-1 leading-relaxed">
-            «Заполню позже» — напоминалка останется на главной до тех пор, пока всё не заполните
-            или не подтвердите «уже есть».
+          <p className="text-[11px] text-center pt-1 leading-relaxed" style={{ color: 'oklch(50% 0.18 25)' }}>
+            Без этих данных путевой лист недействителен. Напоминалка останется на главной,
+            пока вы их не заполните — пропустить нельзя.
           </p>
         </div>
       </div>
