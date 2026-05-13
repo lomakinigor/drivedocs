@@ -11,6 +11,37 @@ import { EssentialsReminderCard, EssentialsSheet, useEssentialsStatus } from '@/
 import { recordMetric } from '@/lib/metrics/featureMetrics'
 
 const SESSION_ESSENTIALS_SHOWN = 'drivedocs:essentials-shown-session:v1'
+
+// Цветовая палитра трёх приоритетов уведомлений на главной (2026-05-13).
+const TIER_STYLES = {
+  red: {
+    bg: 'oklch(96% 0.04 25)',
+    border: 'oklch(88% 0.08 25)',
+    iconBg: 'oklch(90% 0.10 25)',
+    icon: 'oklch(40% 0.20 25)',
+    title: 'oklch(38% 0.20 25)',
+    subtitle: 'oklch(48% 0.18 25)',
+    chevron: 'oklch(55% 0.16 25)',
+  },
+  yellow: {
+    bg: 'oklch(96% 0.08 90)',
+    border: 'oklch(88% 0.12 90)',
+    iconBg: 'oklch(90% 0.12 90)',
+    icon: 'oklch(40% 0.14 75)',
+    title: 'oklch(35% 0.14 75)',
+    subtitle: 'oklch(45% 0.13 75)',
+    chevron: 'oklch(55% 0.13 75)',
+  },
+  white: {
+    bg: 'white',
+    border: 'oklch(94% 0.005 280)',
+    iconBg: 'oklch(95% 0.005 280)',
+    icon: 'oklch(45% 0.02 280)',
+    title: 'oklch(22% 0.028 280)',
+    subtitle: 'oklch(52% 0.02 280)',
+    chevron: 'oklch(75% 0.01 280)',
+  },
+} as const
 import type { AttentionItem } from '@/features/home/useHomeData'
 import type { Trip, WorkspaceDocument, VehicleUsageModel } from '@/entities/types/domain'
 
@@ -91,7 +122,21 @@ export function HomePage() {
     )
   }
 
-  const topUrgent = data.attentionItems.find((i) => i.severity === 'urgent') ?? null
+  // 2026-05-13 — Приоритеты уведомлений на главной (всегда показываем одно — самое верхнее):
+  //   RED    — штрафы (event.type='fine'), оперативные urgent-евенты (КоАП, налоговая)
+  //   YELLOW — документы предприятия с дедлайнами (приказы, договоры, ОСАГО к концу срока)
+  //   WHITE  — мягкие info (чеки без поездки, прочие warning-евенты)
+  const classify = (it: AttentionItem): 'red' | 'yellow' | 'white' => {
+    if (it.event?.type === 'fine') return 'red'
+    if (it.kind === 'event' && it.severity === 'urgent') return 'red'
+    if (it.kind === 'document' || it.kind === 'expiry') return 'yellow'
+    return 'white'
+  }
+  const TIER_RANK: Record<'red' | 'yellow' | 'white', number> = { red: 0, yellow: 1, white: 2 }
+  const topAttention =
+    [...data.attentionItems].sort((a, b) => TIER_RANK[classify(a)] - TIER_RANK[classify(b)])[0] ?? null
+  const topTier = topAttention ? classify(topAttention) : null
+
   const handleAttentionTap = (item: AttentionItem) => {
     if (item.kind === 'document' && item.document) setSelectedDoc(item.document)
     else if (item.kind === 'receipt') navigate(`/w/${id}/trips?mode=receipts`)
@@ -204,34 +249,35 @@ export function HomePage() {
       {/* F-026 — Essentials reminder (выше urgent-alert: без этих данных путевой не сформируется) */}
       <EssentialsReminderCard workspaceId={id} onTap={() => setEssentialsOpen(true)} />
 
-      {/* Top urgent alert — документы предприятия (приказы, договоры): ЖЁЛТЫЙ.
-          Это важные дедлайны, но не блокирующие поездку — водитель их с собой не возит. */}
-      {topUrgent && (
-        <button
-          onClick={() => handleAttentionTap(topUrgent)}
-          className="w-full flex items-center gap-3 px-4 py-3.5 rounded-[18px] mb-6 text-left active:opacity-90"
-          style={{ background: 'oklch(96% 0.08 90)', border: '1px solid oklch(88% 0.12 90)' }}
-        >
-          <span
-            className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0"
-            style={{ background: 'oklch(90% 0.12 90)' }}
+      {/* Top alert — цвет по приоритету: red > yellow > white. Показываем одно. */}
+      {topAttention && topTier && (() => {
+        const style = TIER_STYLES[topTier]
+        return (
+          <button
+            onClick={() => handleAttentionTap(topAttention)}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-[18px] mb-6 text-left active:opacity-90"
+            style={{ background: style.bg, border: `1px solid ${style.border}` }}
           >
-            <AlertTriangle size={18} style={{ color: 'oklch(40% 0.14 75)' }} strokeWidth={2.2} />
-          </span>
-          <div className="flex-1 min-w-0">
-            <div
-              className="font-semibold text-[14px] leading-snug"
-              style={{ color: 'oklch(35% 0.14 75)' }}
+            <span
+              className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0"
+              style={{ background: style.iconBg }}
             >
-              {topUrgent.title}
+              <AlertTriangle size={18} style={{ color: style.icon }} strokeWidth={2.2} />
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-[14px] leading-snug" style={{ color: style.title }}>
+                {topAttention.title}
+              </div>
+              {topAttention.subtitle && (
+                <div className="text-[12px] mt-0.5 line-clamp-1" style={{ color: style.subtitle }}>
+                  {topAttention.subtitle}
+                </div>
+              )}
             </div>
-            {topUrgent.subtitle && (
-              <div className="text-[12px] mt-0.5 line-clamp-1" style={{ color: 'oklch(45% 0.13 75)' }}>{topUrgent.subtitle}</div>
-            )}
-          </div>
-          <ChevronRight size={18} style={{ color: 'oklch(55% 0.13 75)' }} />
-        </button>
-      )}
+            <ChevronRight size={18} style={{ color: style.chevron }} />
+          </button>
+        )
+      })()}
 
       {/* Journal — today's trips */}
       <SectionLabel icon={<Car size={13} />} text="Журнал за сегодня" />
