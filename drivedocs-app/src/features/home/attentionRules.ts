@@ -17,6 +17,9 @@ export interface AttentionItem {
   // Typed payloads — present based on kind
   document?: WorkspaceDocument
   event?: WorkspaceEvent
+  /** Сколько дней до истечения (только для kind='expiry'). Отрицательное = уже истёк.
+   *  Используется на главной для эскалации ОСАГО/ВУ за неделю в RED tier. */
+  daysLeft?: number
 }
 
 // ─── Rule engine ──────────────────────────────────────────────────────────────
@@ -56,6 +59,8 @@ export function buildAttentionItems(
     }))
 
   const eventItems: AttentionItem[] = events
+    // 2026-05-13 — MVP: штрафы убраны из приложения (нет источника данных)
+    .filter((e) => e.type !== 'fine')
     .filter((e) => !e.isRead && (e.severity === 'urgent' || e.severity === 'warning'))
     .map((e) => ({
       id: `ev-${e.id}`,
@@ -135,6 +140,7 @@ export function buildExpiryItems(vehicle: VehicleProfile | null, drivers: Driver
       title: `${label} — срок ${expired ? 'истёк' : 'истекает'}`,
       subtitle,
       severity,
+      daysLeft,
     })
   }
 

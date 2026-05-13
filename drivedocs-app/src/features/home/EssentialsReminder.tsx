@@ -8,15 +8,14 @@ import { useVehicleProfile } from '@/app/store/workspaceStore'
 import { useEssentialsStatus, type EssentialBlock } from './useEssentialsStatus'
 
 // F-026 — Напоминалка о минимальных документах для путевого листа.
-// Два состояния:
-// 1) Компактная жёлтая карточка на /home (EssentialsReminderCard)
-// 2) Bottom sheet со списком блоков и двумя финальными кнопками (EssentialsSheet)
+// КРАСНАЯ — блокирует основной use case (без неё путевой лист не формируется).
+// Документы предприятия (приказы, договоры) — отдельный жёлтый attention.
 
-const AMBER_BG = 'oklch(96% 0.08 90)'
-const AMBER_BORDER = 'oklch(88% 0.12 90)'
-const AMBER_ICON_BG = 'oklch(90% 0.12 90)'
-const AMBER_TEXT = 'oklch(45% 0.13 75)'
-const AMBER_DARK = 'oklch(35% 0.14 75)'
+const RED_BG = 'oklch(96% 0.04 25)'
+const RED_BORDER = 'oklch(88% 0.08 25)'
+const RED_ICON_BG = 'oklch(90% 0.10 25)'
+const RED_TEXT = 'oklch(48% 0.18 25)'
+const RED_DARK = 'oklch(40% 0.20 25)'
 
 export function EssentialsReminderCard({
   workspaceId,
@@ -32,23 +31,23 @@ export function EssentialsReminderCard({
     <button
       onClick={onTap}
       className="w-full mb-5 rounded-[18px] px-4 py-3.5 flex items-center gap-3 text-left active:opacity-90 transition-opacity"
-      style={{ background: AMBER_BG, border: `1px solid ${AMBER_BORDER}` }}
+      style={{ background: RED_BG, border: `1px solid ${RED_BORDER}` }}
     >
       <span
         className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0"
-        style={{ background: AMBER_ICON_BG }}
+        style={{ background: RED_ICON_BG }}
       >
-        <AlertCircle size={18} style={{ color: AMBER_DARK }} strokeWidth={2.2} />
+        <AlertCircle size={18} style={{ color: RED_DARK }} strokeWidth={2.2} />
       </span>
       <div className="flex-1 min-w-0">
-        <div className="text-[14px] font-semibold leading-snug" style={{ color: AMBER_DARK }}>
-          Заполните документы для путевого листа
+        <div className="text-[14px] font-semibold leading-snug" style={{ color: RED_DARK }}>
+          Документы для путевого листа
         </div>
-        <div className="text-[11px] mt-0.5" style={{ color: AMBER_TEXT }}>
-          Не хватает {status.missingCount} из 3 · нужно для отчёта в налоговую
+        <div className="text-[11px] mt-0.5" style={{ color: RED_TEXT }}>
+          Не хватает {status.missingCount} из 3 · без них путевой лист не оформить
         </div>
       </div>
-      <ChevronRight size={18} style={{ color: AMBER_TEXT }} />
+      <ChevronRight size={18} style={{ color: RED_TEXT }} />
     </button>
   )
 }
@@ -121,7 +120,7 @@ export function EssentialsSheet({ workspaceId, onClose }: EssentialsSheetProps) 
                 style={
                   b.done
                     ? { background: 'oklch(94% 0.06 155)', color: 'oklch(45% 0.13 155)' }
-                    : { background: AMBER_ICON_BG, color: AMBER_DARK }
+                    : { background: RED_ICON_BG, color: RED_DARK }
                 }
               >
                 {b.done ? <Check size={18} strokeWidth={2.6} /> : blockIcon(b.key)}

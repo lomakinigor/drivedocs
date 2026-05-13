@@ -1,9 +1,43 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, LocateFixed, Loader } from 'lucide-react'
-import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
+import { X, Loader, HelpCircle, Satellite } from 'lucide-react'
+import { useWorkspaceStore, todayISO, useCurrentWorkspace, useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import { reverseGeocode } from '@/shared/lib/reverseGeocode'
+import { calcFuelNorm } from '@/entities/config/fuelNorms'
+import { HelpFuelNormsSheet } from '@/features/help/HelpFuelNorms'
+import { recordMetric } from '@/lib/metrics/featureMetrics'
+import { getAutofillValue, recordFieldValue } from '@/lib/memory/fieldMemory'
 import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
+
+// F-028 — GLONASS toggle хранится в localStorage (per-user, не per-workspace).
+const GLONASS_KEY = 'drivedocs:glonass-enabled:v1'
+function readGlonass(): boolean {
+  if (typeof window === 'undefined') return false
+  try { return window.localStorage.getItem(GLONASS_KEY) === '1' } catch { return false }
+}
+function writeGlonass(on: boolean): void {
+  if (typeof window === 'undefined') return
+  try { window.localStorage.setItem(GLONASS_KEY, on ? '1' : '0') } catch { /* ignore */ }
+}
+
+// Старый frequentStart удалён — заменён единым правилом «Запоминание»
+// (F-029, `src/lib/memory/fieldMemory.ts`): 3 одинаковых подряд → autofill,
+// 2 override → сброс. Работает для любых полей форм.
+
+// Одометр последней поездки на возврате — подставляется как «выезд» новой.
+function lastOdometerEnd(trips: Trip[]): number | undefined {
+  const sorted = [...trips].sort((a, b) => {
+    const dd = b.date.localeCompare(a.date)
+    if (dd !== 0) return dd
+    return (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
+  })
+  for (const t of sorted) {
+    if (typeof t.odometerEnd === 'number' && isFinite(t.odometerEnd) && t.odometerEnd > 0) {
+      return t.odometerEnd
+    }
+  }
+  return undefined
+}
 
 // ─── Purpose options ──────────────────────────────────────────────────────────
 
@@ -27,16 +61,21 @@ interface FormState {
   distanceKm: string
   purpose: PurposeOption | ''
   customPurpose: string
+  // F-027 — приказ 368: одометр обязателен для путевого
+  odometerStart: string
+  odometerEnd: string
 }
 
 function initialState(): FormState {
   return {
     date: todayISO(),
     from: '',
-    to: '',
+    to: 'По городу',                  // F-028 — дефолт «Куда»
     distanceKm: '',
-    purpose: '',
+    purpose: 'Переговоры с партнёром', // F-027
     customPurpose: '',
+    odometerStart: '',
+    odometerEnd: '',
   }
 }
 
@@ -85,18 +124,30 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
   const vehicleProfile = useWorkspaceStore((s) =>
     s.vehicleProfiles.find((v) => v.workspaceId === workspaceId),
   )
+  const workspace = useCurrentWorkspace()
+  const trips = useWorkspaceTrips(workspaceId) // мемоизированный селектор — критично, иначе infinite render
   const fromRef = useRef<HTMLInputElement>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [glonassOn, setGlonassOn] = useState(() => readGlonass())
 
-  const [form, setForm] = useState<FormState>(() => ({
-    ...initialState(),
-    from: prefill?.from ?? '',
-    to: prefill?.to ?? '',
-    distanceKm: prefill?.distanceKm ? String(prefill.distanceKm) : '',
-  }))
+  const [form, setForm] = useState<FormState>(() => {
+    const base = initialState()
+    // F-029 — правило «Запоминание»: 3 одинаковых подряд → autofill
+    const memFrom = getAutofillValue(`${workspaceId}:addtrip.from`)
+    const memTo = getAutofillValue(`${workspaceId}:addtrip.to`)
+    const prevOdo = lastOdometerEnd(trips)
+    return {
+      ...base,
+      from: prefill?.from ?? memFrom ?? '',
+      to: prefill?.to ?? memTo ?? base.to,
+      distanceKm: prefill?.distanceKm ? String(prefill.distanceKm) : '',
+      odometerStart: prevOdo !== undefined ? String(prevOdo) : '',
+    }
+  })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [touched, setTouched] = useState(false)
   const [locatingFrom, setLocatingFrom] = useState(false)
-  const [locatingTo, setLocatingTo] = useState(false)
+  // locatingTo / locateField удалены 2026-05-12 — функцию заменяет кнопка ГЛОНАСС в шапке.
 
   // Auto-focus first field after sheet animates in
   useEffect(() => {
@@ -104,23 +155,53 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
     return () => clearTimeout(t)
   }, [])
 
-  const locateField = async (field: 'from' | 'to') => {
-    if (!navigator.geolocation) return
-    if (field === 'from') setLocatingFrom(true)
-    else setLocatingTo(true)
+  // F-028 — Если GLONASS включён, при открытии формы пытаемся определить адрес.
+  // Значение ГЛОНАСС всегда главное — перетирает frequent-fill, даже если уже стоит.
+  useEffect(() => {
+    if (!glonassOn || !navigator.geolocation) return
+    let cancelled = false
+    setLocatingFrom(true)
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
-        set({ [field]: addr })
-        if (field === 'from') setLocatingFrom(false)
-        else setLocatingTo(false)
+        if (cancelled) return
+        try {
+          const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
+          if (!cancelled && addr) {
+            setForm((prev) => ({ ...prev, from: addr }))
+            recordMetric('glonass.autofill', { source: 'opensheet' })
+          }
+        } finally {
+          if (!cancelled) setLocatingFrom(false)
+        }
       },
-      () => {
-        if (field === 'from') setLocatingFrom(false)
-        else setLocatingTo(false)
-      },
+      () => { if (!cancelled) setLocatingFrom(false) },
       { enableHighAccuracy: true, timeout: 10000 },
     )
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const toggleGlonass = () => {
+    const next = !glonassOn
+    setGlonassOn(next)
+    writeGlonass(next)
+    recordMetric('glonass.toggle', { state: next ? 'on' : 'off' })
+    // При включении сразу пытаемся определить
+    if (next && navigator.geolocation) {
+      setLocatingFrom(true)
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
+          if (addr) {
+            set({ from: addr })
+            recordMetric('glonass.autofill', { source: 'toggle' })
+          }
+          setLocatingFrom(false)
+        },
+        () => setLocatingFrom(false),
+        { enableHighAccuracy: true, timeout: 10000 },
+      )
+    }
   }
 
   const set = (patch: Partial<FormState>) =>
@@ -140,6 +221,9 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
     const km = parseFloat(form.distanceKm.replace(',', '.'))
     const purpose = form.purpose === 'Другое' ? form.customPurpose.trim() : form.purpose
 
+    const odoStart = parseFloat(form.odometerStart.replace(',', '.'))
+    const odoEnd = parseFloat(form.odometerEnd.replace(',', '.'))
+
     const trip: Trip = {
       id: `trip-${Date.now()}`,
       workspaceId,
@@ -149,9 +233,16 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
       distanceKm: km,
       purpose,
       createdAt: new Date().toISOString(),
+      tripMode: 'city', // F-028 — по умолчанию city; chip удалён
+      ...(isFinite(odoStart) && odoStart >= 0 ? { odometerStart: odoStart } : {}),
+      ...(isFinite(odoEnd) && odoEnd >= 0 ? { odometerEnd: odoEnd } : {}),
     }
 
     addTrip(trip)
+
+    // F-029 — фиксируем введённые значения для правила «Запоминание»
+    recordFieldValue(`${workspaceId}:addtrip.from`, trip.startLocation)
+    recordFieldValue(`${workspaceId}:addtrip.to`, trip.endLocation)
 
     const event: WorkspaceEvent = {
       id: `ev-trip-${Date.now()}`,
@@ -187,15 +278,29 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0">
+        <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0 gap-3">
           <h2 className="text-base font-semibold text-slate-900">Новая поездка</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100"
-            aria-label="Закрыть"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleGlonass}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[12px] font-semibold transition-colors ${
+                glonassOn ? 'text-white' : 'border border-slate-200 text-slate-600 active:bg-slate-50'
+              }`}
+              style={glonassOn ? { background: 'oklch(52% 0.225 285)' } : undefined}
+              aria-pressed={glonassOn}
+            >
+              <Satellite size={13} />
+              ГЛОНАСС
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
+              aria-label="Закрыть"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable form */}
@@ -209,20 +314,17 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
                 value={form.from}
                 onChange={(e) => set({ from: e.target.value })}
                 onBlur={handleBlur}
-                placeholder="Адрес или район"
+                placeholder="Введите адрес или нажмите ГЛОНАСС"
                 className={fieldClass(touched && !!errors.from)}
               />
               <VoiceMicButton onResult={(t) => set({ from: t })} />
-              <button
-                type="button"
-                onClick={() => locateField('from')}
-                disabled={locatingFrom}
-                className="shrink-0 p-2 rounded-xl text-slate-400 active:bg-slate-100 disabled:opacity-40"
-                aria-label="Определить местоположение"
-              >
-                {locatingFrom ? <Loader size={17} className="animate-spin" /> : <LocateFixed size={17} />}
-              </button>
             </div>
+            {locatingFrom && (
+              <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500">
+                <Loader size={12} className="animate-spin" />
+                Определяю местоположение…
+              </div>
+            )}
           </Field>
 
           {/* To */}
@@ -233,23 +335,63 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
                 value={form.to}
                 onChange={(e) => set({ to: e.target.value })}
                 onBlur={handleBlur}
-                placeholder="Адрес или район"
+                placeholder="Адрес назначения"
                 className={fieldClass(touched && !!errors.to)}
               />
               <VoiceMicButton onResult={(t) => set({ to: t })} />
-              <button
-                type="button"
-                onClick={() => locateField('to')}
-                disabled={locatingTo}
-                className="shrink-0 p-2 rounded-xl text-slate-400 active:bg-slate-100 disabled:opacity-40"
-                aria-label="Определить местоположение"
-              >
-                {locatingTo ? <Loader size={17} className="animate-spin" /> : <LocateFixed size={17} />}
-              </button>
             </div>
           </Field>
 
-          {/* Distance + Date — side by side */}
+          {/* Odometer — пара (приказ 368, обязательное поле путевого) */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Одометр, выезд">
+              <input
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
+                autoComplete="off"
+                value={form.odometerStart}
+                onChange={(e) => {
+                  // F-028 — допускаем только цифры и один разделитель (точка/запятая)
+                  const next = e.target.value.replace(/[^\d.,]/g, '').replace(/([.,]).*\1/g, '$1')
+                  const s = parseFloat(next.replace(',', '.'))
+                  const eVal = parseFloat(form.odometerEnd.replace(',', '.'))
+                  set({
+                    odometerStart: next,
+                    ...(isFinite(s) && isFinite(eVal) && eVal > s
+                      ? { distanceKm: String(+(eVal - s).toFixed(1)) }
+                      : {}),
+                  })
+                }}
+                placeholder="км"
+                className={fieldClass(false)}
+              />
+            </Field>
+            <Field label="Одометр, возврат">
+              <input
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
+                autoComplete="off"
+                value={form.odometerEnd}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/[^\d.,]/g, '').replace(/([.,]).*\1/g, '$1')
+                  const s = parseFloat(form.odometerStart.replace(',', '.'))
+                  const eVal = parseFloat(next.replace(',', '.'))
+                  set({
+                    odometerEnd: next,
+                    ...(isFinite(s) && isFinite(eVal) && eVal > s
+                      ? { distanceKm: String(+(eVal - s).toFixed(1)) }
+                      : {}),
+                  })
+                }}
+                placeholder="км"
+                className={fieldClass(false)}
+              />
+            </Field>
+          </div>
+
+          {/* Distance + Date */}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Расстояние, км" error={touched ? errors.distanceKm : undefined}>
               <input
@@ -261,17 +403,6 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
                 placeholder="0"
                 className={fieldClass(touched && !!errors.distanceKm)}
               />
-              {(() => {
-                const km = parseFloat(form.distanceKm.replace(',', '.'))
-                const rate = vehicleProfile?.fuelConsumptionPer100km
-                if (!rate || isNaN(km) || km <= 0) return null
-                const liters = (km * rate) / 100
-                return (
-                  <p className="text-xs text-slate-400 mt-1">
-                    ~{liters.toFixed(1)} л топлива
-                  </p>
-                )
-              })()}
             </Field>
 
             <Field label="Дата">
@@ -284,6 +415,51 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
               />
             </Field>
           </div>
+
+          {/* Fuel norm preview (F-027) — режим всегда 'city' */}
+          {(() => {
+            const km = parseFloat(form.distanceKm.replace(',', '.'))
+            const baseRate = vehicleProfile?.fuelConsumptionPer100km
+            if (!baseRate || !isFinite(km) || km <= 0) return null
+            const vehicleAgeYears = vehicleProfile?.year
+              ? new Date().getFullYear() - vehicleProfile.year
+              : undefined
+            const profile = workspace?.fuelProfile
+            const result = calcFuelNorm({
+              baseRate,
+              distanceKm: km,
+              tripMode: 'city',
+              citySize: profile?.citySize,
+              winterRegion: profile?.winterRegion,
+              hasAC: profile?.hasAC,
+              vehicleAgeYears,
+              date: form.date ? new Date(form.date) : new Date(),
+            })
+            return (
+              <div
+                className="rounded-[12px] px-3 py-2.5 flex items-start gap-2"
+                style={{ background: 'oklch(94% 0.044 285)' }}
+              >
+                <div className="flex-1 text-[12px]" style={{ color: 'oklch(40% 0.18 285)' }}>
+                  Норма расхода по АМ-23-р: <b>{result.normLiters.toLocaleString('ru-RU')} л</b>
+                  {result.totalBonusPct !== 0 && (
+                    <span className="opacity-75">
+                      {' '}(база {baseRate} л/100 км × {result.totalBonusPct > 0 ? '+' : ''}{result.totalBonusPct}%)
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHelpOpen(true)}
+                  className="shrink-0 p-1 -m-1 rounded-lg active:bg-white/40"
+                  style={{ color: 'oklch(52% 0.225 285)' }}
+                  aria-label="Справка по нормам расхода"
+                >
+                  <HelpCircle size={16} />
+                </button>
+              </div>
+            )
+          })()}
 
           {/* Purpose */}
           <Field label="Цель поездки" error={touched ? errors.purpose : undefined}>
@@ -353,6 +529,8 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
           </button>
         </div>
       </div>
+
+      {helpOpen && <HelpFuelNormsSheet onClose={() => setHelpOpen(false)} />}
     </>
   )
 }

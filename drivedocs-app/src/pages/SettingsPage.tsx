@@ -35,6 +35,7 @@ import {
   VEHICLE_USAGE_MODEL_LABELS,
 } from '@/entities/constants/labels'
 import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { recordMetric } from '@/lib/metrics/featureMetrics'
 import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE } from '@/entities/config/onboardingHelp'
 import type { HelpContent } from '@/entities/config/onboardingHelp'
 import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
@@ -475,6 +476,8 @@ export function SettingsPage() {
   const [renameOpen, setRenameOpen] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [helpSheet, setHelpSheet] = useState<HelpContent | null>(null)
+
+  useEffect(() => { recordMetric('view.settings') }, [])
 
   useEffect(() => {
     if (billingResult === 'success') {

@@ -1,7 +1,9 @@
 import { Navigate } from 'react-router-dom'
-import { Users, Route, FileText, Receipt, TrendingUp, Database, BarChart2, Activity } from 'lucide-react'
+import { Users, Route, FileText, Receipt, TrendingUp, Database, BarChart2, Activity, Trash2 } from 'lucide-react'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { isBackendConfigured } from '@/lib/supabase'
+import { getAllMetrics, clearMetrics } from '@/lib/metrics/featureMetrics'
+import { useState, useEffect } from 'react'
 
 // ─── Admin access guard ───────────────────────────────────────────────────────
 
@@ -193,10 +195,66 @@ export function AdminPage() {
           </div>
         </section>
 
+        <MetricsSection />
+
         <p className="text-xs text-slate-300 text-center pb-4">
           drivedocs admin · beta · только для разработчика
         </p>
       </div>
     </div>
+  )
+}
+
+// ─── F-028 · Feature metrics ─────────────────────────────────────────────────
+
+function MetricsSection() {
+  const [snapshot, setSnapshot] = useState(() => getAllMetrics())
+  useEffect(() => {
+    const i = setInterval(() => setSnapshot(getAllMetrics()), 1500)
+    return () => clearInterval(i)
+  }, [])
+  const entries = Object.entries(snapshot).sort((a, b) => b[1].count - a[1].count)
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Метрики фич (локально)</h2>
+        {entries.length > 0 && (
+          <button
+            onClick={() => {
+              if (confirm('Очистить все метрики?')) {
+                clearMetrics()
+                setSnapshot({})
+              }
+            }}
+            className="flex items-center gap-1 text-[11px] text-red-500 active:text-red-700"
+          >
+            <Trash2 size={11} />
+            Очистить
+          </button>
+        )}
+      </div>
+      {entries.length === 0 ? (
+        <p className="text-xs text-slate-400 text-center py-6 bg-white rounded-2xl border border-slate-100">
+          Ещё нет событий. Походите по приложению — счётчики появятся.
+        </p>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100">
+          {entries.map(([key, entry]) => (
+            <div key={key} className="px-4 py-3 flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-mono font-medium text-slate-900 truncate">{key}</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {new Date(entry.lastUsed).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}
+                </p>
+              </div>
+              <span className="text-lg font-bold text-blue-600 tabular-nums">{entry.count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
+        Хранится в localStorage. Доступно через консоль: <code>drivedocsMetrics.get()</code>.
+      </p>
+    </section>
   )
 }

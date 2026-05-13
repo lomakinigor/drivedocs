@@ -1,16 +1,9 @@
 import type { WorkspaceEvent, Reminder, WorkspaceDocument, Trip, Fine } from '../types/domain'
 
 export const mockEvents: WorkspaceEvent[] = [
-  {
-    id: 'ev-1',
-    workspaceId: 'ws-1',
-    type: 'fine',
-    title: 'Штраф 500 ₽',
-    description: 'КоАП 12.16 — несоблюдение требований знака',
-    date: '2026-04-05T09:15:00Z',
-    isRead: false,
-    severity: 'warning',
-  },
+  // 2026-05-13 — fine-евент удалён из MVP: штрафы/новости ПДД в текущей
+  // версии не отображаются (нет источника данных). Тип EventType='fine'
+  // оставлен в модели на будущее.
   {
     id: 'ev-2',
     workspaceId: 'ws-1',
@@ -127,15 +120,6 @@ export const mockTrips: Trip[] = [
   },
 ]
 
-export const mockFines: Fine[] = [
-  {
-    id: 'fine-1',
-    workspaceId: 'ws-1',
-    amount: 500,
-    date: '2026-04-05',
-    description: 'Несоблюдение требований знака',
-    status: 'unpaid',
-    licensePlate: 'А123ВГ77',
-    articleCode: 'КоАП 12.16',
-  },
-]
+// 2026-05-13 — Штрафы в MVP не отображаются (нет источника). Массив оставлен
+// пустым, тип Fine оставлен в модели для будущей интеграции с ГИБДД API.
+export const mockFines: Fine[] = []

@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { Download, Calendar, FileText } from 'lucide-react'
 import { useWorkspaceTrips, useWorkspaceReceipts } from '@/app/store/workspaceStore'
 import { MonthlyReportSheet } from '@/features/trips/MonthlyReportSheet'
+import { recordMetric } from '@/lib/metrics/featureMetrics'
 import type { Trip, Receipt } from '@/entities/types/domain'
 
 // T-136 · T-137 · F-022 · D-024
@@ -45,6 +46,8 @@ export function ReportsPage() {
   const allReceipts = useWorkspaceReceipts(id)
 
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  useEffect(() => { recordMetric('view.reports') }, [])
 
   const now = new Date()
   const currYear = now.getFullYear()
