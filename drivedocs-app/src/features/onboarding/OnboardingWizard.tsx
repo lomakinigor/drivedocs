@@ -217,8 +217,14 @@ export function OnboardingWizard() {
   const ok = canProceed(currentStep, state)
   const isSummary = currentStep === 'summary'
 
+  // 2026-05-13 — Enter в любом поле = клик «Далее» (если кнопка активна).
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (ok) handleNext()
+  }
+
   return (
-    <div className="flex flex-col h-full bg-white">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full bg-white">
       {/* ── Header ── */}
       <div className="flex items-center gap-2 px-4 pt-12 pb-4">
         <button
@@ -321,7 +327,7 @@ export function OnboardingWizard() {
       {/* ── Footer CTA ── */}
       <div className="px-4 pb-10 pt-4 border-t border-slate-100">
         <button
-          onClick={handleNext}
+          type="submit"
           disabled={!ok}
           className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
             ok
@@ -335,6 +341,7 @@ export function OnboardingWizard() {
         {/* Skip for INN step */}
         {currentStep === 'inn' && (
           <button
+            type="button"
             onClick={handleNext}
             className="w-full mt-3 py-2 text-sm text-slate-400 active:text-slate-600"
           >
@@ -342,7 +349,7 @@ export function OnboardingWizard() {
           </button>
         )}
       </div>
-    </div>
+    </form>
   )
 }
 
