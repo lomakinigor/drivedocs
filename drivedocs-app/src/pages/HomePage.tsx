@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Car, Bell, FileText, AlertTriangle, Receipt, Settings, ChevronRight, MapPin, Check, Wallet } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Car, Bell, FileText, AlertTriangle, Receipt, ChevronRight, MapPin, Check, Wallet } from 'lucide-react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
 import { DocumentDetailSheet } from '@/features/documents/DocumentDetailSheet'
 import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
@@ -101,25 +101,10 @@ export function HomePage() {
 
   if (!workspace) return null
 
+  // 2026-05-13 — Если workspace неконфигурирован (true first-run или после reset),
+  // пользователь должен видеть полноценный WelcomePage с логотипом, а не dead-end.
   if (!data.isConfigured) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full px-6 text-center py-16">
-        <div className="w-16 h-16 rounded-3xl bg-slate-100 flex items-center justify-center mb-5">
-          <Settings size={28} className="text-slate-400" />
-        </div>
-        <h2 className="text-lg font-bold text-slate-900 mb-2">Настройка не завершена</h2>
-        <p className="text-sm text-slate-500 mb-6 max-w-xs leading-relaxed">
-          Укажите налоговый режим и правовую модель, чтобы приложение смогло настроить документы и подсказки.
-        </p>
-        <button
-          onClick={() => navigate('/onboarding')}
-          className="text-white text-sm font-semibold px-6 py-3 rounded-2xl active:opacity-90"
-          style={{ background: 'oklch(52% 0.225 285)' }}
-        >
-          Завершить настройку
-        </button>
-      </div>
-    )
+    return <Navigate to="/welcome" replace />
   }
 
   // 2026-05-13 — Приоритеты уведомлений на главной (всегда показываем одно — самое верхнее).

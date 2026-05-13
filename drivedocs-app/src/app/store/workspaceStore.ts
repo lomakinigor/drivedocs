@@ -15,9 +15,8 @@ import type {
   DocumentStatus,
   WorkspaceSubscription,
 } from '@/entities/types/domain'
-import { mockWorkspaces, mockOrgProfiles, mockVehicleProfiles } from '@/entities/mocks/workspaces'
+// Mock imports удалены 2026-05-13 — store стартует пустым, новые пользователи идут на /welcome.
 import { mockUser } from '@/entities/mocks/user'
-import { mockTrips, mockDocuments, mockEvents } from '@/entities/mocks/events'
 import {
   workspaceRepo,
   orgProfileRepo,
@@ -178,15 +177,17 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       authUserId: null,
       authChecked: !isBackendConfigured,
 
-      workspaces: mockWorkspaces,
-      currentWorkspaceId: mockWorkspaces[0]?.id ?? null,
+      // 2026-05-13 — чистый старт для новых посетителей: первое впечатление = WelcomePage.
+      // Демо-данные остаются доступны через /admin (можно добавить кнопку seed позже).
+      workspaces: [],
+      currentWorkspaceId: null,
 
-      orgProfiles: mockOrgProfiles,
-      vehicleProfiles: mockVehicleProfiles,
+      orgProfiles: [],
+      vehicleProfiles: [],
       drivers: [],
-      trips: mockTrips,
-      documents: mockDocuments,
-      events: mockEvents,
+      trips: [],
+      documents: [],
+      events: [],
       receipts: [],
       subscriptions: [],
       onboarding: null,
