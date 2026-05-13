@@ -122,14 +122,12 @@ export function HomePage() {
     )
   }
 
-  // 2026-05-13 — Приоритеты уведомлений на главной (всегда показываем одно — самое верхнее):
-  //   RED    — штрафы (event.type='fine'), оперативные urgent-евенты (КоАП, налоговая)
-  //   YELLOW — документы предприятия с дедлайнами (приказы, договоры, ОСАГО к концу срока)
+  // 2026-05-13 — Приоритеты уведомлений на главной (всегда показываем одно — самое верхнее).
+  // MVP: штрафы / новости ПДД из приложения убраны (нет источника данных).
+  //   RED    — ОСАГО / ВУ / ТО / КАСКО при ≤7 дней до истечения (или уже истекло)
+  //   YELLOW — документы предприятия с дедлайнами (приказы, договоры, прочие expiry)
   //   WHITE  — мягкие info (чеки без поездки, прочие warning-евенты)
   const classify = (it: AttentionItem): 'red' | 'yellow' | 'white' => {
-    if (it.event?.type === 'fine') return 'red'
-    if (it.kind === 'event' && it.severity === 'urgent') return 'red'
-    // ОСАГО / ВУ / ТО / КАСКО — при ≤7 дней до истечения или уже истёк → красный
     if (it.kind === 'expiry' && typeof it.daysLeft === 'number' && it.daysLeft <= 7) return 'red'
     if (it.kind === 'document' || it.kind === 'expiry') return 'yellow'
     return 'white'

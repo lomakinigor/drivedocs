@@ -59,6 +59,8 @@ export function buildAttentionItems(
     }))
 
   const eventItems: AttentionItem[] = events
+    // 2026-05-13 — MVP: штрафы убраны из приложения (нет источника данных)
+    .filter((e) => e.type !== 'fine')
     .filter((e) => !e.isRead && (e.severity === 'urgent' || e.severity === 'warning'))
     .map((e) => ({
       id: `ev-${e.id}`,
