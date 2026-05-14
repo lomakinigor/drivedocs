@@ -96,7 +96,8 @@ export function useHomeData(workspaceId: string): HomeData {
 
   // Attention rule engine — pure function, no hooks
   const expiryItems = buildExpiryItems(vehicle ?? null, drivers)
-  const attentionItems = [...buildAttentionItems(urgentDocs, urgentEvents, unattachedReceipts), ...expiryItems].sort(
+  const ackedIds = workspace?.acknowledgedDocumentIds ?? []
+  const attentionItems = [...buildAttentionItems(urgentDocs, urgentEvents, unattachedReceipts, ackedIds), ...expiryItems].sort(
     (a, b) => (a.severity === 'urgent' ? 0 : 1) - (b.severity === 'urgent' ? 0 : 1),
   )
 
