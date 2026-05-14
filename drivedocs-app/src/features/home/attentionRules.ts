@@ -41,8 +41,14 @@ export function buildAttentionItems(
   docs: WorkspaceDocument[],
   events: WorkspaceEvent[],
   unattachedReceipts: Receipt[] = [],
+  acknowledgedDocumentIds: string[] = [],
 ): AttentionItem[] {
+  // F-031 — документы, по которым пользователь сказал «у меня уже есть»,
+  // не показываются как attention. Они доступны через список документов,
+  // где увидит спецсообщение.
+  const ackSet = new Set(acknowledgedDocumentIds)
   const docItems: AttentionItem[] = docs
+    .filter((d) => !ackSet.has(d.id))
     .filter((d) => d.status === 'required' || d.status === 'overdue')
     .map((d) => ({
       id: `doc-${d.id}`,
