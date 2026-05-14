@@ -18,6 +18,7 @@ import {
   Archive,
   FileText,
   ChevronRight,
+  MessageCircle,
 } from 'lucide-react'
 import {
   useWorkspaceStore,
@@ -38,6 +39,7 @@ import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
 import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE } from '@/entities/config/onboardingHelp'
 import type { HelpContent } from '@/entities/config/onboardingHelp'
+import { FeedbackSheet } from '@/features/feedback/FeedbackSheet'
 import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
 import { VehicleProfileSheet } from '@/features/workspace/VehicleProfileSheet'
 import { DriversSheet } from '@/features/workspace/DriversSheet'
@@ -476,6 +478,7 @@ export function SettingsPage() {
   const [renameOpen, setRenameOpen] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [helpSheet, setHelpSheet] = useState<HelpContent | null>(null)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   useEffect(() => { recordMetric('view.settings') }, [])
 
@@ -648,6 +651,22 @@ export function SettingsPage() {
           <BillingSection workspaceId={id} />
         </div>
 
+        {/* ── Support / Feedback (F-033) ── */}
+        <section>
+          <SectionLabel>Поддержка</SectionLabel>
+          <Card>
+            <Row
+              icon={<MessageCircle size={14} style={{ color: INDIGO }} />}
+              title="Связаться с нами"
+              subtitle="Идеи, баги, вопросы — через Telegram"
+              onClick={() => {
+                recordMetric('feedback.open')
+                setFeedbackOpen(true)
+              }}
+            />
+          </Card>
+        </section>
+
         {/* ── Help ── */}
         <section>
           <SectionLabel>Справка по документам</SectionLabel>
@@ -783,6 +802,8 @@ export function SettingsPage() {
       )}
 
       {helpSheet && <HelpInfoSheet content={helpSheet} onClose={() => setHelpSheet(null)} />}
+
+      {feedbackOpen && <FeedbackSheet onClose={() => setFeedbackOpen(false)} />}
     </div>
   )
 }

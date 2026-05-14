@@ -1,4 +1,13 @@
-import type { Trip, Workspace, OrganizationProfile, VehicleProfile, EntityType } from '@/entities/types/domain'
+import type {
+  Trip,
+  Workspace,
+  OrganizationProfile,
+  VehicleProfile,
+  Driver,
+  EntityType,
+  FuelProfile,
+} from '@/entities/types/domain'
+import { calcFuelNorm } from '@/entities/config/fuelNorms'
 
 // ─── Derived export types (D-011) ────────────────────────────────────────────
 
@@ -8,6 +17,18 @@ export interface WaybillExportRow {
   route: string       // "Откуда → Куда"
   purpose: string
   distanceKm: number | null
+  // F-032 extended-only — одометр для таблицы рейсов
+  odometerStart?: number
+  odometerEnd?: number
+}
+
+/** F-032 extended — расчёт ГСМ по АМ-23-р для всего периода. */
+export interface WaybillFuelSummary {
+  fuelType: string                // 'Бензин' / 'Дизель' / etc.
+  baseRateLper100km: number | null  // базовая норма Hs
+  totalDistanceKm: number
+  surchargePercent: number        // суммарная надбавка D
+  normLitres: number | null       // расчётный расход по формуле, null если нет базовой нормы
 }
 
 export interface MonthlyWaybillTotals {
@@ -30,6 +51,17 @@ export interface MonthlyWaybillData {
   totals: MonthlyWaybillTotals
   warnings: string[]
   isExportReady: boolean       // false if trips === 0 or critical fields missing
+
+  // F-032 — Поля для расширенного бланка. Опциональны (null если не заданы).
+  organizationAddress: string | null
+  organizationPhone: string | null
+  organizationKpp: string | null
+  vehicleVin: string | null
+  vehicleYear: number | null
+  vehicleTypeLabel: string | null  // "Легковой" / "Грузовой" — пока всегда "Легковой автомобиль"
+  driverLicense: string | null
+  driverLicenseCategories: string | null
+  fuelSummary: WaybillFuelSummary | null
 }
 
 export interface MonthlyWaybillInput {
@@ -39,6 +71,16 @@ export interface MonthlyWaybillInput {
   trips: Trip[]      // pre-filtered for the period by the caller
   fromDate: string   // ISO date — period start, used for label
   toDate: string     // ISO date — period end (inclusive)
+  // F-032 — для расширенного бланка
+  drivers?: Driver[]
+  fuelProfile?: FuelProfile
+}
+
+const FUEL_TYPE_LABEL: Record<string, string> = {
+  gasoline: 'Бензин',
+  diesel: 'Дизель',
+  electric: 'Электро',
+  hybrid: 'Гибрид',
 }
 
 // ─── Pure function (D-010, D-011) ────────────────────────────────────────────
@@ -111,6 +153,8 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
     route: `${t.startLocation.split(',')[0].trim()} → ${t.endLocation.split(',')[0].trim()}`,
     purpose: t.purpose,
     distanceKm: t.distanceKm,
+    odometerStart: t.odometerStart,
+    odometerEnd: t.odometerEnd,
   }))
 
   const totalDistanceKm = rows.reduce((sum, r) => sum + (r.distanceKm ?? 0), 0)
@@ -122,6 +166,45 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
 
   // Export is ready only when the document would be printable
   const isExportReady = trips.length > 0 && vehicleProfile !== null && !!orgProfile
+
+  // F-032 — расширенные поля
+  const { drivers, fuelProfile } = input
+  const defaultDriver = drivers?.find((d) => d.isDefault) ?? drivers?.[0] ?? null
+
+  const fuelTypeKey = vehicleProfile?.fuelType ?? 'gasoline'
+  const baseRate = vehicleProfile?.fuelConsumptionPer100km ?? null
+
+  let fuelSummary: WaybillFuelSummary | null = null
+  if (trips.length > 0 && baseRate != null) {
+    // По умолчанию tripMode='city' (приказ 368 / F-027) — суммарно по периоду
+    const vehicleAgeYears = vehicleProfile?.year
+      ? new Date().getFullYear() - vehicleProfile.year
+      : undefined
+    const calc = calcFuelNorm({
+      baseRate,
+      distanceKm: totalDistanceKm,
+      tripMode: 'city',
+      citySize: fuelProfile?.citySize,
+      winterRegion: fuelProfile?.winterRegion,
+      hasAC: fuelProfile?.hasAC,
+      vehicleAgeYears,
+    })
+    fuelSummary = {
+      fuelType: FUEL_TYPE_LABEL[fuelTypeKey] ?? fuelTypeKey,
+      baseRateLper100km: baseRate,
+      totalDistanceKm,
+      surchargePercent: calc.totalBonusPct,
+      normLitres: calc.normLiters,
+    }
+  } else if (trips.length > 0 && baseRate == null) {
+    fuelSummary = {
+      fuelType: FUEL_TYPE_LABEL[fuelTypeKey] ?? fuelTypeKey,
+      baseRateLper100km: null,
+      totalDistanceKm,
+      surchargePercent: 0,
+      normLitres: null,
+    }
+  }
 
   return {
     workspaceId: workspace.id,
@@ -138,5 +221,15 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
     totals,
     warnings,
     isExportReady,
+    // Extended fields
+    organizationAddress: orgProfile?.address ?? null,
+    organizationPhone: orgProfile?.phone ?? null,
+    organizationKpp: orgProfile?.kpp ?? null,
+    vehicleVin: vehicleProfile?.vin ?? null,
+    vehicleYear: vehicleProfile?.year ?? null,
+    vehicleTypeLabel: vehicleProfile ? 'Легковой автомобиль' : null,
+    driverLicense: defaultDriver?.licenseNumber ?? null,
+    driverLicenseCategories: defaultDriver?.licenseCategories ?? null,
+    fuelSummary,
   }
 }

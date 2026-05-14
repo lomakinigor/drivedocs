@@ -174,6 +174,10 @@ export interface Driver {
 /** F-027 · приказ Минтранса 368 — режим поездки для расчёта нормы расхода */
 export type TripMode = 'city' | 'suburban'
 
+/** F-032 — формат путевого листа. Minimal = 10 обяз. реквизитов приказа 368.
+ *  Extended = + ГСМ-таблица (АМ-23-р), VIN, год, ВУ, расширенные подписи. */
+export type WaybillTemplate = 'minimal' | 'extended'
+
 export interface Trip {
   id: string
   workspaceId: string

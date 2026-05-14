@@ -1,16 +1,40 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, FileText, AlertTriangle, Download, Loader, Lock } from 'lucide-react'
+import { X, FileText, AlertTriangle, Download, Loader, Lock, Sparkles, Info } from 'lucide-react'
 import {
   useWorkspaceStore,
   useOrgProfile,
   useVehicleProfile,
   useWorkspaceTrips,
+  useDrivers,
   useIsProWorkspace,
 } from '@/app/store/workspaceStore'
 import { buildMonthlyWaybillData } from './waybillData'
 import { exportWaybillPdf } from './exportWaybillPdf'
+import { recordMetric } from '@/lib/metrics/featureMetrics'
 import type { WaybillExportRow } from './waybillData'
+import type { WaybillTemplate } from '@/entities/types/domain'
+
+const TEMPLATE_STORAGE_KEY = 'drivedocs:waybill.template'
+
+function readTemplate(): WaybillTemplate {
+  if (typeof window === 'undefined') return 'minimal'
+  try {
+    const v = window.localStorage.getItem(TEMPLATE_STORAGE_KEY)
+    return v === 'extended' ? 'extended' : 'minimal'
+  } catch {
+    return 'minimal'
+  }
+}
+
+function writeTemplate(t: WaybillTemplate): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(TEMPLATE_STORAGE_KEY, t)
+  } catch {
+    /* ignore */
+  }
+}
 
 interface WaybillPreviewSheetProps {
   workspaceId: string
@@ -31,11 +55,17 @@ export function WaybillPreviewSheet({
   const orgProfile = useOrgProfile(workspaceId)
   const vehicleProfile = useVehicleProfile(workspaceId)
   const allTrips = useWorkspaceTrips(workspaceId)
+  const drivers = useDrivers(workspaceId)
   const isPro = useIsProWorkspace(workspaceId)
   const navigate = useNavigate()
 
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [template, setTemplate] = useState<WaybillTemplate>(() => readTemplate())
+
+  useEffect(() => {
+    writeTemplate(template)
+  }, [template])
 
   const periodTrips = useMemo(
     () => allTrips.filter((t) => t.date >= fromDate && t.date <= toDate),
@@ -51,8 +81,10 @@ export function WaybillPreviewSheet({
       trips: periodTrips,
       fromDate,
       toDate,
+      drivers,
+      fuelProfile: workspace.fuelProfile,
     })
-  }, [workspace, orgProfile, vehicleProfile, periodTrips, fromDate, toDate])
+  }, [workspace, orgProfile, vehicleProfile, periodTrips, drivers, fromDate, toDate])
 
   if (!data) return null
 
@@ -61,7 +93,8 @@ export function WaybillPreviewSheet({
     setIsExporting(true)
     setExportError(null)
     try {
-      await exportWaybillPdf(data)
+      recordMetric('waybill.export', { template })
+      await exportWaybillPdf(data, template)
     } catch (err) {
       setExportError(err instanceof Error ? err.message : 'Не удалось создать PDF. Попробуйте ещё раз.')
     } finally {
@@ -112,6 +145,45 @@ export function WaybillPreviewSheet({
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4 min-h-0">
+          {/* F-032 · Template toggle */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              Шаблон
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <TemplateOption
+                active={template === 'minimal'}
+                title="Минимальный"
+                subtitle="10 обязательных реквизитов приказа 368"
+                badge="По умолчанию"
+                onClick={() => {
+                  setTemplate('minimal')
+                  recordMetric('waybill.template.switch', { to: 'minimal' })
+                }}
+              />
+              <TemplateOption
+                active={template === 'extended'}
+                title="Расширенный"
+                subtitle="+ ГСМ (АМ-23-р), VIN, ВУ, медконтроль"
+                badge="Рекомендуем"
+                badgeIcon={<Sparkles size={11} />}
+                onClick={() => {
+                  setTemplate('extended')
+                  recordMetric('waybill.template.switch', { to: 'extended' })
+                }}
+              />
+            </div>
+            {template === 'extended' && (
+              <div className="flex items-start gap-2 mt-2 px-3 py-2.5 bg-indigo-50 rounded-xl">
+                <Info size={13} className="text-indigo-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-indigo-700 leading-relaxed">
+                  Расширенный бланк — для ФНС-проверки, списания ГСМ в расходы и аудита.
+                  Не обязателен, но защищает в спорных ситуациях.
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Summary card */}
           <div className="bg-slate-50 rounded-2xl p-4 space-y-2.5">
             <SummaryRow label="Организация" value={data.organizationName} />
@@ -262,6 +334,48 @@ function PdfPaywall({ onUpgrade }: { onUpgrade: () => void }) {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+interface TemplateOptionProps {
+  active: boolean
+  title: string
+  subtitle: string
+  badge?: string
+  badgeIcon?: React.ReactNode
+  onClick: () => void
+}
+
+function TemplateOption({ active, title, subtitle, badge, badgeIcon, onClick }: TemplateOptionProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left rounded-2xl border-2 p-3 active:scale-[0.98] transition-transform ${
+        active
+          ? 'border-indigo-500 bg-indigo-50'
+          : 'border-slate-200 bg-white active:bg-slate-50'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <p className={`text-[13px] font-semibold ${active ? 'text-indigo-900' : 'text-slate-900'}`}>
+          {title}
+        </p>
+        {badge && (
+          <span
+            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 ${
+              active ? 'bg-indigo-200 text-indigo-800' : 'bg-slate-100 text-slate-500'
+            }`}
+          >
+            {badgeIcon}
+            {badge}
+          </span>
+        )}
+      </div>
+      <p className={`text-[11px] leading-snug ${active ? 'text-indigo-700' : 'text-slate-500'}`}>
+        {subtitle}
+      </p>
+    </button>
+  )
+}
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
