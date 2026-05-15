@@ -70,8 +70,13 @@ function canProceed(step: Step, state: WizardState): boolean {
       return !!state.entityType
     case 'workspace_name':
       return state.workspaceName.trim().length >= 2
-    case 'inn':
-      return true // INN is optional — user can skip
+    case 'inn': {
+      // 2026-05-15 — ИНН обязателен (приказ 368 / договоры / приказы).
+      // ИП: 12 цифр, ООО: 10 цифр.
+      const digits = state.inn.replace(/\D/g, '')
+      const required = state.entityType === 'IP' ? 12 : 10
+      return digits.length === required
+    }
     case 'tax_mode':
       return !!state.taxMode
     case 'vehicle_model':

@@ -87,10 +87,8 @@ export function InnStep({ entityType, value, onChange }: InnStepProps) {
         )}
       </div>
 
-      {/* Skip hint */}
-      <p className="text-xs text-slate-500 px-1">
-        Можно заполнить позже — в настройках предприятия.
-      </p>
+      {/* 2026-05-15 — подсказка «можно позже» убрана: ИНН обязателен для путевого
+          и договоров, без него документы недействительны. */}
     </div>
   )
 }
