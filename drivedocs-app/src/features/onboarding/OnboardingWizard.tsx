@@ -217,14 +217,22 @@ export function OnboardingWizard() {
   const ok = canProceed(currentStep, state)
   const isSummary = currentStep === 'summary'
 
-  // 2026-05-13 — Enter в любом поле = клик «Далее» (если кнопка активна).
-  const handleSubmit = (e: React.FormEvent) => {
+  // 2026-05-15 — Enter в input/textarea = клик «Далее».
+  // НЕ используем <form onSubmit>, т.к. это делает все вложенные кнопки
+  // submit-кнопками (стрелка назад, опции в radio-group, edit-step в summary),
+  // и любой их клик дополнительно вызывает handleNext.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter') return
+    const t = e.target as HTMLElement
+    if (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA') return
+    // Не перехватываем Enter в textarea если зажат Shift (перенос строки)
+    if (t.tagName === 'TEXTAREA' && e.shiftKey) return
     e.preventDefault()
     if (ok) handleNext()
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full bg-white">
+    <div onKeyDown={handleKeyDown} className="flex flex-col h-full bg-white">
       {/* ── Header ── */}
       <div className="flex items-center gap-2 px-4 pt-12 pb-4">
         <button
@@ -327,7 +335,8 @@ export function OnboardingWizard() {
       {/* ── Footer CTA ── */}
       <div className="px-4 pb-10 pt-4 border-t border-slate-100">
         <button
-          type="submit"
+          type="button"
+          onClick={handleNext}
           disabled={!ok}
           className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
             ok
@@ -349,7 +358,7 @@ export function OnboardingWizard() {
           </button>
         )}
       </div>
-    </form>
+    </div>
   )
 }
 
