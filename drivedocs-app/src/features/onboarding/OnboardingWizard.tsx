@@ -236,6 +236,7 @@ export function OnboardingWizard() {
       {/* ── Header ── */}
       <div className="flex items-center gap-2 px-4 pt-12 pb-4">
         <button
+          type="button"
           onClick={handleBack}
           className="p-2 -ml-2 rounded-xl text-slate-500 active:bg-slate-100"
           aria-label="Назад"
@@ -347,16 +348,9 @@ export function OnboardingWizard() {
           {ctaLabel(currentStep, !!targetWsId)}
         </button>
 
-        {/* Skip for INN step */}
-        {currentStep === 'inn' && (
-          <button
-            type="button"
-            onClick={handleNext}
-            className="w-full mt-3 py-2 text-sm text-slate-500 active:text-slate-600"
-          >
-            Пропустить — заполню позже
-          </button>
-        )}
+        {/* 2026-05-15 — кнопка «Пропустить» на ИНН убрана: ИНН попадает
+            в путевой лист (приказ 368 / стандарт ФНС) и в договоры аренды /
+            приказы / акты. Без него документы недействительны — отложить нельзя. */}
       </div>
     </div>
   )
