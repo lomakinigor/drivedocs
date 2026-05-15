@@ -104,10 +104,6 @@ export function TodayPage() {
         </div>
       </div>
 
-      {/* 2026-05-15 — кнопка «Отслеживать маршрут» убрана: GPS-отслеживание
-          вне MVP-скоупа. GeoTripProvider остался в MobileLayout dormant —
-          без триггера запуска ничего не делает. */}
-
       {/* Daily waybill button */}
       <button
         onClick={() => setShowWaybill(true)}

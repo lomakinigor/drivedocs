@@ -97,20 +97,13 @@ function isValid(form: FormState): boolean {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-interface TripPrefill {
-  from?: string
-  to?: string
-  distanceKm?: number
-}
-
 interface AddTripSheetProps {
   workspaceId: string
-  prefill?: TripPrefill
   onClose: () => void
   onSaved: () => void
 }
 
-export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTripSheetProps) {
+export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProps) {
   const addTrip = useWorkspaceStore((s) => s.addTrip)
   const addEvent = useWorkspaceStore((s) => s.addEvent)
   const vehicleProfile = useWorkspaceStore((s) =>
@@ -130,9 +123,8 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
     const prevOdo = lastOdometerEnd(trips)
     return {
       ...base,
-      from: prefill?.from ?? memFrom ?? '',
-      to: prefill?.to ?? memTo ?? base.to,
-      distanceKm: prefill?.distanceKm ? String(prefill.distanceKm) : '',
+      from: memFrom ?? '',
+      to: memTo ?? base.to,
       odometerStart: prevOdo !== undefined ? String(prevOdo) : '',
     }
   })
