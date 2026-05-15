@@ -136,7 +136,7 @@ export function WaybillPreviewSheet({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -177,10 +177,17 @@ export function WaybillPreviewSheet({
               <div className="flex items-start gap-2 mt-2 px-3 py-2.5 bg-indigo-50 rounded-xl">
                 <Info size={13} className="text-indigo-500 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-indigo-700 leading-relaxed">
-                  Расширенный бланк — для ФНС-проверки, списания ГСМ в расходы и аудита.
-                  Не обязателен, но защищает в спорных ситуациях.
+                  Для ФНС, списания ГСМ и аудита. Расчёт нормы расхода
+                  по&nbsp;АМ-23-р делается за&nbsp;вас — экономит ~20&nbsp;минут
+                  на&nbsp;каждый путевой.
                 </p>
               </div>
+            )}
+            {template === 'minimal' && (
+              <p className="text-[11px] text-slate-500 mt-2 leading-relaxed px-1">
+                Полное соответствие приказу 368 — для повседневной отчётности.
+                Готовим PDF за&nbsp;5–10 секунд.
+              </p>
             )}
           </div>
 
@@ -227,7 +234,7 @@ export function WaybillPreviewSheet({
             {data.rows.length === 0 ? (
               <div className="py-6 text-center">
                 <p className="text-sm text-slate-500">Нет поездок за период</p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Добавьте поездки, чтобы сформировать путевой лист
                 </p>
               </div>
@@ -276,7 +283,7 @@ export function WaybillPreviewSheet({
               className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
                 data.isExportReady && !isExporting
                   ? 'bg-indigo-600 text-white active:bg-indigo-700'
-                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : 'bg-slate-100 text-slate-500 cursor-not-allowed'
               }`}
             >
               {isExporting ? (
@@ -393,10 +400,10 @@ function WaybillRow({ row }: { row: WaybillExportRow }) {
   })
   return (
     <div className="flex items-start gap-3 py-2.5">
-      <span className="text-xs text-slate-400 shrink-0 mt-0.5 w-14">{dateStr}</span>
+      <span className="text-xs text-slate-500 shrink-0 mt-0.5 w-14">{dateStr}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-slate-900 truncate">{row.route}</p>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <p className="text-xs text-slate-500 mt-0.5">
           {row.distanceKm != null ? `${row.distanceKm} км · ` : ''}{row.purpose}
         </p>
       </div>

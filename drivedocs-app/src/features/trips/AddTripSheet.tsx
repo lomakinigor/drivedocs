@@ -522,7 +522,7 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
             className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
               ok
                 ? 'bg-blue-600 text-white active:bg-blue-700'
-                : 'bg-slate-100 text-slate-400'
+                : 'bg-slate-100 text-slate-500'
             }`}
           >
             Добавить поездку

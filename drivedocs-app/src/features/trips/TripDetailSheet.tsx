@@ -65,7 +65,7 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -77,9 +77,9 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
           {/* Route */}
           <div className="bg-slate-50 rounded-2xl p-4 space-y-2">
             <div className="flex items-start gap-2.5">
-              <MapPin size={15} className="text-slate-400 shrink-0 mt-0.5" />
+              <MapPin size={15} className="text-slate-500 shrink-0 mt-0.5" />
               <div className="min-w-0">
-                <p className="text-xs text-slate-400 mb-0.5">Откуда</p>
+                <p className="text-xs text-slate-500 mb-0.5">Откуда</p>
                 <p className="text-sm font-medium text-slate-900 leading-snug">
                   {trip.startLocation}
                 </p>
@@ -89,7 +89,7 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
             <div className="flex items-start gap-2.5">
               <MapPin size={15} className="text-blue-400 shrink-0 mt-0.5" />
               <div className="min-w-0">
-                <p className="text-xs text-slate-400 mb-0.5">Куда</p>
+                <p className="text-xs text-slate-500 mb-0.5">Куда</p>
                 <p className="text-sm font-medium text-slate-900 leading-snug">
                   {trip.endLocation}
                 </p>
@@ -99,17 +99,17 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
 
           {/* Meta rows */}
           <div className="space-y-3">
-            <MetaRow icon={<Car size={15} className="text-slate-400" />} label="Расстояние">
+            <MetaRow icon={<Car size={15} className="text-slate-500" />} label="Расстояние">
               {trip.distanceKm} км
             </MetaRow>
-            <MetaRow icon={<Target size={15} className="text-slate-400" />} label="Цель поездки">
+            <MetaRow icon={<Target size={15} className="text-slate-500" />} label="Цель поездки">
               {trip.purpose}
             </MetaRow>
-            <MetaRow icon={<Calendar size={15} className="text-slate-400" />} label="Дата">
+            <MetaRow icon={<Calendar size={15} className="text-slate-500" />} label="Дата">
               <span className="capitalize">{dateFormatted}</span>
             </MetaRow>
             {linkedReceipts.length > 0 && (
-              <MetaRow icon={<Receipt size={15} className="text-slate-400" />} label="Чеки">
+              <MetaRow icon={<Receipt size={15} className="text-slate-500" />} label="Чеки">
                 {linkedReceipts.length} {pluralReceipts(linkedReceipts.length)} ·{' '}
                 {linkedReceipts
                   .reduce((sum, r) => sum + r.amount, 0)
@@ -133,7 +133,7 @@ export function TripDetailSheet({ trip, onClose }: TripDetailSheetProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900">Путевой лист за этот день</p>
-                <p className="text-xs text-slate-400 mt-0.5">PDF для печати или отправки</p>
+                <p className="text-xs text-slate-500 mt-0.5">PDF для печати или отправки</p>
               </div>
               <span className="text-slate-300 text-lg shrink-0">›</span>
             </button>
@@ -199,7 +199,7 @@ function MetaRow({
     <div className="flex items-start gap-2.5">
       <span className="shrink-0 mt-0.5">{icon}</span>
       <div className="min-w-0">
-        <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+        <p className="text-xs text-slate-500 mb-0.5">{label}</p>
         <p className="text-sm font-medium text-slate-800">{children}</p>
       </div>
     </div>

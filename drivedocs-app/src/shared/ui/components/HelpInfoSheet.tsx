@@ -56,7 +56,7 @@ export function HelpInfoSheet({ content, onClose }: HelpInfoSheetProps) {
                 <ul className="space-y-1.5 mt-1">
                   {section.list.map((item, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-slate-400 mt-1 shrink-0 text-xs">•</span>
+                      <span className="text-slate-500 mt-1 shrink-0 text-xs">•</span>
                       <p
                         className={`text-sm leading-relaxed ${
                           section.tone === 'warning' ? 'text-amber-700' : 'text-slate-600'
@@ -73,7 +73,7 @@ export function HelpInfoSheet({ content, onClose }: HelpInfoSheetProps) {
         </div>
 
         {content.footnote && (
-          <p className="text-xs text-slate-400 leading-relaxed mt-4 pt-3 border-t border-slate-100">
+          <p className="text-xs text-slate-500 leading-relaxed mt-4 pt-3 border-t border-slate-100">
             {content.footnote}
           </p>
         )}

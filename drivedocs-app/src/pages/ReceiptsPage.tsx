@@ -101,10 +101,10 @@ export function ReceiptsPage({ embedded = false }: ReceiptsPageProps = {}) {
         /* Empty state */
         <Card className="p-8 flex flex-col items-center text-center">
           <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-            <Receipt size={28} className="text-slate-400" />
+            <Receipt size={28} className="text-slate-500" />
           </div>
           <p className="text-sm font-medium text-slate-700">Чеков за этот период нет</p>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Добавьте чек на экране «Сегодня» или выберите другой период
           </p>
         </Card>
@@ -169,7 +169,7 @@ export function ReceiptsPage({ embedded = false }: ReceiptsPageProps = {}) {
                         <p className="text-sm font-semibold text-slate-900">
                           {receipt.amount.toLocaleString('ru-RU')} ₽
                         </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 mt-0.5">
                           {RECEIPT_CATEGORY_LABELS[receipt.category]} ·{' '}
                           {new Date(receipt.date).toLocaleDateString('ru-RU', {
                             day: 'numeric',
@@ -179,7 +179,7 @@ export function ReceiptsPage({ embedded = false }: ReceiptsPageProps = {}) {
                       </div>
                       <span
                         className={`text-xs font-medium shrink-0 ${
-                          receipt.tripId ? 'text-blue-500' : 'text-slate-400'
+                          receipt.tripId ? 'text-blue-500' : 'text-slate-500'
                         }`}
                       >
                         {receipt.tripId ? 'К поездке' : 'Не привязан'}
@@ -276,7 +276,7 @@ function TrendBadge({ trendPct, period }: { trendPct: number; period: number }) 
       }`}
     >
       {isFlat ? (
-        <Minus size={15} className="text-slate-400 shrink-0" />
+        <Minus size={15} className="text-slate-500 shrink-0" />
       ) : isUp ? (
         <TrendingUp size={15} className="text-red-500 shrink-0" />
       ) : (
@@ -303,7 +303,7 @@ function CategoryBar({ stat }: { stat: { category: ReceiptCategory; amount: numb
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-700">{RECEIPT_CATEGORY_LABELS[stat.category]}</span>
-          <span className="text-xs text-slate-400">{stat.count} шт.</span>
+          <span className="text-xs text-slate-500">{stat.count} шт.</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500">{stat.pct}%</span>

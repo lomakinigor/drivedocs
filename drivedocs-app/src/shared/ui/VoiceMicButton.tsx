@@ -22,7 +22,7 @@ export function VoiceMicButton({ onResult, className = '' }: VoiceMicButtonProps
           ? 'text-red-500 bg-red-50 active:bg-red-100'
           : error
             ? 'text-slate-300'
-            : 'text-slate-400 active:bg-slate-100'
+            : 'text-slate-500 active:bg-slate-100'
       } ${className}`}
     >
       {isListening ? (

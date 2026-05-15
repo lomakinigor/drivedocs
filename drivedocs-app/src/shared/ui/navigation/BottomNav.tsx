@@ -46,6 +46,6 @@ export function BottomNav() {
 
 function navItemClass(isActive: boolean) {
   return `flex flex-col items-center justify-center flex-1 py-2 gap-0 min-h-[60px] transition-colors ${
-    isActive ? 'text-blue-600' : 'text-slate-400 active:text-slate-600'
+    isActive ? 'text-blue-600' : 'text-slate-500 active:text-slate-600'
   }`
 }

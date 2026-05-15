@@ -39,7 +39,7 @@ function StatCard({ icon, label, value, sub }: StatCardProps) {
         <p className="text-xs font-medium text-slate-500">{label}</p>
       </div>
       <p className="text-2xl font-bold text-slate-900">{value}</p>
-      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -56,13 +56,13 @@ function FeatureRow({ label, description }: FeatureRowProps) {
     <div className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
       <div>
         <p className="text-sm font-medium text-slate-700">{label}</p>
-        <p className="text-xs text-slate-400">{description}</p>
+        <p className="text-xs text-slate-500">{description}</p>
       </div>
       <div className="flex items-center gap-2">
         <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
           <div className="h-full bg-slate-200 rounded-full w-0" />
         </div>
-        <span className="text-xs text-slate-400 w-6 text-right">—</span>
+        <span className="text-xs text-slate-500 w-6 text-right">—</span>
       </div>
     </div>
   )
@@ -110,7 +110,7 @@ export function AdminPage() {
 
         {/* Overview stats */}
         <section>
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Обзор</h2>
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Обзор</h2>
           <div className="grid grid-cols-2 gap-3">
             <StatCard
               icon={<Users size={16} />}
@@ -142,8 +142,8 @@ export function AdminPage() {
         {/* Feature usage */}
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <BarChart2 size={16} className="text-slate-400" />
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Использование фич</h2>
+            <BarChart2 size={16} className="text-slate-500" />
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Использование фич</h2>
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4">
             <FeatureRow label="Поездки" description="пользователей, добавивших ≥1 поездку" />
@@ -158,8 +158,8 @@ export function AdminPage() {
         {/* Retention stub */}
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={16} className="text-slate-400" />
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Активность</h2>
+            <TrendingUp size={16} className="text-slate-500" />
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Активность</h2>
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
             <div className="flex items-end gap-1 h-16">
@@ -172,10 +172,10 @@ export function AdminPage() {
               ))}
             </div>
             <div className="flex justify-between mt-2">
-              <p className="text-xs text-slate-400">14 дней назад</p>
-              <p className="text-xs text-slate-400">Сегодня</p>
+              <p className="text-xs text-slate-500">14 дней назад</p>
+              <p className="text-xs text-slate-500">Сегодня</p>
             </div>
-            <p className="text-xs text-slate-400 text-center mt-2">
+            <p className="text-xs text-slate-500 text-center mt-2">
               Данные DAU появятся после подключения БД
             </p>
           </div>
@@ -184,8 +184,8 @@ export function AdminPage() {
         {/* Documents usage */}
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <FileText size={16} className="text-slate-400" />
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Документы</h2>
+            <FileText size={16} className="text-slate-500" />
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Документы</h2>
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4">
             <FeatureRow label="Приказ о компенсации" description="оформлено / требуется" />
@@ -217,7 +217,7 @@ function MetricsSection() {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Метрики фич (локально)</h2>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Метрики фич (локально)</h2>
         {entries.length > 0 && (
           <button
             onClick={() => {
@@ -234,7 +234,7 @@ function MetricsSection() {
         )}
       </div>
       {entries.length === 0 ? (
-        <p className="text-xs text-slate-400 text-center py-6 bg-white rounded-2xl border border-slate-100">
+        <p className="text-xs text-slate-500 text-center py-6 bg-white rounded-2xl border border-slate-100">
           Ещё нет событий. Походите по приложению — счётчики появятся.
         </p>
       ) : (
@@ -243,7 +243,7 @@ function MetricsSection() {
             <div key={key} className="px-4 py-3 flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-mono font-medium text-slate-900 truncate">{key}</p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {new Date(entry.lastUsed).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}
                 </p>
               </div>
@@ -252,7 +252,7 @@ function MetricsSection() {
           ))}
         </div>
       )}
-      <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
+      <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
         Хранится в localStorage. Доступно через консоль: <code>drivedocsMetrics.get()</code>.
       </p>
     </section>

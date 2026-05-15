@@ -73,7 +73,7 @@ export function AuthPage() {
             className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${
               tab === 'signin'
                 ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-slate-400'
+                : 'text-slate-500'
             }`}
           >
             Войти
@@ -84,7 +84,7 @@ export function AuthPage() {
             className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${
               tab === 'signup'
                 ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-slate-400'
+                : 'text-slate-500'
             }`}
           >
             Создать аккаунт
@@ -154,7 +154,7 @@ export function AuthPage() {
       </div>
 
       {/* Footer */}
-      <p className="text-center text-xs text-slate-400 mt-auto py-8">
+      <p className="text-center text-xs text-slate-500 mt-auto py-8">
         drivedocs · v0.1.0
       </p>
     </div>

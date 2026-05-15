@@ -301,7 +301,7 @@ function KpiTile({ label, value, unit, isEmpty }: { label: string; value: string
   return (
     <div className="bg-white rounded-[18px] px-4 py-3.5 shadow-[0_2px_12px_oklch(22%_0.028_280/0.06)]">
       <div
-        className="text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+        className="text-[10px] font-semibold uppercase tracking-wider text-slate-500"
         style={{ letterSpacing: '0.08em' }}
       >
         {label}
@@ -311,7 +311,7 @@ function KpiTile({ label, value, unit, isEmpty }: { label: string; value: string
         style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
       >
         {value}
-        {unit && <span className="text-[14px] text-slate-400 font-medium ml-1">{unit}</span>}
+        {unit && <span className="text-[14px] text-slate-500 font-medium ml-1">{unit}</span>}
       </div>
     </div>
   )
@@ -323,7 +323,7 @@ function SectionLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
       className="flex items-center gap-1.5 mb-2.5 text-slate-500"
       style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
     >
-      <span className="text-slate-400">{icon}</span>
+      <span className="text-slate-500">{icon}</span>
       <span className="text-[11px] font-semibold uppercase tracking-wider">{text}</span>
     </div>
   )
@@ -440,7 +440,7 @@ function TodayTripCard({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
           <FileText size={14} strokeWidth={2} />
           Документы
         </button>
-        <button onClick={onOpen} className="text-[13px] text-slate-400 active:text-slate-600">
+        <button onClick={onOpen} className="text-[13px] text-slate-500 active:text-slate-600">
           Подробнее →
         </button>
       </div>

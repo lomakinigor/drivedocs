@@ -123,7 +123,7 @@ function RenameSheet({ currentName, onSave, onClose }: RenameSheetProps) {
           <button
             onClick={handleSave}
             disabled={!ok}
-            className={`w-full py-4 rounded-2xl text-base font-semibold transition-opacity ${ok ? 'text-white active:opacity-90' : 'bg-slate-100 text-slate-400'}`}
+            className={`w-full py-4 rounded-2xl text-base font-semibold transition-opacity ${ok ? 'text-white active:opacity-90' : 'bg-slate-100 text-slate-500'}`}
             style={ok ? { background: INDIGO, fontFamily: SORA } : { fontFamily: SORA }}
           >
             Сохранить
@@ -767,13 +767,13 @@ export function SettingsPage() {
         {(user.email === 'claudesecond2026@gmail.com' || !isBackendConfigured) && (
           <button
             onClick={() => navigate('/admin')}
-            className="w-full text-center text-[11px] text-slate-400 active:text-slate-600 py-1"
+            className="w-full text-center text-[11px] text-slate-500 active:text-slate-600 py-1"
           >
             Аналитика · только для разработчика
           </button>
         )}
 
-        <p className="text-center text-[11px] text-slate-400">drivedocs · v0.1.0</p>
+        <p className="text-center text-[11px] text-slate-500">drivedocs · v0.1.0</p>
       </div>
 
       {/* Sheets */}

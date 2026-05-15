@@ -69,7 +69,7 @@ export function DocumentFillSheet({ doc, onClose }: Props) {
             <p className="text-xs text-slate-500 mb-0.5">Шаблон документа</p>
             <h2 className="text-sm font-bold text-slate-900 leading-snug">{doc.title}</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100 shrink-0">
+          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0">
             <X size={20} />
           </button>
         </div>
@@ -171,7 +171,7 @@ export function DocumentFillSheet({ doc, onClose }: Props) {
             <Printer size={18} />
             Печать / Сохранить PDF
           </button>
-          <p className="text-center text-xs text-slate-400">
+          <p className="text-center text-xs text-slate-500">
             Откроется диалог печати браузера — выберите «Сохранить как PDF»
           </p>
         </div>

@@ -196,7 +196,7 @@ export function ReportsPage() {
       {/* Empty hint when no data at all */}
       {primary.tripsCount === 0 && current.tripsCount === 0 && (
         <div className="bg-slate-50 rounded-2xl p-4 flex gap-3 items-start mt-2">
-          <FileText size={18} className="text-slate-400 shrink-0 mt-0.5" />
+          <FileText size={18} className="text-slate-500 shrink-0 mt-0.5" />
           <p className="text-xs text-slate-500 leading-relaxed">
             Добавьте поездки и чеки — здесь появится готовый месячный отчёт для бухгалтерии.
           </p>

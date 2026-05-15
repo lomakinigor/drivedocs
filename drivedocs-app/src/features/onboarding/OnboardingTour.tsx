@@ -83,14 +83,14 @@ export function OnboardingTour() {
             {/* Skip */}
             <button
               onClick={completeTour}
-              className="absolute top-5 right-5 p-1.5 text-slate-400 active:text-slate-600"
+              className="absolute top-5 right-5 p-1.5 text-slate-500 active:text-slate-600"
               aria-label="Закрыть"
             >
               <X size={18} />
             </button>
 
             {/* Step counter */}
-            <p className="text-xs font-medium text-slate-400 mb-4">
+            <p className="text-xs font-medium text-slate-500 mb-4">
               {step + 1} из {STEPS.length}
             </p>
 
@@ -108,7 +108,7 @@ export function OnboardingTour() {
               {step > 0 ? (
                 <button
                   onClick={() => setStep((s) => s - 1)}
-                  className="text-sm font-medium text-slate-400 active:text-slate-600 py-1"
+                  className="text-sm font-medium text-slate-500 active:text-slate-600 py-1"
                 >
                   Назад
                 </button>

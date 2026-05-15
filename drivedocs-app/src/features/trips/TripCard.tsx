@@ -28,7 +28,7 @@ export function TripCard({ trip, showDate = false, onClick }: TripCardProps) {
       <div className="min-w-0 flex-1">
         {/* Route */}
         <div className="flex items-center gap-1 min-w-0 mb-1">
-          <MapPin size={11} className="text-slate-400 shrink-0" />
+          <MapPin size={11} className="text-slate-500 shrink-0" />
           <span className="text-sm font-semibold text-slate-900 truncate">{fromCity}</span>
           <span className="text-slate-300 shrink-0 text-xs">→</span>
           <span className="text-sm font-semibold text-slate-900 truncate">{toCity}</span>
@@ -49,7 +49,7 @@ export function TripCard({ trip, showDate = false, onClick }: TripCardProps) {
             </>
           )}
           <span className="text-slate-200 text-xs">·</span>
-          <span className="text-xs text-slate-400 truncate">{trip.purpose}</span>
+          <span className="text-xs text-slate-500 truncate">{trip.purpose}</span>
         </div>
       </div>
     </Tag>

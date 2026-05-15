@@ -29,14 +29,14 @@ export function DriversSheet({ workspaceId, onClose }: DriversSheetProps) {
         </div>
         <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0">
           <h2 className="text-base font-semibold text-slate-900">Водители</h2>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100">
             <X size={20} />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
           {drivers.length === 0 && editingId !== 'new' && (
-            <p className="text-sm text-slate-400 text-center py-6">
+            <p className="text-sm text-slate-500 text-center py-6">
               Водителей пока нет — добавьте первого
             </p>
           )}
@@ -80,7 +80,7 @@ export function DriversSheet({ workspaceId, onClose }: DriversSheetProps) {
 
           <button
             onClick={() => setEditingId('new')}
-            className="flex items-center gap-2 w-full px-4 py-3 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 active:border-blue-300 active:text-blue-500 transition-colors"
+            className="flex items-center gap-2 w-full px-4 py-3 rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 active:border-blue-300 active:text-blue-500 transition-colors"
           >
             <Plus size={18} />
             <span className="text-sm font-medium">Добавить водителя</span>
@@ -116,14 +116,14 @@ function DriverCard({
             <span className="ml-2 text-xs font-medium text-blue-500">основной</span>
           )}
         </p>
-        <p className="text-xs text-slate-400 mt-0.5">ВУ: {driver.licenseNumber || '—'}</p>
+        <p className="text-xs text-slate-500 mt-0.5">ВУ: {driver.licenseNumber || '—'}</p>
         {driver.licenseExpires && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Действует до: {new Date(driver.licenseExpires).toLocaleDateString('ru-RU')}
           </p>
         )}
         {driver.licenseCategories && (
-          <p className="text-xs text-slate-400">Категории: {driver.licenseCategories}</p>
+          <p className="text-xs text-slate-500">Категории: {driver.licenseCategories}</p>
         )}
       </div>
       <div className="flex items-center gap-1 shrink-0">
@@ -138,7 +138,7 @@ function DriverCard({
         )}
         <button
           onClick={onEdit}
-          className="p-1.5 rounded-xl text-slate-400 active:bg-slate-100 text-xs font-medium"
+          className="p-1.5 rounded-xl text-slate-500 active:bg-slate-100 text-xs font-medium"
         >
           Изм.
         </button>
@@ -217,7 +217,7 @@ function DriverForm({
         <button
           onClick={handleSave}
           disabled={!ok}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${ok ? 'bg-blue-600 text-white active:bg-blue-700' : 'bg-slate-100 text-slate-400'}`}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${ok ? 'bg-blue-600 text-white active:bg-blue-700' : 'bg-slate-100 text-slate-500'}`}
         >
           Сохранить
         </button>

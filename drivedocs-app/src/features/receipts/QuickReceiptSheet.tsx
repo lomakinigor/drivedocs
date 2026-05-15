@@ -122,7 +122,7 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
           <h2 className="text-base font-semibold text-slate-900">Новый чек</h2>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -133,7 +133,7 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
         <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
           {/* Photo capture — primary entry point, OCR autofills fields below */}
           <Field label="Фото чека">
-            <p className="text-xs text-slate-400 -mt-1 mb-1.5">
+            <p className="text-xs text-slate-500 -mt-1 mb-1.5">
               Сфотографируйте чек — сумма, дата и категория заполнятся автоматически
             </p>
             <input
@@ -159,7 +159,7 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
           {!form.imageUrl && (
             <div className="flex items-center gap-3 py-1">
               <div className="flex-1 h-px bg-slate-100" />
-              <span className="text-xs text-slate-400 font-medium">или заполните вручную</span>
+              <span className="text-xs text-slate-500 font-medium">или заполните вручную</span>
               <div className="flex-1 h-px bg-slate-100" />
             </div>
           )}
@@ -231,7 +231,7 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
             className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
               isValid
                 ? 'bg-blue-600 text-white active:bg-blue-700'
-                : 'bg-slate-100 text-slate-400'
+                : 'bg-slate-100 text-slate-500'
             }`}
           >
             Сохранить чек
@@ -287,7 +287,7 @@ export function PhotoPicker({
 }) {
   if (loading) {
     return (
-      <div className="w-full flex items-center gap-2.5 px-3.5 py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400">
+      <div className="w-full flex items-center gap-2.5 px-3.5 py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500">
         <Loader size={18} className="animate-spin shrink-0" />
         <span className="text-sm">Загрузка…</span>
       </div>
@@ -359,7 +359,7 @@ export function PhotoPicker({
           onClick={onOpen}
           className="w-full flex items-center gap-2.5 px-3.5 py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 active:bg-slate-50"
         >
-          <Camera size={18} className="shrink-0 text-slate-400" />
+          <Camera size={18} className="shrink-0 text-slate-500" />
           <span className="text-sm">{label}</span>
         </button>
       )}

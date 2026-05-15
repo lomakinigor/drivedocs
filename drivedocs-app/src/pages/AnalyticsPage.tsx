@@ -161,10 +161,10 @@ export function AnalyticsPage() {
       {!hasData ? (
         <Card className="p-8 flex flex-col items-center text-center">
           <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-            <BarChart2 size={28} className="text-slate-400" />
+            <BarChart2 size={28} className="text-slate-500" />
           </div>
           <p className="text-sm font-medium text-slate-700">Данных за этот период нет</p>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Добавьте поездки и чеки — здесь появится сводка
           </p>
         </Card>
@@ -221,7 +221,7 @@ export function AnalyticsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Компенсация</p>
-                  <p className="text-xs text-slate-400">По нормам ПП РФ № 92</p>
+                  <p className="text-xs text-slate-500">По нормам ПП РФ № 92</p>
                 </div>
               </div>
               <div className="bg-amber-50 rounded-xl p-3 space-y-1.5">
@@ -237,7 +237,7 @@ export function AnalyticsPage() {
                     </span>
                   </div>
                 )}
-                <p className="text-xs text-slate-400 pt-1 leading-snug">
+                <p className="text-xs text-slate-500 pt-1 leading-snug">
                   Точный расчёт — в разделе «Документы» → Расчёт компенсации
                 </p>
               </div>
@@ -288,7 +288,7 @@ function StatCard({
       <div className="grid grid-cols-2 gap-2">
         {items.map((item) => (
           <div key={item.label} className="bg-slate-50 rounded-xl p-3">
-            <p className="text-[11px] font-medium text-slate-400 mb-1 uppercase tracking-wide">{item.label}</p>
+            <p className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">{item.label}</p>
             <p className="text-[17px] font-bold text-slate-900 leading-none"
               style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>{item.value}</p>
           </div>
@@ -310,7 +310,7 @@ function TrendRow({ pct, label }: { pct: number; label: string }) {
   return (
     <div className={`flex items-center gap-2 rounded-xl px-3 py-2 ${isFlat ? 'bg-slate-50' : isUp ? 'bg-red-50' : 'bg-green-50'}`}>
       {isFlat
-        ? <Minus size={14} className="text-slate-400 shrink-0" />
+        ? <Minus size={14} className="text-slate-500 shrink-0" />
         : isUp
         ? <TrendingUp size={14} className="text-red-500 shrink-0" />
         : <TrendingDown size={14} className="text-green-600 shrink-0" />}
@@ -334,7 +334,7 @@ function CategoryRow({ label, amount, total }: { label: string; amount: number; 
       <div className="flex justify-between">
         <span className="text-sm text-slate-700">{label}</span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">{pct}%</span>
+          <span className="text-xs text-slate-500">{pct}%</span>
           <span className="text-sm font-semibold text-slate-800">{amount.toLocaleString('ru-RU')} ₽</span>
         </div>
       </div>

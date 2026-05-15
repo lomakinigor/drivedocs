@@ -234,7 +234,7 @@ function HelpSheet({
         </div>
         <div className="flex items-center justify-between px-5 pb-3 shrink-0">
           <h2 className="text-base font-semibold text-slate-900">Сравнение вариантов</h2>
-          <button onClick={onClose} className="p-1.5 rounded-xl text-slate-400 active:bg-slate-100" aria-label="Закрыть">
+          <button onClick={onClose} className="p-1.5 rounded-xl text-slate-500 active:bg-slate-100" aria-label="Закрыть">
             <X size={18} />
           </button>
         </div>
@@ -301,7 +301,7 @@ export function VehicleModelStep({ selected, onSelect, entityType }: VehicleMode
       {!isIP && (
         <button
           onClick={() => setCarOwner(undefined)}
-          className="text-xs text-slate-400 font-medium mb-4 active:text-slate-600"
+          className="text-xs text-slate-500 font-medium mb-4 active:text-slate-600"
         >
           ← Изменить: чья машина
         </button>

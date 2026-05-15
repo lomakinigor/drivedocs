@@ -88,7 +88,7 @@ export function InnStep({ entityType, value, onChange }: InnStepProps) {
       </div>
 
       {/* Skip hint */}
-      <p className="text-xs text-slate-400 px-1">
+      <p className="text-xs text-slate-500 px-1">
         Можно заполнить позже — в настройках предприятия.
       </p>
     </div>

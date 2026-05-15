@@ -8,7 +8,7 @@ import type { EventType, EventSeverity } from '@/entities/types/domain'
 function EventIcon({ type, severity }: { type: EventType; severity: EventSeverity }) {
   const color =
     severity === 'urgent' ? 'text-red-500' :
-    severity === 'warning' ? 'text-yellow-500' : 'text-slate-400'
+    severity === 'warning' ? 'text-yellow-500' : 'text-slate-500'
   const bg =
     severity === 'urgent' ? 'bg-red-50' :
     severity === 'warning' ? 'bg-yellow-50' : 'bg-slate-50'
@@ -70,12 +70,12 @@ export function NotificationsSheet({ workspaceId, onClose }: NotificationsSheetP
           <div>
             <h2 className="text-base font-semibold text-slate-900">Уведомления</h2>
             {unread.length > 0 && (
-              <p className="text-xs text-slate-400 mt-0.5">{unread.length} непрочитанных</p>
+              <p className="text-xs text-slate-500 mt-0.5">{unread.length} непрочитанных</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -87,7 +87,7 @@ export function NotificationsSheet({ workspaceId, onClose }: NotificationsSheetP
           {unread.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-3">
               <Bell size={36} className="text-slate-200" />
-              <p className="text-sm text-slate-400">Нет непрочитанных уведомлений</p>
+              <p className="text-sm text-slate-500">Нет непрочитанных уведомлений</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -105,7 +105,7 @@ export function NotificationsSheet({ workspaceId, onClose }: NotificationsSheetP
                     <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
                       {event.description}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {new Date(event.date).toLocaleString('ru-RU', {
                         day: 'numeric',
                         month: 'short',

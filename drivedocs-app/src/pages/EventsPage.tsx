@@ -15,7 +15,7 @@ import type { WorkspaceEvent, EventType, EventSeverity } from '@/entities/types/
 function EventIcon({ type, severity }: { type: EventType; severity: EventSeverity }) {
   const color =
     severity === 'urgent' ? 'text-red-500' :
-    severity === 'warning' ? 'text-yellow-500' : 'text-slate-400'
+    severity === 'warning' ? 'text-yellow-500' : 'text-slate-500'
 
   const bg =
     severity === 'urgent' ? 'bg-red-50' :
@@ -88,7 +88,7 @@ export function EventsPage() {
                     <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
                       {event.description}
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       {new Date(event.date).toLocaleString('ru-RU', {
                         day: 'numeric',
                         month: 'short',

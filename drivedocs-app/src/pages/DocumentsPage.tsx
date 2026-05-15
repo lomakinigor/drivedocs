@@ -153,7 +153,7 @@ export function DocumentsPage() {
         {total > 0 && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-slate-400">{completed} готово</span>
+              <span className="text-xs text-slate-500">{completed} готово</span>
               <span className="text-xs font-semibold text-slate-600">{percent}%</span>
             </div>
             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -225,7 +225,7 @@ export function DocumentsPage() {
             className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold transition-colors ${
               selectedIds.size > 0
                 ? 'bg-blue-600 text-white active:bg-blue-700'
-                : 'bg-slate-100 text-slate-400'
+                : 'bg-slate-100 text-slate-500'
             }`}
           >
             <Printer size={16} />

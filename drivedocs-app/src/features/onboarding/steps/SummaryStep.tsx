@@ -36,7 +36,7 @@ function SummaryRow({ icon, label, value, secondary, onEdit }: SummaryRowProps) 
       <div className="flex-1 min-w-0">
         <p className="text-xs text-slate-500">{label}</p>
         <p className="text-sm font-semibold text-slate-900 mt-0.5 truncate">{value}</p>
-        {secondary && <p className="text-xs text-slate-400 mt-0.5">{secondary}</p>}
+        {secondary && <p className="text-xs text-slate-500 mt-0.5">{secondary}</p>}
       </div>
       <ChevronRight size={14} className="text-slate-300 shrink-0" />
     </button>
@@ -122,7 +122,7 @@ export function SummaryStep({
           <p className="text-sm font-semibold text-slate-900">Как правильно оформить поездку</p>
           <p className="text-xs text-slate-500 mt-0.5">Что фиксировать до выезда</p>
         </div>
-        <span className="text-slate-400 text-xs font-semibold shrink-0">Подробнее →</span>
+        <span className="text-slate-500 text-xs font-semibold shrink-0">Подробнее →</span>
       </button>
 
       {showPreTripHelp && (

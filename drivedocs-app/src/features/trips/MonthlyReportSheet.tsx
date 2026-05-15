@@ -291,7 +291,7 @@ export function MonthlyReportSheet({ workspaceId, onClose }: MonthlyReportSheetP
               <p className="text-xs text-slate-500 mt-0.5 capitalize">{periodLabel}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100">
             <X size={20} />
           </button>
         </div>
@@ -326,7 +326,7 @@ export function MonthlyReportSheet({ workspaceId, onClose }: MonthlyReportSheetP
           {!hasData ? (
             <div className="py-8 text-center">
               <p className="text-sm text-slate-500">Данных за этот период нет</p>
-              <p className="text-xs text-slate-400 mt-1">Добавьте поездки и чеки</p>
+              <p className="text-xs text-slate-500 mt-1">Добавьте поездки и чеки</p>
             </div>
           ) : (
             <>
@@ -408,7 +408,7 @@ export function MonthlyReportSheet({ workspaceId, onClose }: MonthlyReportSheetP
             className={`w-full py-3.5 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
               hasData
                 ? 'bg-blue-600 text-white active:bg-blue-700'
-                : 'bg-slate-100 text-slate-400'
+                : 'bg-slate-100 text-slate-500'
             }`}
           >
             <Printer size={16} />
@@ -419,7 +419,7 @@ export function MonthlyReportSheet({ workspaceId, onClose }: MonthlyReportSheetP
             disabled={!hasData}
             className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors border ${
               !hasData
-                ? 'border-slate-200 text-slate-400'
+                ? 'border-slate-200 text-slate-500'
                 : copied
                 ? 'border-green-300 text-green-600'
                 : 'border-slate-200 text-slate-600 active:bg-slate-50'
@@ -450,10 +450,10 @@ function TripRow({ trip }: { trip: Trip }) {
   const to = trip.endLocation.split(',')[0].trim()
   return (
     <div className="flex items-start gap-3 py-2.5">
-      <span className="text-xs text-slate-400 shrink-0 mt-0.5 w-14">{date}</span>
+      <span className="text-xs text-slate-500 shrink-0 mt-0.5 w-14">{date}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-slate-900 truncate">{from} → {to}</p>
-        <p className="text-xs text-slate-400 mt-0.5">{trip.distanceKm} км · {trip.purpose}</p>
+        <p className="text-xs text-slate-500 mt-0.5">{trip.distanceKm} км · {trip.purpose}</p>
       </div>
     </div>
   )
@@ -466,7 +466,7 @@ function CategoryRow({ label, amount, total }: { label: string; amount: number; 
       <div className="flex justify-between">
         <span className="text-sm text-slate-700">{label}</span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">{pct}%</span>
+          <span className="text-xs text-slate-500">{pct}%</span>
           <span className="text-sm font-semibold text-slate-800">{amount.toLocaleString('ru-RU')} ₽</span>
         </div>
       </div>

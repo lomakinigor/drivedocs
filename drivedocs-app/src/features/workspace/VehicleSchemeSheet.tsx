@@ -42,7 +42,7 @@ export function VehicleSchemeSheet({ current, onSelect, onClose }: VehicleScheme
           <h2 className="text-base font-semibold text-slate-900">Схема оформления авто</h2>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
           >
             <X size={20} />
           </button>
@@ -81,14 +81,14 @@ export function VehicleSchemeSheet({ current, onSelect, onClose }: VehicleScheme
                     <p className="text-sm font-semibold text-slate-900 leading-snug">
                       {VEHICLE_SCHEME_TITLE[scheme]}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {VEHICLE_SCHEME_SUBTITLE[scheme]}
                     </p>
                     <p className="text-xs text-blue-500 mt-1 font-medium">
                       {requiredCount} обязательных документа
                     </p>
                   </div>
-                  <span className="text-slate-400 shrink-0 mt-0.5">
+                  <span className="text-slate-500 shrink-0 mt-0.5">
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </span>
                 </button>
@@ -96,7 +96,7 @@ export function VehicleSchemeSheet({ current, onSelect, onClose }: VehicleScheme
                 {/* Checklist */}
                 {isExpanded && (
                   <div className="px-4 pb-3 space-y-1.5 border-t border-slate-100">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide pt-3 mb-2">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-3 mb-2">
                       Чеклист документов
                     </p>
                     {checklist.map((item) => (
@@ -114,14 +114,14 @@ export function VehicleSchemeSheet({ current, onSelect, onClose }: VehicleScheme
                               <span className="ml-1 text-red-400 font-semibold">*</span>
                             )}
                           </p>
-                          <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>
                           {item.normative && (
                             <p className="text-xs text-blue-400 mt-0.5">{item.normative}</p>
                           )}
                         </div>
                       </div>
                     ))}
-                    <p className="text-xs text-slate-400 pt-1">* — обязательный документ</p>
+                    <p className="text-xs text-slate-500 pt-1">* — обязательный документ</p>
                   </div>
                 )}
               </div>

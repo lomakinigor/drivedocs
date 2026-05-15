@@ -26,7 +26,7 @@ function typeLabel(t: EventType): string {
 function EventIcon({ type, severity }: { type: EventType; severity: EventSeverity }) {
   const color =
     severity === 'urgent' ? 'text-red-500' :
-    severity === 'warning' ? 'text-yellow-500' : 'text-slate-400'
+    severity === 'warning' ? 'text-yellow-500' : 'text-slate-500'
 
   const bg =
     severity === 'urgent' ? 'bg-red-50' :
@@ -93,13 +93,13 @@ export function EventDetailSheet({ event, onClose }: EventDetailSheetProps) {
           <div className="flex items-center gap-3">
             <EventIcon type={event.type} severity={event.severity} />
             <div>
-              <p className="text-xs font-medium text-slate-400 mb-0.5">{typeLabel(event.type)}</p>
+              <p className="text-xs font-medium text-slate-500 mb-0.5">{typeLabel(event.type)}</p>
               <h2 className="text-base font-semibold text-slate-900 leading-snug">{event.title}</h2>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100 shrink-0"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -119,7 +119,7 @@ export function EventDetailSheet({ event, onClose }: EventDetailSheetProps) {
           </div>
 
           {/* Date */}
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
             <AlertTriangle size={13} className="shrink-0 opacity-0" aria-hidden="true" />
             <span>{dateFormatted}</span>
           </div>

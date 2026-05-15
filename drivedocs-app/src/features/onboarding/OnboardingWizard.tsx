@@ -332,7 +332,7 @@ export function OnboardingWizard() {
           className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
             ok
               ? 'bg-blue-600 text-white active:bg-blue-700'
-              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              : 'bg-slate-100 text-slate-500 cursor-not-allowed'
           }`}
         >
           {ctaLabel(currentStep, !!targetWsId)}
@@ -343,7 +343,7 @@ export function OnboardingWizard() {
           <button
             type="button"
             onClick={handleNext}
-            className="w-full mt-3 py-2 text-sm text-slate-400 active:text-slate-600"
+            className="w-full mt-3 py-2 text-sm text-slate-500 active:text-slate-600"
           >
             Пропустить — заполню позже
           </button>

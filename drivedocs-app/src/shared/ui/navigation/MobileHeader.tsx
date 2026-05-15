@@ -41,7 +41,7 @@ export function MobileHeader({ onOpenSwitcher, onOpenNotifications, onOpenQuickT
               {workspace.name}
             </span>
           </div>
-          <ChevronDown size={14} className="text-slate-400 shrink-0 mt-0.5 group-active:text-slate-600 transition-colors" />
+          <ChevronDown size={14} className="text-slate-500 shrink-0 mt-0.5 group-active:text-slate-600 transition-colors" />
         </button>
 
         {/* Actions */}

@@ -126,7 +126,7 @@ export function FeedbackSheet({ onClose }: FeedbackSheetProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100 shrink-0"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -215,7 +215,7 @@ export function FeedbackSheet({ onClose }: FeedbackSheetProps) {
                     ? 'Что непонятно?'
                     : 'Расскажите, что нравится — это важно'
                 }
-                className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 text-[14px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 resize-none"
+                className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 text-[14px] text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-slate-400 resize-none"
               />
             </div>
 
@@ -229,7 +229,7 @@ export function FeedbackSheet({ onClose }: FeedbackSheetProps) {
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
                 placeholder="@username, e-mail или телефон"
-                className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 text-[14px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
+                className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 text-[14px] text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-slate-400"
               />
             </div>
 
@@ -277,7 +277,7 @@ export function FeedbackSheet({ onClose }: FeedbackSheetProps) {
               </button>
               <button
                 onClick={onClose}
-                className="w-full py-2 rounded-2xl text-[12px] font-medium text-slate-400 active:text-slate-600"
+                className="w-full py-2 rounded-2xl text-[12px] font-medium text-slate-500 active:text-slate-600"
               >
                 Отмена
               </button>

@@ -67,7 +67,7 @@ export function OrgProfileSheet({ workspaceId, entityType, onClose }: OrgProfile
           <h2 className="text-base font-semibold text-slate-900">
             {isIP ? 'Реквизиты ИП' : 'Реквизиты организации'}
           </h2>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100">
             <X size={20} />
           </button>
         </div>
@@ -241,7 +241,7 @@ const cls = 'w-full px-3.5 py-3 text-sm text-slate-900 placeholder-slate-300 bg-
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">{title}</p>
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">{title}</p>
       <div className="space-y-3">{children}</div>
     </div>
   )

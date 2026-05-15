@@ -100,14 +100,14 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
                 {STATUS_LABEL[doc.status]}
               </span>
               {doc.type === 'recurring' && (
-                <span className="text-xs text-slate-400">Ежемесячно</span>
+                <span className="text-xs text-slate-500">Ежемесячно</span>
               )}
             </div>
             <h2 className="text-base font-bold text-slate-900 leading-snug">{doc.title}</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100 shrink-0"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -208,7 +208,7 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
               Скан подписанного документа
             </p>
-            <p className="text-xs text-slate-400 mb-2">
+            <p className="text-xs text-slate-500 mb-2">
               Когда подпишете «{doc.title}» — приложите фото или скан для архива
             </p>
             <input
@@ -284,7 +284,7 @@ export function DocumentDetailSheet({ doc, onClose }: DocumentDetailSheetProps) 
               </button>
               <button
                 onClick={onClose}
-                className="w-full py-2 rounded-2xl text-[12px] font-medium text-slate-400 active:text-slate-600"
+                className="w-full py-2 rounded-2xl text-[12px] font-medium text-slate-500 active:text-slate-600"
               >
                 Заполнить позже
               </button>

@@ -74,14 +74,14 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
               <h2 className="text-base font-semibold text-slate-900">
                 {liveReceipt.amount.toLocaleString('ru-RU')} ₽
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 {RECEIPT_CATEGORY_LABELS[liveReceipt.category]} · {dateFormatted}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-400 active:bg-slate-100"
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -168,7 +168,7 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
                   </button>
                 </div>
                 {trips.length === 0 ? (
-                  <p className="text-sm text-slate-400 text-center py-4">
+                  <p className="text-sm text-slate-500 text-center py-4">
                     Нет поездок для привязки
                   </p>
                 ) : (
@@ -185,7 +185,7 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
                         <p className="text-sm font-medium text-slate-900 truncate">
                           {trip.startLocation} → {trip.endLocation}
                         </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 mt-0.5">
                           {trip.distanceKm} км ·{' '}
                           {new Date(trip.date).toLocaleDateString('ru-RU', {
                             day: 'numeric',
@@ -205,11 +205,11 @@ export function ReceiptDetailSheet({ receipt, workspaceId, onClose }: ReceiptDet
                 className="w-full flex items-center gap-3 px-4 py-3.5 bg-slate-50 border border-dashed border-slate-200 rounded-2xl active:bg-slate-100"
               >
                 <div className="p-1.5 bg-slate-100 rounded-lg shrink-0">
-                  <Car size={15} className="text-slate-400" />
+                  <Car size={15} className="text-slate-500" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-slate-600">Не привязан к поездке</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Нажмите, чтобы выбрать поездку</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Нажмите, чтобы выбрать поездку</p>
                 </div>
                 <ChevronRight size={15} className="text-slate-300 shrink-0" />
               </button>

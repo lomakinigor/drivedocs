@@ -64,7 +64,7 @@ export function InstallPrompt() {
     <div className="fixed bottom-4 left-4 right-4 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
       <button
         onClick={dismiss}
-        className="absolute top-3 right-3 text-slate-400 active:text-slate-600"
+        className="absolute top-3 right-3 text-slate-500 active:text-slate-600"
         aria-label="Закрыть"
       >
         <X size={18} />

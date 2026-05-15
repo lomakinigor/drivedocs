@@ -93,7 +93,7 @@ export function TodayPage() {
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-slate-900">Поездка</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">+ записать маршрут</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">+ записать маршрут</p>
             </div>
           </Card>
 
@@ -106,7 +106,7 @@ export function TodayPage() {
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-slate-900">Чек</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">+ расход бизнеса</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">+ расход бизнеса</p>
             </div>
           </Card>
         </div>
@@ -158,7 +158,7 @@ export function TodayPage() {
           </div>
           <div className="text-left">
             <p className="text-sm font-semibold text-slate-900">Путевой лист за сегодня</p>
-            <p className="text-xs text-slate-400 mt-0.5">Скачать PDF для печати</p>
+            <p className="text-xs text-slate-500 mt-0.5">Скачать PDF для печати</p>
           </div>
         </div>
         <span className="text-slate-300 text-lg leading-none">›</span>
@@ -167,7 +167,7 @@ export function TodayPage() {
       {/* Journal */}
       <section>
         <div className="flex items-center gap-1.5 mb-3">
-          <Car size={13} className="text-slate-400" />
+          <Car size={13} className="text-slate-500" />
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
             Журнал за сегодня
           </h2>
@@ -176,10 +176,10 @@ export function TodayPage() {
         {todayTrips.length === 0 ? (
           <Card className="p-6 flex flex-col items-center text-center">
             <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
-              <Plus size={24} className="text-slate-400" />
+              <Plus size={24} className="text-slate-500" />
             </div>
             <p className="text-sm font-medium text-slate-700">Ничего не добавлено</p>
-            <p className="text-xs text-slate-400 mt-1 mb-4">
+            <p className="text-xs text-slate-500 mt-1 mb-4">
               Нажмите «Поездка», чтобы зафиксировать маршрут
             </p>
             <button
@@ -227,11 +227,11 @@ export function TodayPage() {
                       <p className="text-sm font-semibold text-slate-900">
                         {receipt.amount.toLocaleString('ru-RU')} ₽
                       </p>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-xs text-slate-500 mt-0.5">
                         {RECEIPT_CATEGORY_LABELS[receipt.category]}
                       </p>
                     </div>
-                    <span className={`text-xs font-medium shrink-0 ${receipt.tripId ? 'text-blue-500' : 'text-slate-400'}`}>
+                    <span className={`text-xs font-medium shrink-0 ${receipt.tripId ? 'text-blue-500' : 'text-slate-500'}`}>
                       {receipt.tripId ? 'К поездке' : 'Не привязан'}
                     </span>
                   </div>
