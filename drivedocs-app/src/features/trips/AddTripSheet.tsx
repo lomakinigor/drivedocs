@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Loader, HelpCircle, Satellite, Info } from 'lucide-react'
+import { X, HelpCircle, Info } from 'lucide-react'
 import { useWorkspaceStore, todayISO, useCurrentWorkspace, useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
-import { reverseGeocode } from '@/shared/lib/reverseGeocode'
 import { calcFuelNorm } from '@/entities/config/fuelNorms'
 import { HelpFuelNormsSheet } from '@/features/help/HelpFuelNorms'
 import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
@@ -11,16 +10,7 @@ import { recordMetric } from '@/lib/metrics/featureMetrics'
 import { getAutofillValue, recordFieldValue } from '@/lib/memory/fieldMemory'
 import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
 
-// F-028 — GLONASS toggle хранится в localStorage (per-user, не per-workspace).
-const GLONASS_KEY = 'drivedocs:glonass-enabled:v1'
-function readGlonass(): boolean {
-  if (typeof window === 'undefined') return false
-  try { return window.localStorage.getItem(GLONASS_KEY) === '1' } catch { return false }
-}
-function writeGlonass(on: boolean): void {
-  if (typeof window === 'undefined') return
-  try { window.localStorage.setItem(GLONASS_KEY, on ? '1' : '0') } catch { /* ignore */ }
-}
+// 2026-05-15 — GLONASS/GPS-функции убраны из MVP.
 
 // Старый frequentStart удалён — заменён единым правилом «Запоминание»
 // (F-029, `src/lib/memory/fieldMemory.ts`): 3 одинаковых подряд → autofill,
@@ -131,7 +121,6 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
   const fromRef = useRef<HTMLInputElement>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [purposeHelpOpen, setPurposeHelpOpen] = useState(false)
-  const [glonassOn, setGlonassOn] = useState(() => readGlonass())
 
   const [form, setForm] = useState<FormState>(() => {
     const base = initialState()
@@ -149,63 +138,11 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
   })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [touched, setTouched] = useState(false)
-  const [locatingFrom, setLocatingFrom] = useState(false)
-  // locatingTo / locateField удалены 2026-05-12 — функцию заменяет кнопка ГЛОНАСС в шапке.
-
   // Auto-focus first field after sheet animates in
   useEffect(() => {
     const t = setTimeout(() => fromRef.current?.focus(), 150)
     return () => clearTimeout(t)
   }, [])
-
-  // F-028 — Если GLONASS включён, при открытии формы пытаемся определить адрес.
-  // Значение ГЛОНАСС всегда главное — перетирает frequent-fill, даже если уже стоит.
-  useEffect(() => {
-    if (!glonassOn || !navigator.geolocation) return
-    let cancelled = false
-    setLocatingFrom(true)
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        if (cancelled) return
-        try {
-          const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
-          if (!cancelled && addr) {
-            setForm((prev) => ({ ...prev, from: addr }))
-            recordMetric('glonass.autofill', { source: 'opensheet' })
-          }
-        } finally {
-          if (!cancelled) setLocatingFrom(false)
-        }
-      },
-      () => { if (!cancelled) setLocatingFrom(false) },
-      { enableHighAccuracy: true, timeout: 10000 },
-    )
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const toggleGlonass = () => {
-    const next = !glonassOn
-    setGlonassOn(next)
-    writeGlonass(next)
-    recordMetric('glonass.toggle', { state: next ? 'on' : 'off' })
-    // При включении сразу пытаемся определить
-    if (next && navigator.geolocation) {
-      setLocatingFrom(true)
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
-          if (addr) {
-            set({ from: addr })
-            recordMetric('glonass.autofill', { source: 'toggle' })
-          }
-          setLocatingFrom(false)
-        },
-        () => setLocatingFrom(false),
-        { enableHighAccuracy: true, timeout: 10000 },
-      )
-    }
-  }
 
   const set = (patch: Partial<FormState>) =>
     setForm((prev) => ({ ...prev, ...patch }))
@@ -283,27 +220,13 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0 gap-3">
           <h2 className="text-base font-semibold text-slate-900">Новая поездка</h2>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleGlonass}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[12px] font-semibold transition-colors ${
-                glonassOn ? 'text-white' : 'border border-slate-200 text-slate-600 active:bg-slate-50'
-              }`}
-              style={glonassOn ? { background: 'oklch(52% 0.225 285)' } : undefined}
-              aria-pressed={glonassOn}
-            >
-              <Satellite size={13} />
-              ГЛОНАСС
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
-              aria-label="Закрыть"
-            >
-              <X size={20} />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
+            aria-label="Закрыть"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Scrollable form */}
@@ -317,17 +240,11 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
                 value={form.from}
                 onChange={(e) => set({ from: e.target.value })}
                 onBlur={handleBlur}
-                placeholder="Введите адрес или нажмите ГЛОНАСС"
+                placeholder="Введите адрес отправления"
                 className={fieldClass(touched && !!errors.from)}
               />
               <VoiceMicButton onResult={(t) => set({ from: t })} />
             </div>
-            {locatingFrom && (
-              <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500">
-                <Loader size={12} className="animate-spin" />
-                Определяю местоположение…
-              </div>
-            )}
           </Field>
 
           {/* To */}

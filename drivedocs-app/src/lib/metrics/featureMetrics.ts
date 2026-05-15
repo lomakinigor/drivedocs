@@ -8,8 +8,6 @@
 //
 // Примеры ключей:
 //   view.home / view.settings / view.reports / view.trips — page views
-//   glonass.toggle — включение/выключение кнопки ГЛОНАСС (payload: { state: 'on'|'off' })
-//   glonass.autofill — авто-заполнение адреса через GLONASS
 //   addtrip.saved / addtrip.cancelled
 //   ...
 
