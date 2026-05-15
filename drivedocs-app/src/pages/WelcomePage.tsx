@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Car, FileText, Receipt, ArrowRight, Clock } from 'lucide-react'
+import { Car, FileText, Receipt, ArrowRight, Clock, MessageCircle } from 'lucide-react'
 
 export function WelcomePage() {
   const navigate = useNavigate()
@@ -40,30 +40,36 @@ export function WelcomePage() {
         >
           DriveDocs
         </h1>
-        <p className="text-[15px] text-slate-500 leading-relaxed max-w-[270px] mb-10 z-10">
-          Учёт служебного транспорта для&nbsp;ИП и&nbsp;ООО —
-          без&nbsp;Excel и&nbsp;лишних бумаг.
+        <p className="text-[15px] text-slate-600 leading-relaxed max-w-[290px] mb-10 z-10">
+          Списывайте поездки на&nbsp;авто в&nbsp;расходы бизнеса —
+          без&nbsp;Excel и&nbsp;бухгалтера.
         </p>
 
-        {/* Features */}
+        {/* Features — 1st = главная выгода (деньги), потом — как это работает */}
         <div className="flex flex-col gap-2.5 w-full max-w-sm z-10">
-          <FeatureRow
-            icon={Car}
-            color="blue"
-            title="Поездки и путевые листы"
-            desc="GPS-трек или ввод вручную — документ готов"
-          />
           <FeatureRow
             icon={Receipt}
             color="emerald"
-            title="Чеки становятся расходами бизнеса"
-            desc="До 180 000 ₽ в год — не из кармана, из компании"
+            title="Возвращайте до 180 000 ₽ в год"
+            desc="Через УСН-вычет и расходы компании — а не из кармана"
+          />
+          <FeatureRow
+            icon={Car}
+            color="blue"
+            title="Путевой лист за 30 секунд"
+            desc="Минимальный или расширенный — оба соответствуют приказу 368"
           />
           <FeatureRow
             icon={FileText}
             color="violet"
-            title="Документы за секунды"
-            desc="Договор, приказ, акт — готовы к подписи"
+            title="Документы для ФНС"
+            desc="Договор, приказ, акт, отчёт по ГСМ — готовы к подписи"
+          />
+          <FeatureRow
+            icon={MessageCircle}
+            color="indigo"
+            title="Мы быстро отвечаем"
+            desc="@drivedocs_bot — пишите идеи и вопросы, мы добавим"
           />
         </div>
       </div>
@@ -82,9 +88,12 @@ export function WelcomePage() {
           <ArrowRight size={18} strokeWidth={2.2} />
         </button>
         <div className="flex items-center justify-center gap-1.5">
-          <Clock size={12} className="text-slate-400" />
-          <p className="text-xs text-slate-400">Займёт около 2 минут</p>
+          <Clock size={12} className="text-slate-500" />
+          <p className="text-xs text-slate-500">Займёт около 2 минут</p>
         </div>
+        <p className="text-[11px] text-slate-500 text-center leading-relaxed max-w-[300px] mx-auto">
+          Бесплатно в&nbsp;период открытого MVP · Без&nbsp;карты при&nbsp;регистрации · Отмена в&nbsp;один&nbsp;тап
+        </p>
       </div>
     </div>
   )
@@ -97,7 +106,7 @@ function FeatureRow({
   desc,
 }: {
   icon: React.ElementType
-  color: 'blue' | 'emerald' | 'violet'
+  color: 'blue' | 'emerald' | 'violet' | 'indigo'
   title: string
   desc: string
 }) {
@@ -105,6 +114,7 @@ function FeatureRow({
     blue:    { pill: 'bg-blue-100',    icon: 'text-blue-600' },
     emerald: { pill: 'bg-emerald-100', icon: 'text-emerald-600' },
     violet:  { pill: 'bg-violet-100',  icon: 'text-violet-600' },
+    indigo:  { pill: 'bg-indigo-100',  icon: 'text-indigo-600' },
   }
   const s = styles[color]
 
