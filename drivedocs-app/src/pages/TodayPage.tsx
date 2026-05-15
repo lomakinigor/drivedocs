@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Car, Receipt as ReceiptIcon, CheckCircle, Plus, Printer, Navigation, Loader } from 'lucide-react'
+import { Car, Receipt as ReceiptIcon, CheckCircle, Plus, Printer } from 'lucide-react'
 import { useParams, Link } from 'react-router-dom'
 import { Card } from '@/shared/ui/components/Card'
 import { TripCard } from '@/features/trips/TripCard'
@@ -9,7 +9,6 @@ import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
 import { ReceiptDetailSheet } from '@/features/receipts/ReceiptDetailSheet'
 import { useTodayTrips, useTodayReceipts } from '@/app/store/workspaceStore'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
-import { useGeoTrip } from '@/features/trips/GeoTripContext'
 import { RECEIPT_CATEGORY_LABELS } from '@/entities/constants/labels'
 import type { Trip, Receipt } from '@/entities/types/domain'
 
@@ -20,22 +19,7 @@ export function TodayPage() {
   const todayTrips = useTodayTrips(id)
   const todayReceipts = useTodayReceipts(id)
   const openQuickTrip = useOpenQuickTrip()
-  const { isTracking, startTrip, error: geoError } = useGeoTrip()
-  const [geoLoading, setGeoLoading] = useState(false)
-  const [geoErrMsg, setGeoErrMsg] = useState<string | null>(null)
   const [justAdded, setJustAdded] = useState(false)
-
-  const handleStartTracking = async () => {
-    setGeoLoading(true)
-    setGeoErrMsg(null)
-    try {
-      await startTrip()
-    } catch {
-      setGeoErrMsg(geoError ?? 'Не удалось запустить отслеживание')
-    } finally {
-      setGeoLoading(false)
-    }
-  }
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [showReceiptSheet, setShowReceiptSheet] = useState(false)
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null)
@@ -120,31 +104,9 @@ export function TodayPage() {
         </div>
       </div>
 
-      {/* Geo tracking button */}
-      {!isTracking && (
-        <button
-          onClick={handleStartTracking}
-          disabled={geoLoading}
-          className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl disabled:opacity-60 active:opacity-80 transition-opacity"
-          style={{ background: 'oklch(97.5% 0.022 285)', border: '1px solid oklch(88% 0.080 285)' }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl shrink-0" style={{ background: 'oklch(94% 0.044 285)' }}>
-              {geoLoading
-                ? <Loader size={18} className="text-blue-600 animate-spin" strokeWidth={1.8} />
-                : <Navigation size={18} className="text-blue-600" strokeWidth={1.8} />}
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-semibold text-blue-900">Отслеживать маршрут</p>
-              <p className="text-xs text-blue-500 mt-0.5">GPS · реальный километраж</p>
-            </div>
-          </div>
-          <span className="text-blue-300 text-lg leading-none">›</span>
-        </button>
-      )}
-      {geoErrMsg && (
-        <p className="text-xs text-red-500 -mt-3 px-1">{geoErrMsg}</p>
-      )}
+      {/* 2026-05-15 — кнопка «Отслеживать маршрут» убрана: GPS-отслеживание
+          вне MVP-скоупа. GeoTripProvider остался в MobileLayout dormant —
+          без триггера запуска ничего не делает. */}
 
       {/* Daily waybill button */}
       <button

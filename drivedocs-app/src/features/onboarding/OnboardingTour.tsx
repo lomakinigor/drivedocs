@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Car, Navigation, Printer, ChevronRight, X, FileCheck, Settings, Camera } from 'lucide-react'
+import { Car, Printer, ChevronRight, X, FileCheck, Settings, Camera } from 'lucide-react'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 
 const STEPS = [
@@ -23,13 +23,6 @@ const STEPS = [
     iconColor: 'text-blue-600',
     title: 'Фиксируйте поездки',
     body: 'Нажмите «Поездка» на главном экране — укажите откуда, куда и расстояние. Данные сохранятся в журнал и попадут в путевой лист.',
-  },
-  {
-    icon: Navigation,
-    iconBg: 'bg-indigo-100',
-    iconColor: 'text-indigo-600',
-    title: 'GPS-отслеживание',
-    body: 'Кнопка «Отслеживать маршрут» запустит запись пути. После завершения поездки расстояние посчитается автоматически.',
   },
   {
     icon: Camera,
