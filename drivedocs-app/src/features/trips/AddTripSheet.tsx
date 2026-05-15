@@ -6,7 +6,6 @@ import { calcFuelNorm } from '@/entities/config/fuelNorms'
 import { HelpFuelNormsSheet } from '@/features/help/HelpFuelNorms'
 import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
 import { HELP_TRIP_PURPOSE } from '@/entities/config/onboardingHelp'
-import { recordMetric } from '@/lib/metrics/featureMetrics'
 import { getAutofillValue, recordFieldValue } from '@/lib/memory/fieldMemory'
 import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
 

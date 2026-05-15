@@ -6,6 +6,22 @@
 
 ---
 
+## 2026-05-15 · prod-билд Vercel падал на TS6133 после удаления кода
+
+**Симптом:** auto-deploy в Vercel падает с `error TS6133: 'recordMetric' is declared but its value is never read`. Локально `npx tsc --noEmit` проходит чисто.
+
+**Корневая причина:** разница флагов TypeScript между разными командами.
+- `npx tsc --noEmit` использует `tsconfig.json` root — без `noUnusedLocals`/`noUnusedParameters`.
+- `npm run build` запускает `tsc -b && vite build` — project references, который **включает** `tsconfig.app.json` со строгими unused-флагами. Тут любой неиспользуемый импорт = ошибка.
+
+**Фикс:** удалил мёртвый `import { recordMetric }` из AddTripSheet после удаления ГЛОНАСС-логики.
+
+**Урок (важно):** перед `git push` после удаления функционала прогонять **`npm run build`** локально, а не `tsc --noEmit`. Иначе Vercel ловит то, что `--noEmit` пропускает.
+
+**Анти-паттерн:** полагаться на «typecheck чистый» как сигнал готовности к пушу. Это слабый сигнал. Сильный сигнал — успешный `npm run build`.
+
+---
+
 ## 2026-05-15 · drivedocs-v2.vercel.app показывал старый билд
 
 **Симптом:** запушенные фиксы не появлялись на `drivedocs-v2.vercel.app` даже после нескольких минут. Hard reload в Private Browsing — старая версия.
