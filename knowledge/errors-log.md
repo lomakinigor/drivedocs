@@ -20,7 +20,7 @@
 
 **Урок:** перед демонстрацией билда — **проверять `vercel ls` в обоих проектах**, что свежий коммит реально доехал до URL, который смотрит пользователь. Признак того что v2 устаревший: timestamp последнего deployment > 10 минут от моего push.
 
-**TODO:** удалить один из проектов или подключить v2 к auto-deploy (Vercel UI → Settings → Git → Connect).
+**Решение (2026-05-15):** `cd drivedocs-app && vercel git connect https://github.com/lomakinigor/drivedocs.git`. Теперь оба проекта (`drivedocs` и `drivedocs-v2`) автодеплоятся на push в master. На каждый коммит будут два билда (одинаковый код, разные URL) — это не страшно, бесплатный план Vercel выдержит.
 
 ---
 
