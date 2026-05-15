@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { X, Camera, RotateCcw, Loader } from 'lucide-react'
+import { X, Camera, RotateCcw, Loader, Info } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
 import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
 import { useOcrExtract } from '@/shared/hooks/useOcrExtract'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
+import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { HELP_RECEIPT_CATEGORIES } from '@/entities/config/onboardingHelp'
 import type { Receipt, ReceiptCategory } from '@/entities/types/domain'
 
 // ─── Category options ─────────────────────────────────────────────────────────
@@ -41,6 +43,7 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
   const addReceipt = useWorkspaceStore((s) => s.addReceipt)
   const [form, setForm] = useState<FormState>(initialState)
   const [touched, setTouched] = useState(false)
+  const [showCategoryHelp, setShowCategoryHelp] = useState(false)
   const set = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }))
 
   const ocr = useOcrExtract()
@@ -205,6 +208,14 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => setShowCategoryHelp(true)}
+              className="flex items-center gap-1.5 mt-2 text-xs text-blue-600 font-medium active:text-blue-800"
+            >
+              <Info size={12} />
+              Какие чеки уменьшают налог?
+            </button>
           </Field>
 
           {/* Description (optional) */}
@@ -238,6 +249,13 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
           </button>
         </div>
       </div>
+
+      {showCategoryHelp && (
+        <HelpInfoSheet
+          content={HELP_RECEIPT_CATEGORIES}
+          onClose={() => setShowCategoryHelp(false)}
+        />
+      )}
     </>
   )
 }

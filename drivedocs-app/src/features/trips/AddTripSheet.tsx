@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Loader, HelpCircle, Satellite } from 'lucide-react'
+import { X, Loader, HelpCircle, Satellite, Info } from 'lucide-react'
 import { useWorkspaceStore, todayISO, useCurrentWorkspace, useWorkspaceTrips } from '@/app/store/workspaceStore'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import { reverseGeocode } from '@/shared/lib/reverseGeocode'
 import { calcFuelNorm } from '@/entities/config/fuelNorms'
 import { HelpFuelNormsSheet } from '@/features/help/HelpFuelNorms'
+import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { HELP_TRIP_PURPOSE } from '@/entities/config/onboardingHelp'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
 import { getAutofillValue, recordFieldValue } from '@/lib/memory/fieldMemory'
 import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
@@ -128,6 +130,7 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
   const trips = useWorkspaceTrips(workspaceId) // мемоизированный селектор — критично, иначе infinite render
   const fromRef = useRef<HTMLInputElement>(null)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [purposeHelpOpen, setPurposeHelpOpen] = useState(false)
   const [glonassOn, setGlonassOn] = useState(() => readGlonass())
 
   const [form, setForm] = useState<FormState>(() => {
@@ -463,6 +466,14 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
 
           {/* Purpose */}
           <Field label="Цель поездки" error={touched ? errors.purpose : undefined}>
+            <button
+              type="button"
+              onClick={() => setPurposeHelpOpen(true)}
+              className="flex items-center gap-1.5 mb-1.5 text-xs text-blue-600 font-medium active:text-blue-800"
+            >
+              <Info size={12} />
+              Зачем заполнять и что писать?
+            </button>
             <div className="space-y-1.5">
               {PURPOSES.map((p) => (
                 <button
@@ -531,6 +542,9 @@ export function AddTripSheet({ workspaceId, prefill, onClose, onSaved }: AddTrip
       </div>
 
       {helpOpen && <HelpFuelNormsSheet onClose={() => setHelpOpen(false)} />}
+      {purposeHelpOpen && (
+        <HelpInfoSheet content={HELP_TRIP_PURPOSE} onClose={() => setPurposeHelpOpen(false)} />
+      )}
     </>
   )
 }

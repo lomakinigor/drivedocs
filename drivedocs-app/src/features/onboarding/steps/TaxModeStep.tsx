@@ -1,5 +1,9 @@
+import { useState } from 'react'
+import { Info } from 'lucide-react'
 import type { EntityType, TaxMode } from '@/entities/types/domain'
 import { TAX_MODE_LABELS } from '@/entities/constants/labels'
+import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { HELP_TAX_MODE } from '@/entities/config/onboardingHelp'
 
 interface TaxModeStepProps {
   entityType: EntityType
@@ -23,6 +27,7 @@ const AVAILABLE_MODES: Record<EntityType, TaxMode[]> = {
 
 export function TaxModeStep({ entityType, selected, onSelect }: TaxModeStepProps) {
   const modes = AVAILABLE_MODES[entityType]
+  const [showHelp, setShowHelp] = useState(false)
 
   return (
     <div className="space-y-2">
@@ -53,6 +58,23 @@ export function TaxModeStep({ entityType, selected, onSelect }: TaxModeStepProps
           </div>
         </button>
       ))}
+
+      {/* F-021 · Help: как выбрать налоговый режим */}
+      <button
+        onClick={() => setShowHelp(true)}
+        className="flex items-center gap-3 w-full p-3.5 rounded-2xl bg-blue-50 border border-blue-100 active:bg-blue-100 text-left mt-1"
+      >
+        <Info size={18} className="text-blue-600 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-blue-900">Не уверены — какой режим выбрать?</p>
+          <p className="text-xs text-blue-700 mt-0.5">Когда выгоден УСН, патент и ОСН</p>
+        </div>
+        <span className="text-blue-500 text-xs font-semibold shrink-0">Подробнее →</span>
+      </button>
+
+      {showHelp && (
+        <HelpInfoSheet content={HELP_TAX_MODE} onClose={() => setShowHelp(false)} />
+      )}
     </div>
   )
 }
