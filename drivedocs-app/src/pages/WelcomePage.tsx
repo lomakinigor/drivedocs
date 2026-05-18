@@ -7,8 +7,8 @@ export function WelcomePage() {
   return (
     <div className="flex flex-col h-full" style={{ background: 'oklch(98.8% 0.005 80)' }}>
 
-      {/* Hero */}
-      <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-14 pb-6 text-center overflow-hidden">
+      {/* Hero — scrollable content area */}
+      <div className="relative flex-1 flex flex-col items-center px-6 pt-10 pb-6 text-center overflow-y-auto min-h-0">
 
         {/* Background glow */}
         <div
@@ -16,21 +16,14 @@ export function WelcomePage() {
           style={{ background: 'radial-gradient(circle, oklch(94% 0.044 285 / 0.6), transparent 70%)' }}
         />
 
-        {/* Brand mark */}
-        <div className="relative mb-8 z-10">
-          <div
-            className="w-24 h-24 rounded-[28px] flex items-center justify-center"
-            style={{
-              background: 'oklch(52% 0.225 285)',
-              boxShadow: '0 8px 32px oklch(52% 0.225 285 / 0.35), 0 2px 8px oklch(52% 0.225 285 / 0.20)',
-            }}
-          >
-            <Car size={42} className="text-white" strokeWidth={1.7} />
-          </div>
-          {/* Trust badge */}
-          <div className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center border-[2.5px] border-white shadow-sm">
-            <span className="text-white text-sm leading-none font-bold">✓</span>
-          </div>
+        {/* Brand mark — реальная иконка приложения */}
+        <div className="relative mb-6 z-10 shrink-0">
+          <img
+            src="/app-icon-source.png"
+            alt="DriveDocs"
+            className="w-24 h-24 rounded-full"
+            style={{ boxShadow: '0 8px 32px oklch(52% 0.225 285 / 0.35), 0 2px 8px oklch(22% 0.028 280 / 0.15)' }}
+          />
         </div>
 
         {/* Headline */}
