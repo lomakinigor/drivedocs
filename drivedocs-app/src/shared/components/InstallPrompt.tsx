@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Share, PlusSquare } from 'lucide-react'
+import { X, Share, PlusSquare, MoreVertical } from 'lucide-react'
 
 const STORAGE_KEY = 'pwa-install-dismissed'
 
@@ -8,34 +8,36 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
+type Platform = 'ios' | 'android-native' | 'android-manual'
+
 export function InstallPrompt() {
   const [show, setShow] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
+  const [platform, setPlatform] = useState<Platform>('android-manual')
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(STORAGE_KEY)
-    if (dismissed) return
+    if (localStorage.getItem(STORAGE_KEY)) return
 
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       ('standalone' in window.navigator && (window.navigator as { standalone?: boolean }).standalone)
-
     if (isStandalone) return
 
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent)
-    setIsIOS(ios)
-
     if (ios) {
+      setPlatform('ios')
       setShow(true)
       return
     }
 
-    // Сохраняем событие и показываем баннер — .prompt() вызываем по кнопке
+    // Android — показываем баннер сразу с инструкцией. Если Chrome пришлёт
+    // beforeinstallprompt — переключим режим на нативную кнопку «Установить».
+    setShow(true)
+
     const handler = (e: Event) => {
       e.preventDefault()
       deferredPrompt.current = e as BeforeInstallPromptEvent
-      setShow(true)
+      setPlatform('android-native')
     }
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
@@ -73,24 +75,33 @@ export function InstallPrompt() {
       <div className="flex items-start gap-3">
         <img src="/pwa-64x64.png" alt="Drivedocs" className="w-12 h-12 rounded-xl flex-shrink-0" />
         <div className="flex-1 min-w-0 pr-4">
-          <p className="text-sm font-semibold text-slate-900">Добавить на экран</p>
-          {isIOS ? (
-            <p className="text-xs text-slate-500 mt-1">
+          <p className="text-sm font-semibold text-slate-900">Установить приложение</p>
+          {platform === 'ios' && (
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
               Нажмите{' '}
               <Share size={12} className="inline align-middle" />{' '}
               в браузере, затем{' '}
               <span className="font-medium">«На экран Домой»</span>
               {' '}<PlusSquare size={12} className="inline align-middle" />
             </p>
-          ) : (
+          )}
+          {platform === 'android-native' && (
             <p className="text-xs text-slate-500 mt-1">
-              Установите Drivedocs как приложение — быстрый доступ без браузера
+              Быстрый доступ без браузера, оффлайн-режим
+            </p>
+          )}
+          {platform === 'android-manual' && (
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Откройте меню браузера{' '}
+              <MoreVertical size={12} className="inline align-middle" />{' '}
+              → <span className="font-medium">«Добавить на главный экран»</span>{' '}
+              или <span className="font-medium">«Установить приложение»</span>
             </p>
           )}
         </div>
       </div>
 
-      {!isIOS && (
+      {platform === 'android-native' && (
         <button
           onClick={handleInstall}
           className="mt-3 w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl active:bg-blue-700"
