@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Building2, Hash, CreditCard, Car, ChevronRight, Info } from 'lucide-react'
+import { Building2, CreditCard, Car, ChevronRight, Info } from 'lucide-react'
 import type { EntityType, TaxMode, VehicleUsageModel } from '@/entities/types/domain'
 import {
   ENTITY_TYPE_LABELS,
@@ -12,10 +12,9 @@ import { HELP_PRE_TRIP } from '@/entities/config/onboardingHelp'
 interface SummaryStepProps {
   workspaceName: string
   entityType: EntityType
-  inn?: string
   taxMode: TaxMode
   vehicleUsageModel: VehicleUsageModel
-  onEditStep: (step: 'workspace_name' | 'inn' | 'tax_mode' | 'vehicle_model') => void
+  onEditStep: (step: 'workspace_name' | 'tax_mode' | 'vehicle_model') => void
 }
 
 interface SummaryRowProps {
@@ -54,7 +53,6 @@ const VEHICLE_MODEL_NOTES: Record<VehicleUsageModel, string> = {
 export function SummaryStep({
   workspaceName,
   entityType,
-  inn,
   taxMode,
   vehicleUsageModel,
   onEditStep,
@@ -71,12 +69,6 @@ export function SummaryStep({
           value={workspaceName}
           secondary={ENTITY_TYPE_LABELS[entityType]}
           onEdit={() => onEditStep('workspace_name')}
-        />
-        <SummaryRow
-          icon={<Hash size={18} />}
-          label="ИНН"
-          value={inn || 'Не указан'}
-          onEdit={() => onEditStep('inn')}
         />
         <SummaryRow
           icon={<CreditCard size={18} />}

@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { EntityTypeStep } from './steps/EntityTypeStep'
 import { WorkspaceNameStep } from './steps/WorkspaceNameStep'
-import { InnStep } from './steps/InnStep'
 import { TaxModeStep } from './steps/TaxModeStep'
 import { VehicleModelStep } from './steps/VehicleModelStep'
 import { SummaryStep } from './steps/SummaryStep'
@@ -14,12 +13,11 @@ import { buildDemoSeedData } from '@/lib/demo/demoSeed'
 
 // ─── Step config ─────────────────────────────────────────────────────────────
 
-type Step = 'entity_type' | 'workspace_name' | 'inn' | 'tax_mode' | 'vehicle_model' | 'summary'
+type Step = 'entity_type' | 'workspace_name' | 'tax_mode' | 'vehicle_model' | 'summary'
 
 const STEP_ORDER: Step[] = [
   'entity_type',
   'workspace_name',
-  'inn',
   'tax_mode',
   'vehicle_model',
   'summary',
@@ -33,10 +31,6 @@ const STEP_META: Record<Step, { label: string; title: string }> = {
   workspace_name: {
     label: 'Название',
     title: 'Как назовём предприятие?',
-  },
-  inn: {
-    label: 'ИНН',
-    title: 'Введите ИНН',
   },
   tax_mode: {
     label: 'Налоги',
@@ -57,7 +51,6 @@ const STEP_META: Record<Step, { label: string; title: string }> = {
 interface WizardState {
   entityType?: EntityType
   workspaceName: string
-  inn: string
   taxMode?: TaxMode
   vehicleUsageModel?: VehicleUsageModel
 }
@@ -70,13 +63,6 @@ function canProceed(step: Step, state: WizardState): boolean {
       return !!state.entityType
     case 'workspace_name':
       return state.workspaceName.trim().length >= 2
-    case 'inn': {
-      // 2026-05-15 — ИНН обязателен (приказ 368 / договоры / приказы).
-      // ИП: 12 цифр, ООО: 10 цифр.
-      const digits = state.inn.replace(/\D/g, '')
-      const required = state.entityType === 'IP' ? 12 : 10
-      return digits.length === required
-    }
     case 'tax_mode':
       return !!state.taxMode
     case 'vehicle_model':
@@ -87,7 +73,6 @@ function canProceed(step: Step, state: WizardState): boolean {
 }
 
 function ctaLabel(step: Step, isUpdate: boolean): string {
-  if (step === 'inn') return 'Далее'
   if (step === 'summary') return isUpdate ? 'Сохранить настройки' : 'Готово, начать работу'
   return 'Далее'
 }
@@ -106,7 +91,6 @@ export function OnboardingWizard() {
   const [currentStep, setCurrentStep] = useState<Step>('entity_type')
   const [state, setState] = useState<WizardState>({
     workspaceName: '',
-    inn: '',
   })
 
   const stepIndex = STEP_ORDER.indexOf(currentStep)
@@ -157,7 +141,6 @@ export function OnboardingWizard() {
       addOrgProfile({
         workspaceId: targetWsId,
         entityType: state.entityType,
-        inn: state.inn || undefined,
         organizationName: state.entityType === 'OOO' ? workspaceName : undefined,
         ownerFullName: state.entityType === 'IP' ? user.name : undefined,
       })
@@ -186,7 +169,6 @@ export function OnboardingWizard() {
       addOrgProfile({
         workspaceId,
         entityType: state.entityType,
-        inn: state.inn || undefined,
         organizationName: state.entityType === 'OOO' ? workspaceName : undefined,
         ownerFullName: state.entityType === 'IP' ? user.name : undefined,
       })
@@ -299,14 +281,6 @@ export function OnboardingWizard() {
           />
         )}
 
-        {currentStep === 'inn' && state.entityType && (
-          <InnStep
-            entityType={state.entityType}
-            value={state.inn}
-            onChange={(inn) => setState((s) => ({ ...s, inn }))}
-          />
-        )}
-
         {currentStep === 'tax_mode' && state.entityType && (
           <TaxModeStep
             entityType={state.entityType}
@@ -330,7 +304,6 @@ export function OnboardingWizard() {
               defaultWorkspaceName(state.entityType, user.name)
             }
             entityType={state.entityType}
-            inn={state.inn || undefined}
             taxMode={state.taxMode}
             vehicleUsageModel={state.vehicleUsageModel}
             onEditStep={handleEditStep}
@@ -353,9 +326,6 @@ export function OnboardingWizard() {
           {ctaLabel(currentStep, !!targetWsId)}
         </button>
 
-        {/* 2026-05-15 — кнопка «Пропустить» на ИНН убрана: ИНН попадает
-            в путевой лист (приказ 368 / стандарт ФНС) и в договоры аренды /
-            приказы / акты. Без него документы недействительны — отложить нельзя. */}
       </div>
     </div>
   )
