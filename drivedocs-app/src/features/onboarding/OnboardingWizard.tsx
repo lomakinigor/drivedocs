@@ -1,239 +1,156 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { EntityTypeStep } from './steps/EntityTypeStep'
-import { WorkspaceNameStep } from './steps/WorkspaceNameStep'
-import { InnStep } from './steps/InnStep'
-import { TaxModeStep } from './steps/TaxModeStep'
-import { VehicleModelStep } from './steps/VehicleModelStep'
-import { SummaryStep } from './steps/SummaryStep'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
+import { recordMetric } from '@/lib/metrics/featureMetrics'
+import { readDraft, writeDraft, clearDraft } from '@/lib/onboarding/wizardDraft'
 import type { EntityType, TaxMode, VehicleUsageModel } from '@/entities/types/domain'
 import { generateInitialDocuments } from '@/features/documents/initialDocuments'
 import { buildDemoSeedData } from '@/lib/demo/demoSeed'
 
-// ─── Step config ─────────────────────────────────────────────────────────────
+// F-034 — Preview-first onboarding.
+// Один экран: тип организации (обязательно) + название (опционально).
+// Default'ы — УСН 15% + COMPENSATION — применяются автоматически.
+// ИНН, авто, водитель — на Home через essentials-блоки.
 
-type Step = 'entity_type' | 'workspace_name' | 'inn' | 'tax_mode' | 'vehicle_model' | 'summary'
-
-const STEP_ORDER: Step[] = [
-  'entity_type',
-  'workspace_name',
-  'inn',
-  'tax_mode',
-  'vehicle_model',
-  'summary',
-]
-
-const STEP_META: Record<Step, { label: string; title: string }> = {
-  entity_type: {
-    label: 'Статус',
-    title: 'Кто вы по юридическому статусу?',
-  },
-  workspace_name: {
-    label: 'Название',
-    title: 'Как назовём предприятие?',
-  },
-  inn: {
-    label: 'ИНН',
-    title: 'Введите ИНН',
-  },
-  tax_mode: {
-    label: 'Налоги',
-    title: 'Какой налоговый режим применяете?',
-  },
-  vehicle_model: {
-    label: 'Автомобиль',
-    title: 'Как оформлено использование авто?',
-  },
-  summary: {
-    label: 'Итог',
-    title: 'Всё верно?',
-  },
-}
-
-// ─── Wizard state ─────────────────────────────────────────────────────────────
+const DEFAULT_TAX_MODE: TaxMode = 'USN_INCOME_MINUS_EXPENSES'
+const DEFAULT_VEHICLE_USAGE: VehicleUsageModel = 'COMPENSATION'
 
 interface WizardState {
   entityType?: EntityType
   workspaceName: string
-  inn: string
-  taxMode?: TaxMode
-  vehicleUsageModel?: VehicleUsageModel
 }
-
-// ─── Validation per step ──────────────────────────────────────────────────────
-
-function canProceed(step: Step, state: WizardState): boolean {
-  switch (step) {
-    case 'entity_type':
-      return !!state.entityType
-    case 'workspace_name':
-      return state.workspaceName.trim().length >= 2
-    case 'inn': {
-      // 2026-05-15 — ИНН обязателен (приказ 368 / договоры / приказы).
-      // ИП: 12 цифр, ООО: 10 цифр.
-      const digits = state.inn.replace(/\D/g, '')
-      const required = state.entityType === 'IP' ? 12 : 10
-      return digits.length === required
-    }
-    case 'tax_mode':
-      return !!state.taxMode
-    case 'vehicle_model':
-      return !!state.vehicleUsageModel
-    case 'summary':
-      return true
-  }
-}
-
-function ctaLabel(step: Step, isUpdate: boolean): string {
-  if (step === 'inn') return 'Далее'
-  if (step === 'summary') return isUpdate ? 'Сохранить настройки' : 'Готово, начать работу'
-  return 'Далее'
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function OnboardingWizard() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  // If ?ws=<id> is present, we are re-configuring an existing workspace
+  // ?ws=<id> — режим переконфигурации существующего workspace
   const targetWsId = searchParams.get('ws') ?? null
 
-  const { addWorkspace, updateWorkspace, addOrgProfile, setCurrentWorkspace, initWorkspaceDocuments, addTrip, addReceipt, addEvent, user } =
-    useWorkspaceStore()
+  const {
+    addWorkspace,
+    updateWorkspace,
+    addOrgProfile,
+    setCurrentWorkspace,
+    initWorkspaceDocuments,
+    addTrip,
+    addReceipt,
+    addEvent,
+    user,
+  } = useWorkspaceStore()
 
-  const [currentStep, setCurrentStep] = useState<Step>('entity_type')
-  const [state, setState] = useState<WizardState>({
-    workspaceName: '',
-    inn: '',
+  // Восстанавливаем draft (если он есть и валиден)
+  const [state, setState] = useState<WizardState>(() => {
+    if (targetWsId) return { workspaceName: '' }
+    const draft = readDraft()
+    if (draft) {
+      recordMetric('wizard.draft.resumed')
+      return { entityType: draft.entityType, workspaceName: draft.workspaceName }
+    }
+    return { workspaceName: '' }
   })
 
-  const stepIndex = STEP_ORDER.indexOf(currentStep)
-  const totalSteps = STEP_ORDER.length
-  const progress = ((stepIndex + 1) / totalSteps) * 100
-  const meta = STEP_META[currentStep]
+  // Метрика: пользователь увидел wizard
+  useEffect(() => {
+    recordMetric('wizard.step.entity_type.viewed')
+  }, [])
+
+  // Автосохранение draft'а при каждом изменении (только в режиме создания)
+  useEffect(() => {
+    if (targetWsId) return
+    if (!state.entityType && !state.workspaceName) return
+    writeDraft({ entityType: state.entityType, workspaceName: state.workspaceName })
+  }, [state, targetWsId])
 
   // ── Navigation ──────────────────────────────────────────────────────────────
 
   const handleBack = () => {
-    if (stepIndex === 0) {
-      navigate(targetWsId ? '/' : '/welcome')
-    } else {
-      setCurrentStep(STEP_ORDER[stepIndex - 1])
-    }
-  }
-
-  const handleNext = () => {
-    if (currentStep === 'summary') {
-      handleComplete()
-      return
-    }
-    setCurrentStep(STEP_ORDER[stepIndex + 1])
-  }
-
-  // Jump to a specific step (used from summary "edit" taps)
-  const handleEditStep = (step: Exclude<Step, 'entity_type' | 'summary'>) => {
-    setCurrentStep(step)
+    navigate(targetWsId ? '/' : '/welcome')
   }
 
   // ── Completion ──────────────────────────────────────────────────────────────
 
   const handleComplete = async () => {
-    if (!state.entityType || !state.taxMode || !state.vehicleUsageModel) return
+    if (!state.entityType) return
 
     const workspaceName =
       state.workspaceName.trim() || defaultWorkspaceName(state.entityType, user.name)
 
     if (targetWsId) {
-      // Re-configuring an existing workspace — regenerate documents for new config
+      // Re-config existing workspace
       updateWorkspace(targetWsId, {
         name: workspaceName,
         entityType: state.entityType,
-        taxMode: state.taxMode,
-        vehicleUsageModel: state.vehicleUsageModel,
+        // Default режимы не перетираем — пользователь мог менять их вручную в Settings
         isConfigured: true,
       })
       addOrgProfile({
         workspaceId: targetWsId,
         entityType: state.entityType,
-        inn: state.inn || undefined,
         organizationName: state.entityType === 'OOO' ? workspaceName : undefined,
         ownerFullName: state.entityType === 'IP' ? user.name : undefined,
       })
-      const docs = generateInitialDocuments(
-        targetWsId,
-        state.entityType,
-        state.taxMode,
-        state.vehicleUsageModel,
-      )
-      await initWorkspaceDocuments(targetWsId, docs)
       setCurrentWorkspace(targetWsId)
       navigate(`/w/${targetWsId}/home`)
-    } else {
-      // Creating a brand-new workspace
-      const workspaceId = `ws-${Date.now()}`
-      await addWorkspace({
-        id: workspaceId,
-        userId: user.id,
-        name: workspaceName,
-        entityType: state.entityType,
-        taxMode: state.taxMode,
-        vehicleUsageModel: state.vehicleUsageModel,
-        isConfigured: true,
-        createdAt: new Date().toISOString(),
-      })
-      addOrgProfile({
-        workspaceId,
-        entityType: state.entityType,
-        inn: state.inn || undefined,
-        organizationName: state.entityType === 'OOO' ? workspaceName : undefined,
-        ownerFullName: state.entityType === 'IP' ? user.name : undefined,
-      })
-      const docs = generateInitialDocuments(
-        workspaceId,
-        state.entityType,
-        state.taxMode,
-        state.vehicleUsageModel,
-      )
-      await initWorkspaceDocuments(workspaceId, docs)
-
-      // Seed demo data so the user immediately sees what the app can do
-      const seed = buildDemoSeedData(workspaceId, state.entityType, state.vehicleUsageModel)
-      await Promise.all(seed.trips.map((t) => addTrip(t)))
-      await Promise.all(seed.receipts.map((r) => addReceipt(r)))
-      seed.events.forEach((e) => addEvent(e))
-
-      navigate(`/w/${workspaceId}/home`)
+      return
     }
+
+    // Создание нового workspace с default'ами
+    const workspaceId = `ws-${Date.now()}`
+    await addWorkspace({
+      id: workspaceId,
+      userId: user.id,
+      name: workspaceName,
+      entityType: state.entityType,
+      taxMode: DEFAULT_TAX_MODE,
+      vehicleUsageModel: DEFAULT_VEHICLE_USAGE,
+      isConfigured: true,
+      createdAt: new Date().toISOString(),
+    })
+    addOrgProfile({
+      workspaceId,
+      entityType: state.entityType,
+      organizationName: state.entityType === 'OOO' ? workspaceName : undefined,
+      ownerFullName: state.entityType === 'IP' ? user.name : undefined,
+    })
+    const docs = generateInitialDocuments(
+      workspaceId,
+      state.entityType,
+      DEFAULT_TAX_MODE,
+      DEFAULT_VEHICLE_USAGE,
+    )
+    await initWorkspaceDocuments(workspaceId, docs)
+
+    // Демо-данные на новый workspace — чтобы Home не выглядел пустым
+    const seed = buildDemoSeedData(workspaceId, state.entityType, DEFAULT_VEHICLE_USAGE)
+    await Promise.all(seed.trips.map((t) => addTrip(t)))
+    await Promise.all(seed.receipts.map((r) => addReceipt(r)))
+    seed.events.forEach((e) => addEvent(e))
+
+    clearDraft()
+    recordMetric('wizard.step.entity_type.completed', { hasName: !!state.workspaceName.trim() })
+    recordMetric('onboarding.complete')
+
+    navigate(`/w/${workspaceId}/home`)
   }
 
   // ── State updaters ──────────────────────────────────────────────────────────
 
-  const setEntityType = (type: EntityType) =>
-    setState((s) => ({
-      ...s,
-      entityType: type,
-      taxMode: undefined, // reset tax mode when entity type changes
-    }))
+  const setEntityType = (type: EntityType) => setState((s) => ({ ...s, entityType: type }))
+  const setWorkspaceName = (name: string) => setState((s) => ({ ...s, workspaceName: name }))
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  const ok = canProceed(currentStep, state)
-  const isSummary = currentStep === 'summary'
+  const ok = !!state.entityType
 
-  // 2026-05-15 — Enter в input/textarea = клик «Далее».
-  // НЕ используем <form onSubmit>, т.к. это делает все вложенные кнопки
-  // submit-кнопками (стрелка назад, опции в radio-group, edit-step в summary),
-  // и любой их клик дополнительно вызывает handleNext.
+  // Enter в input = «Готово» если можно сабмитить
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'Enter') return
     const t = e.target as HTMLElement
-    if (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA') return
-    // Не перехватываем Enter в textarea если зажат Shift (перенос строки)
-    if (t.tagName === 'TEXTAREA' && e.shiftKey) return
+    if (t.tagName !== 'INPUT') return
     e.preventDefault()
-    if (ok) handleNext()
+    if (ok) handleComplete()
   }
 
   return (
@@ -248,101 +165,42 @@ export function OnboardingWizard() {
         >
           <ArrowLeft size={20} />
         </button>
-
-        {/* Step dots */}
-        <div className="flex items-center gap-1.5 flex-1 justify-center pr-8">
-          {STEP_ORDER.map((step, i) => (
-            <div
-              key={step}
-              className={`rounded-full transition-all duration-300 ${
-                i === stepIndex
-                  ? 'w-5 h-2 bg-blue-500'
-                  : i < stepIndex
-                  ? 'w-2 h-2 bg-blue-300'
-                  : 'w-2 h-2 bg-slate-200'
-              }`}
-            />
-          ))}
+        <div className="flex-1 text-center text-[12px] font-medium text-slate-500 pr-8">
+          1 из 1 · ~10 секунд
         </div>
       </div>
 
-      {/* ── Progress bar ── */}
+      {/* ── Progress bar (full при единственном шаге) ── */}
       <div className="px-4">
-        <div className="h-0.5 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-blue-500 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <div className="h-0.5 bg-blue-500 rounded-full" />
       </div>
 
       {/* ── Content ── */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        {/* Step heading */}
         <div className="mb-6">
           <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
-            {meta.label}
+            Ваш бизнес
           </p>
-          <h1 className="text-xl font-bold text-slate-900 leading-snug">{meta.title}</h1>
+          <h1 className="text-xl font-bold text-slate-900 leading-snug">Кто вы?</h1>
+          <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">
+            Это всё что нужно для старта. Остальные данные (ИНН, авто, водитель) —
+            на главной, когда будет удобно.
+          </p>
         </div>
 
-        {/* Step body */}
-        {currentStep === 'entity_type' && (
-          <EntityTypeStep selected={state.entityType} onSelect={setEntityType} />
-        )}
-
-        {currentStep === 'workspace_name' && state.entityType && (
-          <WorkspaceNameStep
-            entityType={state.entityType}
-            value={state.workspaceName}
-            onChange={(name) => setState((s) => ({ ...s, workspaceName: name }))}
-          />
-        )}
-
-        {currentStep === 'inn' && state.entityType && (
-          <InnStep
-            entityType={state.entityType}
-            value={state.inn}
-            onChange={(inn) => setState((s) => ({ ...s, inn }))}
-          />
-        )}
-
-        {currentStep === 'tax_mode' && state.entityType && (
-          <TaxModeStep
-            entityType={state.entityType}
-            selected={state.taxMode}
-            onSelect={(mode) => setState((s) => ({ ...s, taxMode: mode }))}
-          />
-        )}
-
-        {currentStep === 'vehicle_model' && (
-          <VehicleModelStep
-            selected={state.vehicleUsageModel}
-            onSelect={(model) => setState((s) => ({ ...s, vehicleUsageModel: model }))}
-            entityType={state.entityType}
-          />
-        )}
-
-        {isSummary && state.entityType && state.taxMode && state.vehicleUsageModel && (
-          <SummaryStep
-            workspaceName={
-              state.workspaceName.trim() ||
-              defaultWorkspaceName(state.entityType, user.name)
-            }
-            entityType={state.entityType}
-            inn={state.inn || undefined}
-            taxMode={state.taxMode}
-            vehicleUsageModel={state.vehicleUsageModel}
-            onEditStep={handleEditStep}
-          />
-        )}
+        <EntityTypeStep
+          selected={state.entityType}
+          workspaceName={state.workspaceName}
+          onSelectType={setEntityType}
+          onChangeName={setWorkspaceName}
+        />
       </div>
 
       {/* ── Footer CTA ── */}
       <div className="px-4 pb-10 pt-4 border-t border-slate-100">
         <button
           type="button"
-          onClick={handleNext}
+          onClick={handleComplete}
           disabled={!ok}
           className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
             ok
@@ -350,12 +208,8 @@ export function OnboardingWizard() {
               : 'bg-slate-100 text-slate-500 cursor-not-allowed'
           }`}
         >
-          {ctaLabel(currentStep, !!targetWsId)}
+          {targetWsId ? 'Сохранить' : 'Готово, начать работу'}
         </button>
-
-        {/* 2026-05-15 — кнопка «Пропустить» на ИНН убрана: ИНН попадает
-            в путевой лист (приказ 368 / стандарт ФНС) и в договоры аренды /
-            приказы / акты. Без него документы недействительны — отложить нельзя. */}
       </div>
     </div>
   )
