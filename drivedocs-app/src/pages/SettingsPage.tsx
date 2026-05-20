@@ -10,6 +10,7 @@ import {
   Plus,
   X,
   TriangleAlert,
+  Trash2,
   LogOut,
   Star,
   Loader,
@@ -761,6 +762,9 @@ export function SettingsPage() {
               </div>
             )}
           </Card>
+
+          {/* Dev-only: полный сброс приложения (localStorage + SW + IndexedDB) */}
+          {isDevMode() && <DevResetCard />}
         </section>
 
         {/* Admin link */}
@@ -804,6 +808,100 @@ export function SettingsPage() {
       {helpSheet && <HelpInfoSheet content={helpSheet} onClose={() => setHelpSheet(null)} />}
 
       {feedbackOpen && <FeedbackSheet onClose={() => setFeedbackOpen(false)} />}
+    </div>
+  )
+}
+
+// ─── Dev-only: полный сброс приложения ──────────────────────────────────────
+// Видна только в DEV-сборке или с ?dev=1 в URL — обычным пользователям не показывается.
+
+function isDevMode(): boolean {
+  if (import.meta.env.DEV) return true
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('dev') === '1') return true
+  return false
+}
+
+async function fullAppWipe(): Promise<void> {
+  try { localStorage.clear() } catch { /* ignore */ }
+  try { sessionStorage.clear() } catch { /* ignore */ }
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(regs.map((r) => r.unregister()))
+  }
+  if ('caches' in window) {
+    const keys = await caches.keys()
+    await Promise.all(keys.map((k) => caches.delete(k)))
+  }
+  if ('indexedDB' in window && 'databases' in indexedDB) {
+    const dbs = await (indexedDB as IDBFactory & { databases: () => Promise<{ name?: string }[]> }).databases()
+    await Promise.all(
+      dbs.filter((d) => d.name).map((d) => new Promise<void>((resolve) => {
+        const req = indexedDB.deleteDatabase(d.name!)
+        req.onsuccess = () => resolve()
+        req.onerror = () => resolve()
+        req.onblocked = () => resolve()
+      })),
+    )
+  }
+}
+
+function DevResetCard() {
+  const [confirm, setConfirm] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  const handleWipe = async () => {
+    setBusy(true)
+    await fullAppWipe()
+    window.location.href = '/welcome'
+  }
+
+  return (
+    <div className="mt-2">
+      <Card className="p-4">
+        {!confirm ? (
+          <button onClick={() => setConfirm(true)} className="flex items-center gap-3 w-full text-left">
+            <Trash2 size={18} className="shrink-0 text-slate-700" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold text-slate-900">Полный сброс приложения (dev)</p>
+              <p className="text-[12px] text-slate-500 mt-0.5">
+                Удаляет localStorage, SW-кэш и IndexedDB. Видна только в dev-режиме.
+              </p>
+            </div>
+          </button>
+        ) : (
+          <div>
+            <div className="flex items-start gap-3 mb-4">
+              <Trash2 size={18} className="shrink-0 mt-0.5 text-slate-700" />
+              <div>
+                <p className="text-[14px] font-semibold text-slate-900" style={{ fontFamily: SORA }}>
+                  Стереть все данные приложения?
+                </p>
+                <p className="text-[12px] text-slate-500 mt-1 leading-relaxed">
+                  Поездки, чеки, документы, профиль, service worker и кэш — всё будет удалено.
+                  Откроется приветственный экран.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirm(false)}
+                disabled={busy}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-[13px] font-medium text-slate-600 active:bg-slate-50 disabled:opacity-50"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleWipe}
+                disabled={busy}
+                className="flex-1 py-2.5 rounded-xl text-[13px] font-medium text-white active:opacity-90 disabled:opacity-50"
+                style={{ background: 'oklch(35% 0.05 280)' }}
+              >
+                {busy ? 'Стираем…' : 'Стереть всё'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Card>
     </div>
   )
 }
