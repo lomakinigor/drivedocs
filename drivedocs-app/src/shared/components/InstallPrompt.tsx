@@ -10,10 +10,40 @@ interface BeforeInstallPromptEvent extends Event {
 
 type Platform = 'ios' | 'android-native' | 'android-manual'
 
+// Маршруты, где баннер «Установить» перекрывает primary CTA внизу экрана —
+// /welcome, /onboarding, /auth имеют sticky-кнопку и не используют BottomNav.
+const HIDDEN_ROUTES = ['/welcome', '/onboarding', '/auth']
+
+function usePathname(): string {
+  const [pathname, setPathname] = useState(() => (typeof window !== 'undefined' ? window.location.pathname : '/'))
+  useEffect(() => {
+    const update = () => setPathname(window.location.pathname)
+    window.addEventListener('popstate', update)
+    // react-router использует history.pushState — патчим, чтобы слышать переходы
+    const origPush = history.pushState
+    const origReplace = history.replaceState
+    history.pushState = function (...args) {
+      origPush.apply(this, args)
+      update()
+    }
+    history.replaceState = function (...args) {
+      origReplace.apply(this, args)
+      update()
+    }
+    return () => {
+      window.removeEventListener('popstate', update)
+      history.pushState = origPush
+      history.replaceState = origReplace
+    }
+  }, [])
+  return pathname
+}
+
 export function InstallPrompt() {
   const [show, setShow] = useState(false)
   const [platform, setPlatform] = useState<Platform>('android-manual')
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null)
+  const pathname = usePathname()
 
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return
@@ -61,6 +91,7 @@ export function InstallPrompt() {
   }
 
   if (!show) return null
+  if (HIDDEN_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'))) return null
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
