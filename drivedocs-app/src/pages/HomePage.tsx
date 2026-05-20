@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Car, Bell, FileText, AlertTriangle, Receipt, ChevronRight, MapPin, Check, Wallet } from 'lucide-react'
+import { Car, Bell, FileText, AlertTriangle, Receipt, ChevronRight, MapPin, Check, Wallet, FileCheck, Camera, Printer } from 'lucide-react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
 import { DocumentDetailSheet } from '@/features/documents/DocumentDetailSheet'
@@ -287,6 +287,41 @@ export function HomePage() {
         </div>
       )}
 
+      {/* Что умеет DriveDocs — подсказки, перенесены из 5-слайдового тура */}
+      <div className="mt-8">
+        <SectionLabel icon={<FileCheck size={13} />} text="Что умеет DriveDocs" />
+        <div className="space-y-2">
+          <CapabilityCard
+            icon={FileCheck}
+            iconBg="oklch(94% 0.05 195)"
+            iconColor="oklch(45% 0.13 195)"
+            title="Документы — уже в приложении"
+            body="Договор аренды, приказ о закреплении ТС, акт приёма-передачи — готовые шаблоны. Данные из профиля подставятся автоматически."
+          />
+          <CapabilityCard
+            icon={Car}
+            iconBg="oklch(94% 0.044 285)"
+            iconColor="oklch(52% 0.225 285)"
+            title="Фиксируйте поездки"
+            body="Кнопка «Создать поездку» наверху — укажите откуда, куда и расстояние. Запись попадёт в путевой лист."
+          />
+          <CapabilityCard
+            icon={Camera}
+            iconBg="oklch(94% 0.05 155)"
+            iconColor="oklch(48% 0.14 155)"
+            title="Чек — просто сфотографируйте"
+            body="«Добавить расход» → «Сфотографировать». Приложение распознает сумму, дату и категорию."
+          />
+          <CapabilityCard
+            icon={Printer}
+            iconBg="oklch(94% 0.07 305)"
+            iconColor="oklch(52% 0.20 305)"
+            title="Путевой лист одним нажатием"
+            body="В конце дня — кнопка формирует PDF. Готовый документ для бухгалтерии и налоговой."
+          />
+        </div>
+      </div>
+
       {selectedDoc && <DocumentDetailSheet doc={selectedDoc} onClose={() => setSelectedDoc(null)} />}
       {selectedTrip && <TripDetailSheet trip={selectedTrip} onClose={() => setSelectedTrip(null)} />}
       {receiptOpen && <QuickReceiptSheet workspaceId={id} onClose={() => setReceiptOpen(false)} />}
@@ -393,6 +428,35 @@ function TaxBenefitRow({
       </div>
       <ChevronRight size={18} className="text-slate-300" />
     </button>
+  )
+}
+
+function CapabilityCard({
+  icon: Icon,
+  iconBg,
+  iconColor,
+  title,
+  body,
+}: {
+  icon: React.ElementType
+  iconBg: string
+  iconColor: string
+  title: string
+  body: string
+}) {
+  return (
+    <div className="bg-white rounded-[18px] p-4 flex items-start gap-3 shadow-[0_2px_12px_oklch(22%_0.028_280/0.06)]">
+      <span
+        className="w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0"
+        style={{ background: iconBg }}
+      >
+        <Icon size={18} style={{ color: iconColor }} strokeWidth={2} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] font-semibold text-slate-900 leading-snug">{title}</p>
+        <p className="text-[12px] text-slate-500 mt-1 leading-relaxed">{body}</p>
+      </div>
+    </div>
   )
 }
 

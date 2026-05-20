@@ -61,7 +61,10 @@ useEffect(() => {
       )}
 
       {/* Scrollable main content */}
-      <main className="flex-1 overflow-y-auto pb-[72px]">
+      <main
+        className="flex-1 overflow-y-scroll pb-[72px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgb(203 213 225) transparent' }}
+      >
         <QuickTripProvider value={() => setAddTripOpen(true)}>
           <Outlet />
         </QuickTripProvider>
