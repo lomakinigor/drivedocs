@@ -1,6 +1,9 @@
 import { useEffect } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { InstallPrompt } from '@/shared/components/InstallPrompt'
+import { initDevMode } from '@/lib/devMode'
+
+initDevMode()
 import { MobileLayout } from '@/shared/ui/layouts/MobileLayout'
 import { HomePage } from '@/pages/HomePage'
 // import { TodayPage } from '@/pages/TodayPage' // T-134: использован только редиректом на /home, компонент-файл сохраняется в codebase

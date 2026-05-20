@@ -47,6 +47,7 @@ import { DriversSheet } from '@/features/workspace/DriversSheet'
 import { OrgProfileSheet } from '@/features/workspace/OrgProfileSheet'
 import { useVehicleProfile, useDrivers } from '@/app/store/workspaceStore'
 import type { VehicleUsageModel } from '@/entities/types/domain'
+import { isDevMode } from '@/lib/devMode'
 
 // T-144 · F-025 — SettingsPage redesign под mockup 09-settings-warm.html (Warm).
 // Визуальные токены: oklch indigo, rounded-[18px], section-labels uppercase,
@@ -767,8 +768,8 @@ export function SettingsPage() {
           {isDevMode() && <DevResetCard />}
         </section>
 
-        {/* Admin link */}
-        {(user.email === 'claudesecond2026@gmail.com' || !isBackendConfigured) && (
+        {/* Admin link — виден только в dev-режиме */}
+        {isDevMode() && (
           <button
             onClick={() => navigate('/admin')}
             className="w-full text-center text-[11px] text-slate-500 active:text-slate-600 py-1"
@@ -813,13 +814,6 @@ export function SettingsPage() {
 }
 
 // ─── Dev-only: полный сброс приложения ──────────────────────────────────────
-// Видна только в DEV-сборке или с ?dev=1 в URL — обычным пользователям не показывается.
-
-function isDevMode(): boolean {
-  if (import.meta.env.DEV) return true
-  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('dev') === '1') return true
-  return false
-}
 
 async function fullAppWipe(): Promise<void> {
   try { localStorage.clear() } catch { /* ignore */ }
