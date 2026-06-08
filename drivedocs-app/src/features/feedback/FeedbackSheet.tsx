@@ -98,17 +98,38 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
     return lines.join('\n')
   }
 
+  const [autoDelivered, setAutoDelivered] = useState(false)
+
   const handleSubmit = async () => {
     if (!canSubmit) return
-    const message = buildMessage()
     const meta = includeMeta
       ? {
           workspace: workspace
-            ? { entityType: workspace.entityType, taxMode: workspace.taxMode }
-            : undefined,
-          ua: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+            ? `${workspace.entityType} · ${workspace.taxMode}`
+            : 'no-workspace',
+          ua: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 200) : '',
+          date: new Date().toLocaleString('ru-RU'),
         }
       : undefined
+
+    // Сначала пытаемся доставить через backend (Vercel function → Telegram).
+    // Если backend не сконфигурирован или упал — fallback на deep-link с буфером.
+    let backendOk = false
+    try {
+      const resp = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind,
+          text: trimmed,
+          contact: contact.trim() || undefined,
+          meta,
+        }),
+      })
+      backendOk = resp.ok
+    } catch {
+      backendOk = false
+    }
 
     addFeedback({
       kind,
@@ -117,8 +138,16 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
       meta,
       sentToTelegram: true,
     })
-    recordMetric('feedback.submit', { kind })
+    recordMetric('feedback.submit', { kind, mode: backendOk ? 'auto' : 'deeplink' })
 
+    if (backendOk) {
+      setAutoDelivered(true)
+      setSent(true)
+      return
+    }
+
+    // Fallback: копируем текст и открываем чат с ботом
+    const message = buildMessage()
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(message)
@@ -126,7 +155,6 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
     } catch {
       /* clipboard может быть недоступен — пользователь увидит инструкцию */
     }
-
     window.open(`https://t.me/${TG_BOT}`, '_blank', 'noopener,noreferrer')
     setSent(true)
   }
@@ -149,8 +177,10 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
             </h2>
             <p className="text-[12px] text-slate-500 mt-0.5">
               {sent
-                ? 'Текст скопирован — вставьте в чат и отправьте'
-                : 'Напишите в наш Telegram-бот @drivedocs_bot'}
+                ? autoDelivered
+                  ? 'Отправили — обычно отвечаем в течение дня'
+                  : 'Текст скопирован — вставьте в чат и отправьте'
+                : 'Напишите или надиктуйте — отвечаем лично'}
             </p>
           </div>
           <button
@@ -171,26 +201,29 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
               <Check size={18} style={{ color: INDIGO, marginTop: 2 }} />
               <div className="space-y-1.5">
                 <p className="text-[14px] font-semibold" style={{ color: 'oklch(35% 0.18 285)' }}>
-                  Telegram открылся в новой вкладке
+                  {autoDelivered ? 'Сообщение доставлено' : 'Telegram открылся в новой вкладке'}
                 </p>
                 <p className="text-[13px] text-slate-700 leading-relaxed">
-                  Вставьте текст в чат с @drivedocs_bot и нажмите «Отправить». Текст уже в буфере
-                  обмена — долгое нажатие на поле ввода → «Вставить».
+                  {autoDelivered
+                    ? 'Спасибо! Мы получили ваш отзыв и читаем его лично. Если оставили контакт — ответим в течение дня.'
+                    : 'Вставьте текст в чат с @drivedocs_bot и нажмите «Отправить». Текст уже в буфере обмена — долгое нажатие на поле ввода → «Вставить».'}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 px-4 py-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <Copy size={14} className="text-slate-500" />
-                <p className="text-[12px] font-semibold text-slate-700 uppercase tracking-wide">
-                  Что в буфере
-                </p>
+            {!autoDelivered && (
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Copy size={14} className="text-slate-500" />
+                  <p className="text-[12px] font-semibold text-slate-700 uppercase tracking-wide">
+                    Что в буфере
+                  </p>
+                </div>
+                <pre className="text-[12px] text-slate-600 whitespace-pre-wrap font-mono leading-relaxed">
+                  {buildMessage()}
+                </pre>
               </div>
-              <pre className="text-[12px] text-slate-600 whitespace-pre-wrap font-mono leading-relaxed">
-                {buildMessage()}
-              </pre>
-            </div>
+            )}
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
@@ -322,7 +355,7 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
                 style={{ background: INDIGO }}
               >
                 <Send size={16} />
-                Отправить в Telegram
+                Отправить
               </button>
               <button
                 onClick={onClose}
