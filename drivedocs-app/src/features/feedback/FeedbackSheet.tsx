@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Heart, Bug, Lightbulb, HelpCircle, Send, Check, Copy } from 'lucide-react'
+import { X, Heart, Bug, Lightbulb, HelpCircle, Send, Check, Copy, Mic, MicOff } from 'lucide-react'
 import { addFeedback, FEEDBACK_KIND_LABEL, type FeedbackKind } from '@/lib/feedback/feedbackStore'
 import { useCurrentWorkspace } from '@/app/store/workspaceStore'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
+import { useSpeechRecognition } from '@/lib/voice/useSpeechRecognition'
 
 // F-033 — FeedbackSheet
 // Доставка: zero-backend. Текст копируется в буфер обмена, открывается чат с
@@ -25,19 +26,47 @@ interface FeedbackSheetProps {
   onClose: () => void
 }
 
-export function FeedbackSheet({ onClose }: FeedbackSheetProps) {
+export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { initialKind?: FeedbackKind }) {
   const workspace = useCurrentWorkspace()
-  const [kind, setKind] = useState<FeedbackKind>('idea')
+  const [kind, setKind] = useState<FeedbackKind>(initialKind ?? 'idea')
   const [text, setText] = useState('')
   const [contact, setContact] = useState('')
   const [includeMeta, setIncludeMeta] = useState(true)
   const [sent, setSent] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const voiceBaseRef = useRef('')
+
+  const speech = useSpeechRecognition({
+    onTranscript: (chunk, isFinal) => {
+      if (isFinal) {
+        voiceBaseRef.current = (voiceBaseRef.current + ' ' + chunk).trim()
+        setText(voiceBaseRef.current)
+      } else {
+        const interim = (voiceBaseRef.current + ' ' + chunk).trim()
+        setText(interim)
+      }
+    },
+  })
 
   useEffect(() => {
     const t = setTimeout(() => textareaRef.current?.focus(), 200)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    voiceBaseRef.current = text
+  }, [speech.listening]) // sync baseline when mic toggled
+
+  const toggleMic = () => {
+    if (speech.listening) {
+      speech.stop()
+      recordMetric('feedback.voice.stop')
+    } else {
+      voiceBaseRef.current = text
+      speech.start()
+      recordMetric('feedback.voice.start')
+    }
+  }
 
   const trimmed = text.trim()
   const canSubmit = trimmed.length >= 5
@@ -198,9 +227,29 @@ export function FeedbackSheet({ onClose }: FeedbackSheetProps) {
 
             {/* Text */}
             <div>
-              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block mb-2">
-                Сообщение
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                  Сообщение
+                </label>
+                {speech.supported && (
+                  <button
+                    type="button"
+                    onClick={toggleMic}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold active:opacity-80"
+                    style={{
+                      background: speech.listening ? 'oklch(96% 0.04 25)' : INDIGO_SOFT,
+                      color: speech.listening ? 'oklch(50% 0.21 25)' : INDIGO,
+                      border: `1px solid ${speech.listening ? 'oklch(88% 0.08 25)' : 'oklch(88% 0.06 285)'}`,
+                    }}
+                  >
+                    {speech.listening ? <MicOff size={12} /> : <Mic size={12} />}
+                    {speech.listening ? 'Стоп' : 'Надиктовать'}
+                  </button>
+                )}
+              </div>
+              {speech.error && (
+                <p className="text-[11px] text-red-600 mb-2">{speech.error}</p>
+              )}
               <textarea
                 ref={textareaRef}
                 value={text}
