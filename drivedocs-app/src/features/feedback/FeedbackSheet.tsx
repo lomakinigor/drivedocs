@@ -57,7 +57,12 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
     voiceBaseRef.current = text
   }, [speech.listening]) // sync baseline when mic toggled
 
+  const [voiceUnsupportedNote, setVoiceUnsupportedNote] = useState<string | null>(null)
   const toggleMic = () => {
+    if (!speech.supported) {
+      setVoiceUnsupportedNote('Голос доступен в Chrome, Edge или Safari (включая iOS 14.5+). В Firefox распознавание речи отключено.')
+      return
+    }
     if (speech.listening) {
       speech.stop()
       recordMetric('feedback.voice.stop')
@@ -264,24 +269,26 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
                 <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                   Сообщение
                 </label>
-                {speech.supported && (
-                  <button
-                    type="button"
-                    onClick={toggleMic}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold active:opacity-80"
-                    style={{
-                      background: speech.listening ? 'oklch(96% 0.04 25)' : INDIGO_SOFT,
-                      color: speech.listening ? 'oklch(50% 0.21 25)' : INDIGO,
-                      border: `1px solid ${speech.listening ? 'oklch(88% 0.08 25)' : 'oklch(88% 0.06 285)'}`,
-                    }}
-                  >
-                    {speech.listening ? <MicOff size={12} /> : <Mic size={12} />}
-                    {speech.listening ? 'Стоп' : 'Надиктовать'}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={toggleMic}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold active:opacity-80"
+                  style={{
+                    background: speech.listening ? 'oklch(96% 0.04 25)' : INDIGO_SOFT,
+                    color: speech.listening ? 'oklch(50% 0.21 25)' : INDIGO,
+                    border: `1px solid ${speech.listening ? 'oklch(88% 0.08 25)' : 'oklch(88% 0.06 285)'}`,
+                  }}
+                  title={!speech.supported ? 'Голос доступен в Chrome, Edge или Safari' : undefined}
+                >
+                  {speech.listening ? <MicOff size={12} /> : <Mic size={12} />}
+                  {speech.listening ? 'Стоп' : 'Надиктовать'}
+                </button>
               </div>
               {speech.error && (
                 <p className="text-[11px] text-red-600 mb-2">{speech.error}</p>
+              )}
+              {voiceUnsupportedNote && !speech.error && (
+                <p className="text-[11px] text-slate-500 mb-2">{voiceUnsupportedNote}</p>
               )}
               <textarea
                 ref={textareaRef}
