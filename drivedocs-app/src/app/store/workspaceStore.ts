@@ -640,7 +640,10 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
     }),
     {
       name: 'drivedocs-workspace',
-      version: 1,
+      // v2 (2026-06-09): схема изменилась после удаления ИНН-шага и сокращения
+      // wizard'а — старый persist может крашить рендер. Bumping версии заставляет
+      // zustand игнорировать v1-данные и стартовать с чистого state.
+      version: 2,
       // v1: strip base64 imageUrl from receipts/documents before persisting
       //     to prevent localStorage quota overflow (~5 MB limit).
       //     Images are session-only; user re-attaches if needed.

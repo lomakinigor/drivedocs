@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { InstallPrompt } from '@/shared/components/InstallPrompt'
+import { AppErrorBoundary } from '@/shared/components/AppErrorBoundary'
 import { initDevMode } from '@/lib/devMode'
 
 initDevMode()
@@ -140,9 +141,9 @@ export function App() {
   }, [setAuthUser])
 
   return (
-    <>
+    <AppErrorBoundary>
       <RouterProvider router={router} />
       <InstallPrompt />
-    </>
+    </AppErrorBoundary>
   )
 }
