@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Car, Bell, FileText, AlertTriangle, Receipt, ChevronRight, MapPin, Check, Wallet, FileCheck, Camera, Printer, MessageCircle, Mic } from 'lucide-react'
+import { Car, Bell, FileText, AlertTriangle, Receipt, ChevronRight, MapPin, Check, Wallet, FileCheck, Camera, Printer, Mic } from 'lucide-react'
 import { FeedbackSheet } from '@/features/feedback/FeedbackSheet'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
@@ -59,15 +59,6 @@ function todayLabel(): string {
   return `${wd[0].toUpperCase() + wd.slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`
 }
 
-function initials(name: string): string {
-  const parts = name.replace(/[«»"]/g, '').split(/\s+/).filter(Boolean)
-  const letters = parts
-    .filter((p) => /\p{L}/u.test(p[0]))
-    .map((p) => p[0])
-    .join('')
-    .toUpperCase()
-  return letters.slice(0, 2) || 'W'
-}
 
 export function HomePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
@@ -168,15 +159,24 @@ export function HomePage() {
               </span>
             )}
           </button>
-          <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-[12px] font-bold"
+          {/* Большая красная кнопка обратной связи — на месте бывшего avatar.
+              Видна сразу при открытии главной, не нужно скроллить. */}
+          <button
+            onClick={() => {
+              recordMetric('feedback.open.home_header')
+              setFeedbackOpen(true)
+            }}
+            className="h-12 px-4 rounded-2xl flex items-center gap-2 text-white text-[13px] font-bold active:opacity-90"
             style={{
-              background: 'linear-gradient(135deg, oklch(52% 0.225 285) 0%, oklch(46% 0.235 285) 100%)',
+              background: 'linear-gradient(135deg, oklch(60% 0.21 25) 0%, oklch(54% 0.22 25) 100%)',
+              boxShadow: '0 4px 14px oklch(60% 0.21 25 / 0.40)',
               fontFamily: 'Sora, system-ui, sans-serif',
             }}
+            aria-label="Обратная связь"
           >
-            {initials(workspace.name)}
-          </div>
+            <Mic size={18} strokeWidth={2.2} />
+            Отзыв
+          </button>
         </div>
       </div>
 
@@ -323,45 +323,6 @@ export function HomePage() {
           />
         </div>
       </div>
-
-      {/* Большая кнопка обратной связи — на видном месте, с микрофоном */}
-      <button
-        onClick={() => {
-          recordMetric('feedback.open.home')
-          setFeedbackOpen(true)
-        }}
-        className="w-full mt-6 rounded-[22px] px-5 py-4 flex items-center gap-3.5 text-left active:opacity-90"
-        style={{
-          background: 'linear-gradient(135deg, oklch(96% 0.05 285), oklch(94% 0.07 305))',
-          border: '1px solid oklch(88% 0.06 285)',
-          boxShadow: '0 4px 16px oklch(52% 0.225 285 / 0.10)',
-        }}
-      >
-        <span
-          className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 relative"
-          style={{ background: 'oklch(52% 0.225 285)' }}
-        >
-          <MessageCircle size={22} className="text-white" strokeWidth={2} />
-          <span
-            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-            style={{ background: 'oklch(96% 0.05 25)', border: '1px solid oklch(88% 0.08 25)' }}
-          >
-            <Mic size={10} style={{ color: 'oklch(50% 0.21 25)' }} strokeWidth={2.5} />
-          </span>
-        </span>
-        <div className="flex-1 min-w-0">
-          <p
-            className="text-[15px] font-bold text-slate-900 leading-snug"
-            style={{ fontFamily: 'Sora, system-ui, sans-serif' }}
-          >
-            Обратная связь
-          </p>
-          <p className="text-[12px] text-slate-600 mt-0.5 leading-snug">
-            Надиктуйте голосом или напишите — отвечаем лично
-          </p>
-        </div>
-        <ChevronRight size={18} className="text-slate-400 shrink-0" />
-      </button>
 
       {feedbackOpen && <FeedbackSheet onClose={() => setFeedbackOpen(false)} />}
 
