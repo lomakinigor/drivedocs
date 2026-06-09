@@ -174,8 +174,8 @@ export function HomePage() {
             }}
             className="h-12 px-4 rounded-2xl flex items-center gap-2 text-white text-[13px] font-bold active:opacity-90"
             style={{
-              background: 'linear-gradient(135deg, oklch(72% 0.17 40) 0%, oklch(65% 0.18 28) 100%)',
-              boxShadow: '0 4px 14px oklch(68% 0.18 35 / 0.38)',
+              background: 'linear-gradient(135deg, oklch(80% 0.16 80) 0%, oklch(72% 0.17 65) 100%)',
+              boxShadow: '0 4px 14px oklch(75% 0.17 72 / 0.40)',
               fontFamily: 'Sora, system-ui, sans-serif',
             }}
             aria-label="Обратная связь"
