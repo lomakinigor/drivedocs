@@ -92,7 +92,13 @@ export function HomePage() {
     } catch { /* sessionStorage unavailable — silently skip */ }
   }, [essentialsStatus.shouldRemind])
 
-  if (!workspace) return null
+  if (!workspace) {
+    // Раньше тут был `return null` — давало белый экран без объяснений.
+    // Теперь — явный редирект на /welcome чтобы пользователь увидел стартовый
+    // экран и прошёл онбординг. Это случается если рутовый RootRedirect
+    // отправил на /w/<id>/home, но currentWorkspaceId в сторе нет.
+    return <Navigate to="/welcome" replace />
+  }
 
   // 2026-05-13 — Если workspace неконфигурирован (true first-run или после reset),
   // пользователь должен видеть полноценный WelcomePage с логотипом, а не dead-end.

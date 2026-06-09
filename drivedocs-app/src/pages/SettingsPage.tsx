@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, Navigate } from 'react-router-dom'
 import {
   Building2,
   CreditCard,
@@ -505,7 +505,7 @@ export function SettingsPage() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!workspace) return null
+  if (!workspace) return <Navigate to="/welcome" replace />
 
   const handleSwitch = (wsId: string) => {
     if (wsId === id) return
