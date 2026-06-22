@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -7,6 +8,10 @@ import {
   Smartphone,
   Sparkles,
   CheckCircle2,
+  Share,
+  PlusSquare,
+  MoreVertical,
+  Download,
 } from 'lucide-react'
 
 const SORA = 'Sora, system-ui, sans-serif'
@@ -228,6 +233,24 @@ export function WelcomePage() {
         </div>
       </section>
 
+      {/* ── 4.5. УСТАНОВКА НА ТЕЛЕФОН ── */}
+      <section
+        className="px-4 sm:px-6 py-14 sm:py-20"
+        style={{ background: 'oklch(96% 0.022 285)', borderTop: '1px solid oklch(92% 0.044 285)' }}
+      >
+        <div className="max-w-4xl mx-auto">
+          <SectionHeader
+            eyebrow="Установка"
+            title="Установите приложение на телефон"
+          />
+          <p className="text-center text-[14px] sm:text-[15px] text-slate-600 max-w-xl mx-auto mb-8 leading-relaxed">
+            DriveDocs работает как нативное приложение — иконка на главном экране,
+            запуск одним тапом, без браузера, поддерживает офлайн-режим.
+          </p>
+          <InstallBlock />
+        </div>
+      </section>
+
       {/* ── 5. РАННИЙ ДОСТУП ── */}
       <section className="px-4 sm:px-6 py-14 sm:py-20">
         <div className="max-w-3xl mx-auto">
@@ -429,7 +452,7 @@ function StepRow({
         </h3>
         <p className="text-[14px] sm:text-[15px] text-slate-600 leading-relaxed">{desc}</p>
       </div>
-      <div className="flex-1 max-w-[260px]">
+      <div className="flex-1 max-w-[280px] flex justify-center">
         <PhoneFrame>{mockup}</PhoneFrame>
       </div>
     </div>
@@ -860,6 +883,192 @@ function Benefit({ text }: { text: string }) {
         strokeWidth={2.2}
       />
       <p className="text-[13px] sm:text-[14px] text-slate-700 leading-snug">{text}</p>
+    </div>
+  )
+}
+
+// ─── Install block ──────────────────────────────────────
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
+function InstallBlock() {
+  const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null)
+  const [canInstallNative, setCanInstallNative] = useState(false)
+  const [installed, setInstalled] = useState(false)
+  const [isIOS, setIsIOS] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
+
+  useEffect(() => {
+    const ua = navigator.userAgent
+    setIsIOS(/iphone|ipad|ipod/i.test(ua))
+
+    const standaloneCheck =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      ('standalone' in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true)
+    setIsStandalone(standaloneCheck)
+
+    const handler = (e: Event) => {
+      e.preventDefault()
+      deferredPrompt.current = e as BeforeInstallPromptEvent
+      setCanInstallNative(true)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  const handleInstall = async () => {
+    const prompt = deferredPrompt.current
+    if (!prompt) return
+    await prompt.prompt()
+    const { outcome } = await prompt.userChoice
+    deferredPrompt.current = null
+    if (outcome === 'accepted') {
+      setInstalled(true)
+      setCanInstallNative(false)
+    }
+  }
+
+  // Если уже установлено как PWA — сообщаем об этом
+  if (isStandalone || installed) {
+    return (
+      <div
+        className="max-w-md mx-auto rounded-2xl p-5 text-center"
+        style={{ background: 'oklch(94% 0.06 155)', border: '1px solid oklch(85% 0.08 155)' }}
+      >
+        <CheckCircle2 size={32} className="mx-auto mb-2" style={{ color: 'oklch(45% 0.16 155)' }} />
+        <p className="text-[15px] font-bold text-slate-900" style={{ fontFamily: SORA }}>
+          Приложение уже установлено
+        </p>
+        <p className="text-[13px] text-slate-600 mt-1">
+          Откройте DriveDocs с домашнего экрана — оно готово к работе.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Если Android Chrome предоставил deferredPrompt — большая кнопка install */}
+      {canInstallNative && (
+        <div
+          className="max-w-md mx-auto rounded-2xl p-5 text-center"
+          style={{ background: PRIMARY_SOFT, border: '1px solid oklch(88% 0.06 285)' }}
+        >
+          <p className="text-[13px] text-slate-700 mb-3">
+            Ваш браузер поддерживает прямую установку. Один тап — и иконка появится на главном экране.
+          </p>
+          <button
+            onClick={handleInstall}
+            className="inline-flex items-center justify-center gap-2 text-white text-[15px] font-bold px-6 py-3 rounded-xl active:scale-[0.98] transition-transform"
+            style={{ background: PRIMARY, boxShadow: '0 4px 16px oklch(52% 0.225 285 / 0.35)' }}
+          >
+            <Download size={16} strokeWidth={2.4} />
+            Установить сейчас
+          </button>
+        </div>
+      )}
+
+      {/* Инструкции для двух платформ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* iOS */}
+        <div
+          className="rounded-2xl p-5 bg-white"
+          style={{ boxShadow: '0 2px 12px oklch(22% 0.028 280 / 0.05)', border: '1px solid oklch(94% 0.01 280)' }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[20px]">📱</span>
+            <p className="text-[14px] font-bold text-slate-900" style={{ fontFamily: SORA }}>
+              iPhone и iPad
+            </p>
+            {isIOS && (
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ml-auto"
+                style={{ background: PRIMARY_SOFT, color: PRIMARY }}
+              >
+                Вы здесь
+              </span>
+            )}
+          </div>
+          <ol className="space-y-2 text-[13px] text-slate-700 leading-relaxed">
+            <li className="flex gap-2">
+              <span className="font-bold text-slate-400 shrink-0">1.</span>
+              <span>
+                Откройте сайт в <b>Safari</b>{isIOS ? '' : ' на iPhone'}
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-bold text-slate-400 shrink-0">2.</span>
+              <span className="flex items-center gap-1 flex-wrap">
+                Тапните{' '}
+                <Share size={14} className="inline align-text-bottom" />{' '}
+                <b>«Поделиться»</b> в нижней панели
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-bold text-slate-400 shrink-0">3.</span>
+              <span className="flex items-center gap-1 flex-wrap">
+                Выберите{' '}
+                <PlusSquare size={14} className="inline align-text-bottom" />{' '}
+                <b>«На экран Домой»</b>
+              </span>
+            </li>
+          </ol>
+        </div>
+
+        {/* Android */}
+        <div
+          className="rounded-2xl p-5 bg-white"
+          style={{ boxShadow: '0 2px 12px oklch(22% 0.028 280 / 0.05)', border: '1px solid oklch(94% 0.01 280)' }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[20px]">🤖</span>
+            <p className="text-[14px] font-bold text-slate-900" style={{ fontFamily: SORA }}>
+              Android
+            </p>
+            {!isIOS && /android/i.test(navigator.userAgent) && (
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ml-auto"
+                style={{ background: PRIMARY_SOFT, color: PRIMARY }}
+              >
+                Вы здесь
+              </span>
+            )}
+          </div>
+          <ol className="space-y-2 text-[13px] text-slate-700 leading-relaxed">
+            <li className="flex gap-2">
+              <span className="font-bold text-slate-400 shrink-0">1.</span>
+              <span>
+                Откройте сайт в <b>Chrome</b> или Yandex Browser
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-bold text-slate-400 shrink-0">2.</span>
+              <span className="flex items-center gap-1 flex-wrap">
+                Меню{' '}
+                <MoreVertical size={14} className="inline align-text-bottom" />{' '}
+                → <b>«Установить приложение»</b>
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-bold text-slate-400 shrink-0">3.</span>
+              <span>
+                Или <b>«Добавить на главный экран»</b>, если первого пункта нет
+              </span>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      {/* Подсказка для desktop */}
+      {!isIOS && !/android/i.test(navigator.userAgent) && (
+        <p className="text-[12px] text-slate-500 text-center max-w-md mx-auto">
+          Открыли с компьютера? Отсканируйте QR-код адресной строки телефоном,
+          либо откройте drivedocs-v2.vercel.app на смартфоне и следуйте инструкции выше.
+        </p>
+      )}
     </div>
   )
 }
