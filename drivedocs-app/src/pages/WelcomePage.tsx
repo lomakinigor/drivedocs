@@ -4,7 +4,7 @@ import {
   FileCheck,
   Fuel,
   Shield,
-  UserCheck,
+  Smartphone,
   MessageCircle,
   Sparkles,
   CheckCircle2,
@@ -79,45 +79,16 @@ export function WelcomePage() {
 
           {/* Sub */}
           <p className="text-[15px] sm:text-[17px] text-slate-600 leading-relaxed max-w-xl mx-auto mb-7">
-            Путевые листы, отчёт ГСМ, приказы — без&nbsp;Excel
-            и&nbsp;ручного заполнения. Соответствуют требованиям&nbsp;ФНС.
+            Путевые листы, отчёт ГСМ, приказы — всегда в&nbsp;телефоне,
+            без&nbsp;Excel и&nbsp;ручного заполнения.
+            Соответствуют требованиям&nbsp;ФНС.
           </p>
 
-          {/* Screenshot placeholder — iPhone-style frame */}
+          {/* Hero phone mockup — реалистичный главный экран */}
           <div className="flex justify-center mb-7">
-            <div
-              className="rounded-[36px] p-2"
-              style={{ background: 'oklch(22% 0.028 280)', boxShadow: '0 20px 50px oklch(22% 0.028 280 / 0.25)' }}
-            >
-              <div
-                className="w-[260px] h-[400px] rounded-[28px] bg-white flex flex-col items-center justify-center px-4 text-center overflow-hidden relative"
-              >
-                <img src="/app-icon-source.png" alt="" className="w-16 h-16 rounded-2xl mb-3" />
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Главный экран</div>
-                <div className="text-[13px] font-bold text-slate-900 mb-3" style={{ fontFamily: SORA }}>
-                  Сегодня
-                </div>
-                <div className="w-full space-y-1.5">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <div className="h-10 rounded-lg bg-slate-100" />
-                    <div className="h-10 rounded-lg bg-slate-100" />
-                  </div>
-                  <div className="h-8 rounded-lg" style={{ background: 'oklch(94% 0.05 155)' }} />
-                  <div
-                    className="h-11 rounded-lg flex items-center justify-center text-white text-[10px] font-bold"
-                    style={{ background: PRIMARY }}
-                  >
-                    Создать поездку
-                  </div>
-                  <div className="h-8 rounded-lg border border-slate-200" />
-                </div>
-                <div className="absolute bottom-2 left-2 right-2 h-6 rounded-lg bg-slate-50 flex items-center justify-around">
-                  {[0, 1, 2, 3].map((i) => (
-                    <div key={i} className="w-4 h-4 rounded bg-slate-200" />
-                  ))}
-                </div>
-              </div>
-            </div>
+            <PhoneFrame>
+              <HomeScreenMockup />
+            </PhoneFrame>
           </div>
 
           {/* Primary CTA */}
@@ -186,23 +157,23 @@ export function WelcomePage() {
               num="01"
               title="Настройте профиль за 2 минуты"
               desc="Выберите ИП или ООО — остальное подставится автоматически. Налоговый режим, тип использования авто, базовые реквизиты."
-              screenshotLabel="Wizard настройки"
               accent={PRIMARY}
+              mockup={<WizardEntityTypeMockup />}
             />
             <StepRow
               num="02"
               title="Создавайте поездки одной кнопкой"
               desc="Маршрут, расстояние, цель — на главном экране. Все поездки попадают в журнал, из которого формируется путевой лист."
-              screenshotLabel="Главный экран"
               accent="oklch(60% 0.18 195)"
               reverse
+              mockup={<AddTripMockup />}
             />
             <StepRow
               num="03"
               title="Скачивайте PDF-документы для ФНС"
               desc="Путевой лист за день или период, отчёт по расходу ГСМ, приказы и акты — готовые к подписи документы по форме приказа №368."
-              screenshotLabel="PDF превью"
               accent="oklch(55% 0.18 305)"
+              mockup={<WaybillPdfMockup />}
             />
           </div>
         </div>
@@ -236,9 +207,9 @@ export function WelcomePage() {
               desc="Хранение данных в соответствии с 152-ФЗ о персональных данных. Без передачи за рубеж."
             />
             <TrustBadge
-              icon={UserCheck}
-              title="Сделано ИП — для ИП и ООО"
-              desc="Не «универсальный таск-трекер», а инструмент под конкретные требования ФНС и Минтранса."
+              icon={Smartphone}
+              title="Документы всегда в кармане"
+              desc="PWA-приложение устанавливается на iPhone и Android. Создайте поездку в момент когда она нужна — не вечером дома в Excel."
             />
           </div>
         </div>
@@ -274,6 +245,8 @@ export function WelcomePage() {
             </p>
 
             <div className="max-w-md mx-auto space-y-2.5 text-left mb-6">
+              <Benefit text="Полный доступ ко всем функциям без ограничений" />
+              <Benefit text="Установка на смартфон — путевые листы создаются за рулём, не дома в Excel" />
               <Benefit text="Приоритетная поддержка лично от разработчика" />
               <Benefit text="Влияние на функционал — что нужно, то и добавляем" />
               <Benefit text="Льготный тариф при запуске Pro (планируем)" />
@@ -435,16 +408,16 @@ function StepRow({
   num,
   title,
   desc,
-  screenshotLabel,
   accent,
   reverse,
+  mockup,
 }: {
   num: string
   title: string
   desc: string
-  screenshotLabel: string
   accent: string
   reverse?: boolean
+  mockup: React.ReactNode
 }) {
   return (
     <div className={`flex flex-col ${reverse ? 'sm:flex-row-reverse' : 'sm:flex-row'} gap-6 sm:gap-10 items-center`}>
@@ -464,21 +437,389 @@ function StepRow({
         <p className="text-[14px] sm:text-[15px] text-slate-600 leading-relaxed">{desc}</p>
       </div>
       <div className="flex-1 max-w-[260px]">
-        <div
-          className="rounded-[28px] p-1.5"
-          style={{ background: 'oklch(22% 0.028 280)', boxShadow: '0 12px 30px oklch(22% 0.028 280 / 0.18)' }}
-        >
-          <div className="w-full aspect-[9/16] rounded-[22px] bg-white flex items-center justify-center p-4 text-center">
-            <div>
-              <div
-                className="w-10 h-10 rounded-xl mx-auto mb-3"
-                style={{ background: accent, opacity: 0.15 }}
-              />
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                {screenshotLabel}
-              </p>
-              <p className="text-[10px] text-slate-400 mt-1">Скриншот будет здесь</p>
+        <PhoneFrame>{mockup}</PhoneFrame>
+      </div>
+    </div>
+  )
+}
+
+// ─── Phone mockups ──────────────────────────────────────
+
+function PhoneFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-[36px] p-2"
+      style={{ background: 'oklch(22% 0.028 280)', boxShadow: '0 20px 50px oklch(22% 0.028 280 / 0.25)' }}
+    >
+      <div className="w-[260px] h-[460px] rounded-[28px] bg-white overflow-hidden relative">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// 1. HERO — главный экран приложения (Home)
+function HomeScreenMockup() {
+  return (
+    <div className="h-full flex flex-col text-[9px] leading-tight" style={{ background: 'oklch(98.8% 0.005 80)' }}>
+      <div className="flex-1 overflow-hidden px-3 pt-4 pb-2">
+        {/* Header row */}
+        <div className="flex items-start justify-between mb-2">
+          <div className="min-w-0 flex-1">
+            <div className="text-[7px] font-bold text-slate-500 uppercase tracking-wider truncate">ИП Иванов</div>
+            <div className="text-[16px] font-bold text-slate-900 leading-none mt-0.5" style={{ fontFamily: SORA }}>
+              Сегодня
             </div>
+            <div className="text-[8px] text-slate-500 mt-0.5">Понедельник, 15 июня</div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+            <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-full border border-slate-400" />
+            </div>
+            <div
+              className="h-6 px-2 rounded-lg flex items-center gap-1 text-white text-[8px] font-bold"
+              style={{ background: 'linear-gradient(135deg, oklch(80% 0.16 80), oklch(72% 0.17 65))' }}
+            >
+              🎙 Отзыв
+            </div>
+          </div>
+        </div>
+
+        {/* KPI tiles */}
+        <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+          <div className="bg-white rounded-lg px-2 py-1.5 shadow-sm">
+            <div className="text-[6px] font-bold uppercase tracking-wider text-slate-500">Поездок</div>
+            <div className="text-[18px] font-bold text-slate-900 leading-none mt-0.5" style={{ fontFamily: SORA }}>3</div>
+          </div>
+          <div className="bg-white rounded-lg px-2 py-1.5 shadow-sm">
+            <div className="text-[6px] font-bold uppercase tracking-wider text-slate-500">Пробег</div>
+            <div className="text-[18px] font-bold text-slate-900 leading-none mt-0.5" style={{ fontFamily: SORA }}>
+              42<span className="text-[9px] text-slate-500 font-medium ml-0.5">км</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tax benefit row */}
+        <div
+          className="rounded-lg px-2 py-1.5 mb-2 flex items-center gap-1.5"
+          style={{ background: 'oklch(96% 0.05 155)', border: '1px solid oklch(92% 0.06 155)' }}
+        >
+          <div className="w-4 h-4 rounded bg-emerald-200 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="text-[8px] font-bold leading-tight" style={{ color: 'oklch(35% 0.12 155)' }}>
+              12 480 ₽ за июнь — расходы бизнеса
+            </div>
+            <div className="text-[7px] mt-0.5" style={{ color: 'oklch(48% 0.10 155)' }}>
+              Эти деньги уже не из вашего кармана
+            </div>
+          </div>
+        </div>
+
+        {/* Primary CTA */}
+        <div
+          className="rounded-lg py-2.5 mb-1.5 flex items-center justify-center gap-1 text-white text-[10px] font-bold"
+          style={{ background: PRIMARY, boxShadow: '0 4px 12px oklch(52% 0.225 285 / 0.30)', fontFamily: SORA }}
+        >
+          🚗 Создать поездку
+        </div>
+
+        {/* Secondary CTA */}
+        <div className="bg-white rounded-lg px-2 py-1.5 mb-2 flex items-center gap-1.5 shadow-sm border border-slate-100">
+          <div className="w-4 h-4 rounded bg-emerald-100 shrink-0" />
+          <div className="text-[9px] font-semibold text-slate-700">Добавить расход</div>
+        </div>
+
+        {/* Section label */}
+        <div className="text-[6px] font-bold uppercase tracking-wider text-slate-500 mb-1">Журнал за сегодня</div>
+
+        {/* Trip row */}
+        <div className="bg-white rounded-lg p-2 flex items-start gap-1.5 shadow-sm">
+          <div className="w-5 h-5 rounded bg-violet-100 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="text-[8px] font-semibold text-slate-900 truncate">Офис → Клиент на Тверской</div>
+            <div className="text-[7px] text-slate-500 mt-0.5">10:30 · Встреча с заказчиком</div>
+            <div className="flex gap-1 mt-1">
+              <span className="text-[6px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: PRIMARY_SOFT, color: PRIMARY }}>14 км</span>
+              <span className="text-[6px] px-1.5 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700">✓ Документы</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom nav */}
+      <div className="bg-white border-t border-slate-100 px-2 py-1.5 flex items-center justify-around">
+        {['Сегодня', 'Поездки', 'Отчёты', 'Настройки'].map((label, i) => (
+          <div key={label} className="flex flex-col items-center gap-0.5">
+            <div className={`w-4 h-4 rounded ${i === 0 ? 'bg-violet-100' : 'bg-slate-100'}`} />
+            <div className={`text-[6px] font-semibold ${i === 0 ? '' : 'text-slate-400'}`} style={i === 0 ? { color: PRIMARY } : {}}>
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// 2. Wizard — выбор ИП/ООО
+function WizardEntityTypeMockup() {
+  return (
+    <div className="h-full flex flex-col text-[9px]" style={{ background: 'white' }}>
+      {/* Header with back + step dots */}
+      <div className="flex items-center gap-2 px-3 pt-4 pb-2">
+        <div className="w-5 h-5 rounded-lg flex items-center justify-center">
+          <div className="w-2.5 h-0.5 bg-slate-400" />
+        </div>
+        <div className="flex items-center gap-1 flex-1 justify-center pr-5">
+          <div className="w-3 h-1 rounded-full" style={{ background: PRIMARY }} />
+          <div className="w-1 h-1 rounded-full bg-slate-200" />
+          <div className="w-1 h-1 rounded-full bg-slate-200" />
+          <div className="w-1 h-1 rounded-full bg-slate-200" />
+          <div className="w-1 h-1 rounded-full bg-slate-200" />
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="px-3">
+        <div className="h-0.5 bg-slate-100 rounded-full">
+          <div className="h-full w-1/5 rounded-full" style={{ background: PRIMARY }} />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 px-3 pt-4 overflow-hidden">
+        <div className="mb-3">
+          <div className="text-[7px] font-bold uppercase tracking-wider mb-1" style={{ color: PRIMARY }}>Статус</div>
+          <div className="text-[13px] font-bold text-slate-900 leading-snug" style={{ fontFamily: SORA }}>
+            Кто вы по юридическому статусу?
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {/* IP card — selected */}
+          <div
+            className="flex items-start gap-2 p-2.5 rounded-xl border-2"
+            style={{ borderColor: 'oklch(60% 0.20 250)', background: 'oklch(96% 0.05 250)' }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+              style={{ background: 'oklch(60% 0.20 250)', fontFamily: SORA }}
+            >
+              ИП
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold text-slate-900">ИП</p>
+              <p className="text-[8px] text-slate-500 mt-0.5 leading-snug">
+                Индивидуальный предприниматель
+              </p>
+            </div>
+          </div>
+
+          {/* OOO card */}
+          <div className="flex items-start gap-2 p-2.5 rounded-xl border-2 border-slate-200 bg-white">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 text-slate-600 text-[10px] font-bold shrink-0"
+              style={{ fontFamily: SORA }}
+            >
+              ООО
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold text-slate-900">ООО</p>
+              <p className="text-[8px] text-slate-500 mt-0.5 leading-snug">
+                Общество с ограниченной ответственностью
+              </p>
+            </div>
+          </div>
+
+          {/* Info card */}
+          <div
+            className="flex items-center gap-2 p-2 rounded-xl"
+            style={{ background: 'oklch(96% 0.04 250)', border: '1px solid oklch(92% 0.06 250)' }}
+          >
+            <div className="w-3 h-3 rounded-full bg-blue-200 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[8px] font-bold text-blue-900">Чем отличаются ИП и ООО?</p>
+              <p className="text-[7px] text-blue-700">Медосмотр, техосмотр, путевой лист</p>
+            </div>
+            <span className="text-[7px] font-bold text-blue-400">→</span>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="px-3 pb-3 pt-2 border-t border-slate-100">
+        <div
+          className="w-full py-2.5 rounded-xl text-center text-[10px] font-bold text-white"
+          style={{ background: PRIMARY }}
+        >
+          Далее
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 3. Add Trip Sheet — создание поездки
+function AddTripMockup() {
+  return (
+    <div className="h-full flex flex-col text-[9px]" style={{ background: 'oklch(98% 0.005 80)' }}>
+      {/* Backdrop hint */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'oklch(22% 0.028 280 / 0.05)' }} />
+
+      <div className="relative z-10 flex-1 flex flex-col">
+        {/* Sheet handle */}
+        <div className="bg-white rounded-t-2xl pt-2 pb-1 flex justify-center">
+          <div className="w-8 h-1 rounded-full bg-slate-300" />
+        </div>
+
+        {/* Sheet header */}
+        <div className="bg-white px-3 pt-2 pb-3 flex items-center justify-between border-b border-slate-100">
+          <div>
+            <div className="text-[12px] font-bold text-slate-900" style={{ fontFamily: SORA }}>
+              Новая поездка
+            </div>
+            <div className="text-[8px] text-slate-500 mt-0.5">Сегодня, 15 июня · 10:30</div>
+          </div>
+          <div className="w-5 h-5 rounded-lg bg-slate-100 flex items-center justify-center">×</div>
+        </div>
+
+        {/* Form */}
+        <div className="bg-white flex-1 px-3 py-3 space-y-2.5">
+          {/* From */}
+          <div>
+            <div className="text-[7px] font-bold uppercase tracking-wider text-slate-500 mb-1">Откуда</div>
+            <div className="bg-slate-50 rounded-lg px-2 py-2 text-[9px] text-slate-900 font-medium">
+              Офис · Москва, Тверская 7
+            </div>
+          </div>
+
+          {/* To */}
+          <div>
+            <div className="text-[7px] font-bold uppercase tracking-wider text-slate-500 mb-1">Куда</div>
+            <div className="bg-slate-50 rounded-lg px-2 py-2 text-[9px] text-slate-900 font-medium">
+              Клиент · Москва, Арбат 14
+            </div>
+          </div>
+
+          {/* Distance + Purpose row */}
+          <div className="grid grid-cols-2 gap-1.5">
+            <div>
+              <div className="text-[7px] font-bold uppercase tracking-wider text-slate-500 mb-1">Км</div>
+              <div className="bg-slate-50 rounded-lg px-2 py-2 text-[9px] text-slate-900 font-bold">14</div>
+            </div>
+            <div>
+              <div className="text-[7px] font-bold uppercase tracking-wider text-slate-500 mb-1">Цель</div>
+              <div className="bg-slate-50 rounded-lg px-2 py-2 text-[9px] text-slate-900 font-medium truncate">
+                Встреча
+              </div>
+            </div>
+          </div>
+
+          {/* Info hint */}
+          <div
+            className="rounded-lg px-2 py-1.5 flex items-start gap-1.5"
+            style={{ background: 'oklch(96% 0.05 155)' }}
+          >
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-300 mt-0.5 shrink-0" />
+            <div className="text-[7px] leading-tight" style={{ color: 'oklch(40% 0.14 155)' }}>
+              <span className="font-bold">Документы будут готовы</span> сразу после сохранения
+            </div>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="bg-white px-3 pb-3 pt-2 border-t border-slate-100">
+          <div
+            className="w-full py-2.5 rounded-xl text-center text-[10px] font-bold text-white"
+            style={{ background: PRIMARY }}
+          >
+            Сохранить поездку
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 4. PDF Waybill preview — путевой лист
+function WaybillPdfMockup() {
+  return (
+    <div className="h-full flex flex-col text-[8px]" style={{ background: 'oklch(96% 0.005 80)' }}>
+      {/* App header */}
+      <div className="bg-white px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded bg-slate-100" />
+          <div className="text-[10px] font-bold text-slate-900" style={{ fontFamily: SORA }}>
+            Путевой лист
+          </div>
+        </div>
+        <div
+          className="text-[8px] font-bold px-2 py-1 rounded text-white"
+          style={{ background: PRIMARY }}
+        >
+          Скачать PDF
+        </div>
+      </div>
+
+      {/* PDF doc preview */}
+      <div className="flex-1 p-3 overflow-hidden">
+        <div className="bg-white rounded shadow-md p-2.5 h-full text-[6px] leading-tight font-serif text-slate-900">
+          {/* PDF title */}
+          <div className="text-center font-bold text-[7px] mb-1.5 uppercase">Путевой лист легкового автомобиля</div>
+          <div className="text-center text-[6px] mb-2">№ 47 от 15 июня 2026 г.</div>
+
+          {/* Subject */}
+          <div className="border-b border-slate-300 pb-1 mb-1.5">
+            <div className="font-bold text-[6px]">Организация: ИП Иванов А.С.</div>
+            <div className="text-[5.5px] text-slate-700 mt-0.5">ИНН 770000000000 · Москва</div>
+          </div>
+
+          {/* Driver + Vehicle */}
+          <div className="grid grid-cols-2 gap-1.5 mb-1.5 text-[5.5px]">
+            <div>
+              <div className="font-bold">Водитель</div>
+              <div className="text-slate-700">Иванов А.С.</div>
+              <div className="text-slate-500">ВУ 77 АА 123456</div>
+            </div>
+            <div>
+              <div className="font-bold">Автомобиль</div>
+              <div className="text-slate-700">Toyota Camry</div>
+              <div className="text-slate-500">А123АА777</div>
+            </div>
+          </div>
+
+          {/* Trip table header */}
+          <div className="grid grid-cols-[1fr_1fr_0.5fr] gap-1 text-[5px] font-bold border-b border-slate-300 pb-0.5 mb-0.5">
+            <div>Откуда</div>
+            <div>Куда</div>
+            <div className="text-right">Км</div>
+          </div>
+          {/* Trip rows */}
+          {[
+            ['Офис', 'Клиент / Арбат', '14'],
+            ['Арбат', 'Склад / МКАД', '18'],
+            ['МКАД', 'Офис', '21'],
+          ].map(([from, to, km], i) => (
+            <div key={i} className="grid grid-cols-[1fr_1fr_0.5fr] gap-1 text-[5.5px] py-0.5 border-b border-slate-100">
+              <div className="truncate">{from}</div>
+              <div className="truncate">{to}</div>
+              <div className="text-right">{km}</div>
+            </div>
+          ))}
+
+          {/* GSM stats */}
+          <div className="mt-1.5 pt-1 border-t border-slate-300 grid grid-cols-2 gap-1 text-[5.5px]">
+            <div>
+              <span className="font-bold">Всего:</span> 53 км
+            </div>
+            <div>
+              <span className="font-bold">Расход:</span> 4.8 л
+            </div>
+          </div>
+
+          {/* Footer compliance */}
+          <div className="mt-2 text-[5px] text-slate-500 italic">
+            Форма по приказу Минтранса №368 от 28.09.2022
           </div>
         </div>
       </div>
