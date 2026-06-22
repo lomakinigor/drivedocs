@@ -469,6 +469,7 @@ export function SettingsPage() {
   const orgProfile = useOrgProfile(id)
   const allWorkspaces = useWorkspaceStore((s) => s.workspaces)
   const user = useWorkspaceStore((s) => s.user)
+  const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
   const { setCurrentWorkspace, updateWorkspace, resetWorkspaceConfig, refreshSubscription } = useWorkspaceStore()
   const signOut = useWorkspaceStore((s) => s.signOut)
   const resetTour = useWorkspaceStore((s) => s.resetTour)
@@ -689,29 +690,79 @@ export function SettingsPage() {
           </Card>
         </section>
 
-        {/* ── Account ── */}
+        {/* ── Account — anonymous-first стратегия ── */}
         <section>
           <SectionLabel>Аккаунт</SectionLabel>
-          <Card className="overflow-hidden">
-            <div className="px-4 py-3 min-h-[52px]">
-              <p className="text-[14px] font-medium text-slate-900">{user.name}</p>
-              <p className="text-[12px] text-slate-500 mt-0.5">{user.email}</p>
-            </div>
-            <Divider />
-            <Row title="Показать стартовую инструкцию" onClick={resetTour} />
-            {isBackendConfigured && (
-              <>
-                <Divider />
-                <button
-                  onClick={() => signOut()}
-                  className="w-full px-4 py-3 flex items-center gap-2 text-left active:bg-slate-50 min-h-[52px]"
+          {!isBackendConfigured ? (
+            // Backend выключен — честно объясняем что без аккаунта, всё бесплатно
+            <Card className="overflow-hidden">
+              <div className="px-4 py-4">
+                <div className="flex items-start gap-2 mb-2">
+                  <span className="text-[18px]">🔓</span>
+                  <p className="text-[14px] font-bold text-slate-900" style={{ fontFamily: SORA }}>
+                    Без аккаунта
+                  </p>
+                </div>
+                <p className="text-[12px] text-slate-500 leading-relaxed">
+                  Сейчас приложение бесплатное и работает без регистрации.
+                  Все данные — поездки, документы, профиль — хранятся в браузере
+                  и доступны только на этом устройстве.
+                </p>
+                <p className="text-[12px] text-slate-500 leading-relaxed mt-2">
+                  Регистрация появится позже — для синхронизации между телефоном
+                  и компьютером и сохранения данных в облаке.
+                </p>
+              </div>
+              <Divider />
+              <Row title="Показать стартовую инструкцию" onClick={resetTour} />
+            </Card>
+          ) : isAuthenticated ? (
+            // Аутентифицирован — показываем профиль + выход
+            <Card className="overflow-hidden">
+              <div className="px-4 py-3 min-h-[52px]">
+                <p className="text-[14px] font-medium text-slate-900">{user.name}</p>
+                <p className="text-[12px] text-slate-500 mt-0.5">{user.email}</p>
+              </div>
+              <Divider />
+              <Row title="Показать стартовую инструкцию" onClick={resetTour} />
+              <Divider />
+              <button
+                onClick={() => signOut()}
+                className="w-full px-4 py-3 flex items-center gap-2 text-left active:bg-slate-50 min-h-[52px]"
+              >
+                <LogOut size={14} className="text-red-500" />
+                <span className="text-[14px] font-medium text-red-600">Выйти из аккаунта</span>
+              </button>
+            </Card>
+          ) : (
+            // Backend есть, но юзер не залогинен — soft CTA на регистрацию
+            <Card className="overflow-hidden">
+              <div className="px-4 py-5">
+                <h3
+                  className="text-[15px] font-bold text-slate-900 mb-2 leading-tight"
+                  style={{ fontFamily: SORA }}
                 >
-                  <LogOut size={14} className="text-red-500" />
-                  <span className="text-[14px] font-medium text-red-600">Выйти из аккаунта</span>
+                  Сохраните данные в облаке
+                </h3>
+                <p className="text-[12px] text-slate-500 leading-relaxed mb-4">
+                  Войдите чтобы работать с разных устройств и не потерять
+                  документы. Регистрация бесплатная, занимает 30 секунд.
+                </p>
+                <button
+                  onClick={() => navigate('/auth')}
+                  className="w-full py-3 rounded-xl text-[14px] font-bold text-white active:opacity-90"
+                  style={{
+                    background: 'oklch(52% 0.225 285)',
+                    boxShadow: '0 4px 14px oklch(52% 0.225 285 / 0.30)',
+                  }}
+                >
+                  Войти или создать аккаунт
                 </button>
-              </>
-            )}
-          </Card>
+              </div>
+              <Divider />
+              <Row title="Показать стартовую инструкцию" onClick={resetTour} />
+            </Card>
+          )}
         </section>
 
         {/* ── Danger zone ── */}

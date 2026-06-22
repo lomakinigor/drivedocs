@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { isBackendConfigured } from '@/lib/supabase'
 import {
   ArrowRight,
   FileCheck,
@@ -43,13 +44,24 @@ export function WelcomePage() {
               DriveDocs
             </span>
           </div>
-          <button
-            onClick={goOnboarding}
-            className="text-[13px] font-semibold text-white px-4 py-2 rounded-xl active:opacity-90"
-            style={{ background: PRIMARY, boxShadow: '0 2px 8px oklch(52% 0.225 285 / 0.35)' }}
-          >
-            Попробовать бесплатно
-          </button>
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* «Войти» — для возвращающихся юзеров. Показываем только когда auth активен. */}
+            {isBackendConfigured && (
+              <button
+                onClick={() => navigate('/auth')}
+                className="text-[13px] font-semibold text-slate-700 active:text-slate-900"
+              >
+                Войти
+              </button>
+            )}
+            <button
+              onClick={goOnboarding}
+              className="text-[13px] font-semibold text-white px-4 py-2 rounded-xl active:opacity-90"
+              style={{ background: PRIMARY, boxShadow: '0 2px 8px oklch(52% 0.225 285 / 0.35)' }}
+            >
+              Попробовать бесплатно
+            </button>
+          </div>
         </div>
       </nav>
 
