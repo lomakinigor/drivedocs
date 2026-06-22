@@ -84,14 +84,8 @@ export function WelcomePage() {
             Соответствуют требованиям&nbsp;ФНС.
           </p>
 
-          {/* Hero phone mockup — реалистичный главный экран */}
-          <div className="flex justify-center mb-7">
-            <PhoneFrame>
-              <HomeScreenMockup />
-            </PhoneFrame>
-          </div>
-
-          {/* Primary CTA */}
+          {/* Primary CTA — поднят выше mockup'а чтобы оставаться выше fold
+              на mobile (P0 правка из UX-аудита 2026-06-22) */}
           <button
             onClick={goOnboarding}
             className="inline-flex items-center justify-center gap-2 text-white text-[15px] font-bold px-7 py-4 rounded-2xl active:scale-[0.98] transition-transform mb-3"
@@ -100,7 +94,12 @@ export function WelcomePage() {
             Попробовать бесплатно
             <ArrowRight size={18} strokeWidth={2.2} />
           </button>
-          <p className="text-[13px] text-slate-500 mb-7">
+
+          {/* Reassurances — снимают барьер регистрации */}
+          <p className="text-[11px] text-slate-500 mb-1.5 leading-relaxed">
+            Без&nbsp;карты при&nbsp;регистрации · Настройка за&nbsp;2&nbsp;минуты · Отмена в&nbsp;один&nbsp;тап
+          </p>
+          <p className="text-[13px] text-slate-500 mb-6">
             или задайте вопрос в{' '}
             <a
               href="https://t.me/drivedocs_bot"
@@ -113,11 +112,18 @@ export function WelcomePage() {
             </a>
           </p>
 
-          {/* Compliance badges */}
-          <div className="flex flex-wrap justify-center gap-2">
+          {/* Compliance badges — trust signals выше fold */}
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             <ComplianceBadge icon={FileCheck} label="Приказ №368" />
             <ComplianceBadge icon={Fuel} label="АМ-23-р" />
             <ComplianceBadge icon={Shield} label="152-ФЗ" />
+          </div>
+
+          {/* Hero phone mockup — теперь после CTA, не блокирует action above fold */}
+          <div className="flex justify-center">
+            <PhoneFrame>
+              <HomeScreenMockup />
+            </PhoneFrame>
           </div>
         </div>
       </section>
@@ -281,12 +287,15 @@ export function WelcomePage() {
 
           <button
             onClick={goOnboarding}
-            className="inline-flex items-center justify-center gap-2 text-white text-[16px] font-bold px-8 py-4 rounded-2xl active:scale-[0.98] transition-transform mb-4"
+            className="inline-flex items-center justify-center gap-2 text-white text-[16px] font-bold px-8 py-4 rounded-2xl active:scale-[0.98] transition-transform mb-3"
             style={{ background: PRIMARY, boxShadow: '0 6px 24px oklch(52% 0.225 285 / 0.45)' }}
           >
             Начать бесплатно
             <ArrowRight size={18} strokeWidth={2.2} />
           </button>
+          <p className="text-[11px] text-slate-500 mb-1.5 leading-relaxed">
+            Без&nbsp;карты при&nbsp;регистрации · Настройка за&nbsp;2&nbsp;минуты · Отмена в&nbsp;один&nbsp;тап
+          </p>
           <p className="text-[13px] text-slate-500">
             Или напишите в{' '}
             <a
