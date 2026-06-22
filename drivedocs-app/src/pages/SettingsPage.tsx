@@ -694,7 +694,7 @@ export function SettingsPage() {
         <section>
           <SectionLabel>Аккаунт</SectionLabel>
           {!isBackendConfigured ? (
-            // Backend выключен — честно объясняем что без аккаунта, всё бесплатно
+            // Backend выключен — честный блок про локальное хранение + storage usage
             <Card className="overflow-hidden">
               <div className="px-4 py-4">
                 <div className="flex items-start gap-2 mb-2">
@@ -708,7 +708,25 @@ export function SettingsPage() {
                   Все данные — поездки, документы, профиль — хранятся в браузере
                   и доступны только на этом устройстве.
                 </p>
-                <p className="text-[12px] text-slate-500 leading-relaxed mt-2">
+
+                {/* Live storage usage */}
+                <StorageUsage />
+
+                {/* Risks */}
+                <details className="mt-3 group">
+                  <summary className="text-[12px] font-semibold text-slate-700 cursor-pointer flex items-center gap-1">
+                    <span className="group-open:rotate-90 inline-block transition-transform">▸</span>
+                    Что важно знать о хранении данных
+                  </summary>
+                  <div className="mt-2 ml-4 space-y-1.5 text-[11px] text-slate-500 leading-relaxed">
+                    <p>• Очистка cookies / истории браузера <b>удалит данные</b></p>
+                    <p>• Данные <b>не видны на других устройствах</b> — только в этом браузере</p>
+                    <p>• Telegram/MAX встроенный браузер хранит данные <b>отдельно</b> от Chrome/Safari</p>
+                    <p>• <b>Установка PWA</b> повышает сохранность — браузеры реже чистят данные установленных приложений</p>
+                  </div>
+                </details>
+
+                <p className="text-[12px] text-slate-500 leading-relaxed mt-3">
                   Регистрация появится позже — для синхронизации между телефоном
                   и компьютером и сохранения данных в облаке.
                 </p>
@@ -947,6 +965,54 @@ function DevResetCard() {
           </div>
         )}
       </Card>
+    </div>
+  )
+}
+
+
+// ─── StorageUsage — индикатор использования localStorage ──────────────
+// Для блока «Без аккаунта»: показывает сколько занято / лимит,
+// предупреждает при приближении к квоте.
+
+function StorageUsage() {
+  const [usedBytes, setUsedBytes] = useState(0)
+  const APPROX_LIMIT = 5 * 1024 * 1024 // 5 MB — типичная квота localStorage
+
+  useEffect(() => {
+    let total = 0
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (!key) continue
+        const value = localStorage.getItem(key) ?? ""
+        total += key.length + value.length
+      }
+    } catch { /* ignore */ }
+    setUsedBytes(total * 2) // UTF-16: ~2 байта на символ
+  }, [])
+
+  const usedMB = (usedBytes / 1024 / 1024).toFixed(2)
+  const limitMB = (APPROX_LIMIT / 1024 / 1024).toFixed(0)
+  const percent = Math.min(100, (usedBytes / APPROX_LIMIT) * 100)
+  const warning = percent > 80
+  const color = warning ? "oklch(60% 0.21 25)" : "oklch(52% 0.225 285)"
+
+  return (
+    <div className="mt-3 p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[11px] font-semibold text-slate-600">Занято в браузере</span>
+        <span className="text-[11px] font-bold" style={{ color }}>
+          {usedMB} / ~{limitMB} MB
+        </span>
+      </div>
+      <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all" style={{ width: `${percent}%`, background: color }} />
+      </div>
+      {warning && (
+        <p className="text-[10px] text-red-600 mt-1.5 leading-snug">
+          Подходите к лимиту браузера. Удалите старые поездки или подождите cloud sync.
+        </p>
+      )}
     </div>
   )
 }
