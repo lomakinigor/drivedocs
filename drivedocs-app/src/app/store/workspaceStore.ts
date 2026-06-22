@@ -296,8 +296,36 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
                 ? currentId
                 : (data.workspaces[0]?.id ?? null),
             })
+          } else {
+            // Cloud пусто, но локально могли накопиться данные пока юзер был
+            // в anonymous-mode. Поднимаем всё в облако одним проходом, чтобы при
+            // следующем логине с другого устройства данные были видны.
+            const local = get()
+            if (local.workspaces.length > 0) {
+              try {
+                // Привязываем существующие workspaces к auth-юзеру (был mock-user.id)
+                const rebound = local.workspaces.map((ws) => ({ ...ws, userId }))
+                await Promise.all(rebound.map((ws) => workspaceRepo.upsert(ws)))
+                await Promise.all(local.orgProfiles.map((p) => orgProfileRepo.upsert(p)))
+                await Promise.all(local.vehicleProfiles.map((p) => vehicleProfileRepo.upsert(p)))
+                // drivers пока без облачного репо (нет таблицы в schema.sql) — остаются локально
+                await Promise.all(local.trips.map((t) => tripRepo.insert(t)))
+                await Promise.all(local.receipts.map((r) => receiptRepo.insert(r)))
+                // documentRepo использует upsert через workspace, document создаются через initWorkspaceDocuments
+                local.events.forEach((e) => { void eventRepo.insert(e) })
+                set({ workspaces: rebound })
+                console.info('[drivedocs] Uploaded local data to cloud:', {
+                  workspaces: local.workspaces.length,
+                  trips: local.trips.length,
+                  receipts: local.receipts.length,
+                  documents: local.documents.length,
+                })
+              } catch (e) {
+                console.error('[drivedocs] Failed to upload local data on first login', e)
+                set({ syncError: 'Не удалось загрузить локальные данные в облако. Они остались на устройстве.' })
+              }
+            }
           }
-          // If backend has no workspaces yet, keep local/mock data as-is (first-run).
         } catch (err) {
           if (isAuthError(err)) {
             // Auth error during hydration → force sign-out
