@@ -29,8 +29,12 @@ import { isBackendConfigured } from '@/lib/supabase'
 function RootRedirect() {
   const workspaces = useWorkspaceStore((s) => s.workspaces)
   const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)
+  const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
+
   if (!workspaces.length) {
-    return <Navigate to="/welcome" replace />
+    // Залогиненный юзер без workspaces — сразу в онбординг, не на лендинг.
+    // Лендинг показываем только новым (не залогиненным) посетителям.
+    return <Navigate to={isAuthenticated && isBackendConfigured ? '/onboarding' : '/welcome'} replace />
   }
   const id = currentWorkspaceId ?? workspaces[0].id
   return <Navigate to={`/w/${id}/home`} replace />

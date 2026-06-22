@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { isBackendConfigured } from '@/lib/supabase'
+import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import {
   ArrowRight,
   FileCheck,
@@ -26,6 +27,14 @@ const BG = 'oklch(98.8% 0.005 80)'
 
 export function WelcomePage() {
   const navigate = useNavigate()
+  const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
+  const authChecked = useWorkspaceStore((s) => s.authChecked)
+
+  // Залогиненного юзера на лендинге быть не должно — уносим в приложение
+  // через RootRedirect (он решит: онбординг если нет workspaces, либо home)
+  if (isBackendConfigured && authChecked && isAuthenticated) {
+    return <Navigate to="/" replace />
+  }
 
   const goOnboarding = () => navigate('/onboarding')
 
