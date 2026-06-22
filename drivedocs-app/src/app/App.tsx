@@ -41,23 +41,22 @@ function RootRedirect() {
 // In backend mode: waits for first onAuthStateChange event, then redirects to /auth if not signed in.
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
   const authChecked = useWorkspaceStore((s) => s.authChecked)
 
-  // localStorage mode: backend not configured → always authenticated, skip guard
+  // localStorage mode: backend not configured → пропускаем сразу
   if (!isBackendConfigured) return <>{children}</>
 
-  // Backend mode: wait for auth check before rendering or redirecting
+  // Backend mode: ждём первую проверку auth-state перед рендером,
+  // чтобы не было flicker'а пока узнаём кто пользователь.
+  // НО НЕ редиректим неавторизованных на /auth — anonymous-first:
+  // юзер может пользоваться приложением без аккаунта (данные в localStorage).
+  // Cloud sync включается только после логина (см. hydrateFromBackend).
   if (!authChecked) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
       </div>
     )
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />
   }
 
   return <>{children}</>
@@ -77,20 +76,17 @@ const router = createBrowserRouter([
     ),
   },
   {
+    // Лендинг — публичная страница, без auth guard. Anonymous-first стратегия:
+    // посетитель должен видеть value proposition до регистрации.
     path: '/welcome',
-    element: (
-      <ProtectedRoute>
-        <WelcomePage />
-      </ProtectedRoute>
-    ),
+    element: <WelcomePage />,
   },
   {
+    // Онбординг — тоже публичный. Можно создать workspace без аккаунта
+    // (данные в localStorage), потом залогиниться и автоматически
+    // подтянуть их в облако (см. hydrateFromBackend → upload).
     path: '/onboarding',
-    element: (
-      <ProtectedRoute>
-        <OnboardingWizard />
-      </ProtectedRoute>
-    ),
+    element: <OnboardingWizard />,
   },
   {
     path: '/w/:workspaceId',
