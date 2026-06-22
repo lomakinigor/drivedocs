@@ -49,7 +49,7 @@ export function WelcomePage() {
             {isBackendConfigured && (
               <button
                 onClick={() => navigate('/auth')}
-                className="text-[13px] font-semibold text-slate-700 active:text-slate-900"
+                className="text-[13px] font-semibold text-slate-700 cursor-pointer hover:text-slate-900 active:text-slate-900 transition-colors"
               >
                 Войти
               </button>

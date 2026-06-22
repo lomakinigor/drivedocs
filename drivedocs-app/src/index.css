@@ -89,3 +89,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Tailwind v4 убрал default cursor: pointer для <button> — возвращаем,
+   иначе interactive-элементы не выглядят кликабельными на desktop. */
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+  cursor: pointer;
+}
