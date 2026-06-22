@@ -5,7 +5,6 @@ import {
   Fuel,
   Shield,
   Smartphone,
-  MessageCircle,
   Sparkles,
   CheckCircle2,
 } from 'lucide-react'
@@ -57,15 +56,6 @@ export function WelcomePage() {
         />
 
         <div className="max-w-3xl mx-auto text-center relative z-10">
-          {/* Early-access pill */}
-          <div
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-5 text-[12px] font-semibold"
-            style={{ background: 'oklch(94% 0.08 155)', color: 'oklch(40% 0.14 155)' }}
-          >
-            <Sparkles size={12} />
-            Ранний доступ — сейчас бесплатно
-          </div>
-
           {/* H1 */}
           <h1
             className="text-[2rem] sm:text-[2.75rem] font-bold text-slate-900 leading-[1.1] tracking-tight mb-4"
@@ -77,12 +67,29 @@ export function WelcomePage() {
             </span>
           </h1>
 
-          {/* Sub */}
-          <p className="text-[15px] sm:text-[17px] text-slate-600 leading-relaxed max-w-xl mx-auto mb-7">
-            Путевые листы, отчёт ГСМ, приказы — всегда в&nbsp;телефоне,
-            без&nbsp;Excel и&nbsp;ручного заполнения.
-            Соответствуют требованиям&nbsp;ФНС.
+          {/* Sub — добавлен before/after контраст с конкретной болью */}
+          <p className="text-[15px] sm:text-[17px] text-slate-600 leading-relaxed max-w-xl mx-auto mb-5">
+            Раньше — час на&nbsp;каждый путевой и&nbsp;страх претензий
+            ФНС. Сейчас — путевые листы, ГСМ и&nbsp;приказы в&nbsp;телефоне.
+            Соответствуют приказу Минтранса&nbsp;№368.
           </p>
+
+          {/* Пилы: ранний доступ + сегментация. Закрывают «для кого» выше fold */}
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
+              style={{ background: 'oklch(94% 0.08 155)', color: 'oklch(40% 0.14 155)' }}
+            >
+              <Sparkles size={12} />
+              Ранний доступ — бесплатно
+            </div>
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold"
+              style={{ background: PRIMARY_SOFT, color: 'oklch(38% 0.20 285)' }}
+            >
+              💼 Для ИП и ООО · УСН, ОСНО, патент
+            </div>
+          </div>
 
           {/* Primary CTA — поднят выше mockup'а чтобы оставаться выше fold
               на mobile (P0 правка из UX-аудита 2026-06-22) */}
@@ -250,24 +257,13 @@ export function WelcomePage() {
               влиять на&nbsp;развитие продукта.
             </p>
 
-            <div className="max-w-md mx-auto space-y-2.5 text-left mb-6">
+            <div className="max-w-md mx-auto space-y-2.5 text-left">
               <Benefit text="Полный доступ ко всем функциям без ограничений" />
               <Benefit text="Установка на смартфон — путевые листы создаются за рулём, не дома в Excel" />
               <Benefit text="Приоритетная поддержка лично от разработчика" />
               <Benefit text="Влияние на функционал — что нужно, то и добавляем" />
               <Benefit text="Льготный тариф при запуске Pro (планируем)" />
             </div>
-
-            <a
-              href="https://t.me/drivedocs_bot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-[13px] font-semibold px-4 py-2.5 rounded-xl active:opacity-80"
-              style={{ background: 'white', color: 'oklch(38% 0.14 155)', border: '1px solid oklch(85% 0.08 155)' }}
-            >
-              <MessageCircle size={14} />
-              Связь с разработчиком: @drivedocs_bot
-            </a>
           </div>
         </div>
       </section>
@@ -276,13 +272,13 @@ export function WelcomePage() {
       <section className="px-4 sm:px-6 py-14 sm:py-20 text-center">
         <div className="max-w-2xl mx-auto">
           <h3
-            className="text-[24px] sm:text-[32px] font-bold text-slate-900 mb-4 leading-tight"
+            className="text-[24px] sm:text-[32px] font-bold text-slate-900 mb-3 leading-tight"
             style={{ fontFamily: SORA }}
           >
             Готовы попробовать?
           </h3>
           <p className="text-[15px] text-slate-600 mb-7 max-w-md mx-auto">
-            Настройка за 2 минуты. Без карты и подписки. Отмена в один тап.
+            Ваш первый путевой лист — через&nbsp;5&nbsp;минут.
           </p>
 
           <button
@@ -293,20 +289,8 @@ export function WelcomePage() {
             Начать бесплатно
             <ArrowRight size={18} strokeWidth={2.2} />
           </button>
-          <p className="text-[11px] text-slate-500 mb-1.5 leading-relaxed">
+          <p className="text-[11px] text-slate-500 leading-relaxed">
             Без&nbsp;карты при&nbsp;регистрации · Настройка за&nbsp;2&nbsp;минуты · Отмена в&nbsp;один&nbsp;тап
-          </p>
-          <p className="text-[13px] text-slate-500">
-            Или напишите в{' '}
-            <a
-              href="https://t.me/drivedocs_bot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold underline decoration-slate-300 underline-offset-2"
-              style={{ color: PRIMARY }}
-            >
-              @drivedocs_bot
-            </a>
           </p>
         </div>
       </section>
