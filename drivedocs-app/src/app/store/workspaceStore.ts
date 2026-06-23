@@ -280,51 +280,92 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         set({ isSyncing: true, syncError: null })
         try {
           const data = await fetchAllUserData(userId)
-          if (data.workspaces.length > 0) {
-            const currentId = get().currentWorkspaceId
-            const stillValid = data.workspaces.some((ws) => ws.id === currentId)
+          const local = get()
+          const cloudIds = new Set(data.workspaces.map((ws) => ws.id))
+
+          // Workspaces которые есть локально, но НЕ в облаке — нужно поднять.
+          // Случается когда юзер пользовался anonymous-mode и накопил данные,
+          // а потом залогинился (с этого устройства или с другого).
+          const localOnlyWorkspaces = local.workspaces.filter((ws) => !cloudIds.has(ws.id))
+
+          if (localOnlyWorkspaces.length > 0) {
+            try {
+              // Привязываем local-only workspaces к auth-юзеру и пушим в облако
+              const localIds = new Set(localOnlyWorkspaces.map((ws) => ws.id))
+              const rebound = localOnlyWorkspaces.map((ws) => ({ ...ws, userId }))
+              await Promise.all(rebound.map((ws) => workspaceRepo.upsert(ws)))
+
+              // И всё что к ним относится — orgs, vehicles, trips, receipts, events
+              const localOrgs = local.orgProfiles.filter((p) => localIds.has(p.workspaceId))
+              const localVehicles = local.vehicleProfiles.filter((p) => localIds.has(p.workspaceId))
+              const localTrips = local.trips.filter((t) => localIds.has(t.workspaceId))
+              const localReceipts = local.receipts.filter((r) => localIds.has(r.workspaceId))
+              const localEvents = local.events.filter((e) => localIds.has(e.workspaceId))
+
+              await Promise.all(localOrgs.map((p) => orgProfileRepo.upsert(p)))
+              await Promise.all(localVehicles.map((p) => vehicleProfileRepo.upsert(p)))
+              await Promise.all(localTrips.map((t) => tripRepo.insert(t)))
+              await Promise.all(localReceipts.map((r) => receiptRepo.insert(r)))
+              localEvents.forEach((e) => { void eventRepo.insert(e) })
+
+              console.info('[drivedocs] Uploaded local-only data to cloud:', {
+                workspaces: rebound.length,
+                trips: localTrips.length,
+                receipts: localReceipts.length,
+              })
+            } catch (e) {
+              console.error('[drivedocs] Failed to upload local-only workspaces', e)
+              set({ syncError: 'Не удалось загрузить часть локальных данных в облако.' })
+            }
+          }
+
+          // MERGE: облачные данные + local-only с привязкой к userId.
+          // Так юзер видит И вчерашний cloud-workspace И сегодняшний локальный.
+          const reboundLocal = localOnlyWorkspaces.map((ws) => ({ ...ws, userId }))
+          const reboundLocalIds = new Set(reboundLocal.map((ws) => ws.id))
+          const mergedWorkspaces = [...data.workspaces, ...reboundLocal]
+
+          const mergedOrgs = [
+            ...data.orgProfiles,
+            ...local.orgProfiles.filter((p) => reboundLocalIds.has(p.workspaceId)),
+          ]
+          const mergedVehicles = [
+            ...data.vehicleProfiles,
+            ...local.vehicleProfiles.filter((p) => reboundLocalIds.has(p.workspaceId)),
+          ]
+          const mergedTrips = [
+            ...data.trips,
+            ...local.trips.filter((t) => reboundLocalIds.has(t.workspaceId)),
+          ]
+          const mergedReceipts = [
+            ...data.receipts,
+            ...local.receipts.filter((r) => reboundLocalIds.has(r.workspaceId)),
+          ]
+          const mergedDocuments = [
+            ...data.documents,
+            ...local.documents.filter((d) => reboundLocalIds.has(d.workspaceId)),
+          ]
+          const mergedEvents = [
+            ...data.events,
+            ...local.events.filter((e) => reboundLocalIds.has(e.workspaceId)),
+          ]
+
+          if (mergedWorkspaces.length > 0) {
+            const currentId = local.currentWorkspaceId
+            const stillValid = mergedWorkspaces.some((ws) => ws.id === currentId)
             set({
-              workspaces: data.workspaces,
-              orgProfiles: data.orgProfiles,
-              vehicleProfiles: data.vehicleProfiles,
-              trips: data.trips,
-              receipts: data.receipts,
-              documents: data.documents,
-              events: data.events,
+              workspaces: mergedWorkspaces,
+              orgProfiles: mergedOrgs,
+              vehicleProfiles: mergedVehicles,
+              trips: mergedTrips,
+              receipts: mergedReceipts,
+              documents: mergedDocuments,
+              events: mergedEvents,
               subscriptions: data.subscriptions,
               currentWorkspaceId: stillValid
                 ? currentId
-                : (data.workspaces[0]?.id ?? null),
+                : (mergedWorkspaces[0]?.id ?? null),
             })
-          } else {
-            // Cloud пусто, но локально могли накопиться данные пока юзер был
-            // в anonymous-mode. Поднимаем всё в облако одним проходом, чтобы при
-            // следующем логине с другого устройства данные были видны.
-            const local = get()
-            if (local.workspaces.length > 0) {
-              try {
-                // Привязываем существующие workspaces к auth-юзеру (был mock-user.id)
-                const rebound = local.workspaces.map((ws) => ({ ...ws, userId }))
-                await Promise.all(rebound.map((ws) => workspaceRepo.upsert(ws)))
-                await Promise.all(local.orgProfiles.map((p) => orgProfileRepo.upsert(p)))
-                await Promise.all(local.vehicleProfiles.map((p) => vehicleProfileRepo.upsert(p)))
-                // drivers пока без облачного репо (нет таблицы в schema.sql) — остаются локально
-                await Promise.all(local.trips.map((t) => tripRepo.insert(t)))
-                await Promise.all(local.receipts.map((r) => receiptRepo.insert(r)))
-                // documentRepo использует upsert через workspace, document создаются через initWorkspaceDocuments
-                local.events.forEach((e) => { void eventRepo.insert(e) })
-                set({ workspaces: rebound })
-                console.info('[drivedocs] Uploaded local data to cloud:', {
-                  workspaces: local.workspaces.length,
-                  trips: local.trips.length,
-                  receipts: local.receipts.length,
-                  documents: local.documents.length,
-                })
-              } catch (e) {
-                console.error('[drivedocs] Failed to upload local data on first login', e)
-                set({ syncError: 'Не удалось загрузить локальные данные в облако. Они остались на устройстве.' })
-              }
-            }
           }
         } catch (err) {
           if (isAuthError(err)) {
