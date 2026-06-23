@@ -16,7 +16,9 @@ interface AdminCounts {
 
 // ─── Admin access guard ───────────────────────────────────────────────────────
 
-const ADMIN_EMAIL = 'claudesecond2026@gmail.com'
+// Список админов на фронте — для guard'а доступа к странице.
+// Реальная проверка прав делается на сервере (api/admin-stats.ts) через ADMIN_EMAILS env.
+const ADMIN_EMAILS = ['lomakinigor@mail.ru', 'claudesecond2026@gmail.com']
 
 function useIsAdmin(): boolean | null {
   const user = useWorkspaceStore((s) => s.user)
@@ -26,7 +28,7 @@ function useIsAdmin(): boolean | null {
   if (!isBackendConfigured) return true
 
   if (!authChecked) return null   // loading
-  return user.email === ADMIN_EMAIL
+  return ADMIN_EMAILS.includes((user.email ?? '').toLowerCase())
 }
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
