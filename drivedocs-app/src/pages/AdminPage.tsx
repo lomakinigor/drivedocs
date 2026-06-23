@@ -1,9 +1,18 @@
 import { Navigate } from 'react-router-dom'
-import { Users, Route, FileText, Receipt, TrendingUp, Database, BarChart2, Activity, Trash2 } from 'lucide-react'
+import { Users, Route, FileText, Receipt, TrendingUp, Database, BarChart2, Activity, Trash2, RefreshCw, FolderOpen, Bell } from 'lucide-react'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
-import { isBackendConfigured } from '@/lib/supabase'
+import { isBackendConfigured, supabase } from '@/lib/supabase'
 import { getAllMetrics, clearMetrics } from '@/lib/metrics/featureMetrics'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+
+interface AdminCounts {
+  registered_users: number
+  workspaces: number
+  trips: number
+  receipts: number
+  documents: number
+  events: number
+}
 
 // ─── Admin access guard ───────────────────────────────────────────────────────
 
@@ -108,36 +117,7 @@ export function AdminPage() {
           </div>
         )}
 
-        {/* Overview stats */}
-        <section>
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Обзор</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard
-              icon={<Users size={16} />}
-              label="Пользователи"
-              value="—"
-              sub="нет данных"
-            />
-            <StatCard
-              icon={<Activity size={16} />}
-              label="Активных за 7 дней"
-              value="—"
-              sub="нет данных"
-            />
-            <StatCard
-              icon={<Route size={16} />}
-              label="Поездок"
-              value="—"
-              sub="всего в системе"
-            />
-            <StatCard
-              icon={<Receipt size={16} />}
-              label="Расходов"
-              value="—"
-              sub="записано"
-            />
-          </div>
-        </section>
+        <LiveStatsSection />
 
         {/* Feature usage */}
         <section>
@@ -255,6 +235,137 @@ function MetricsSection() {
       <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
         Хранится в localStorage. Доступно через консоль: <code>drivedocsMetrics.get()</code>.
       </p>
+    </section>
+  )
+}
+
+// ─── Live counts from Supabase ───────────────────────────────────────────────
+
+function LiveStatsSection() {
+  const [counts, setCounts] = useState<AdminCounts | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    if (!supabase) {
+      setError('backend_off')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setError('not_logged_in')
+        return
+      }
+      const resp = await fetch('/api/admin-stats', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}))
+        setError(body?.error ?? `HTTP ${resp.status}`)
+        return
+      }
+      const body = (await resp.json()) as { counts: AdminCounts; generated_at: string }
+      setCounts(body.counts)
+      setGeneratedAt(body.generated_at)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { void load() }, [load])
+
+  // Аноним = workspace без user_id (создан до логина). Считаем как разницу
+  // между всеми workspaces и зарегистрированными юзерами — это груба́я оценка,
+  // т.к. один юзер может иметь несколько workspace'ов. Точный трекинг
+  // анонимов — в roadmap (нужен лёгкий ping endpoint).
+  const anonEstimate = counts
+    ? Math.max(0, counts.workspaces - counts.registered_users)
+    : null
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Обзор · цифры</h2>
+        <button
+          onClick={() => void load()}
+          disabled={loading}
+          className="flex items-center gap-1 text-[11px] text-blue-600 active:text-blue-800 disabled:opacity-50"
+        >
+          <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
+          Обновить
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-3 bg-amber-50 border border-amber-200 rounded-2xl p-3">
+          <p className="text-[12px] text-amber-800">
+            {error === 'backend_off' && 'Supabase не подключён — счётчики недоступны.'}
+            {error === 'not_logged_in' && 'Войдите в аккаунт, чтобы увидеть статистику.'}
+            {error === 'forbidden' && 'Этот аккаунт не в списке админов (ADMIN_EMAILS).'}
+            {error === 'backend_not_configured' && 'На сервере не настроены env: SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS.'}
+            {!['backend_off', 'not_logged_in', 'forbidden', 'backend_not_configured'].includes(error) &&
+              `Ошибка: ${error}`}
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard
+          icon={<Users size={16} />}
+          label="Зарегистрированных"
+          value={counts ? String(counts.registered_users) : '—'}
+          sub="с email/паролем"
+        />
+        <StatCard
+          icon={<Activity size={16} />}
+          label="Анонимных (оценка)"
+          value={anonEstimate !== null ? String(anonEstimate) : '—'}
+          sub="workspaces без юзера"
+        />
+        <StatCard
+          icon={<FolderOpen size={16} />}
+          label="Workspaces"
+          value={counts ? String(counts.workspaces) : '—'}
+          sub="всего"
+        />
+        <StatCard
+          icon={<Route size={16} />}
+          label="Поездок"
+          value={counts ? String(counts.trips) : '—'}
+          sub="записей в БД"
+        />
+        <StatCard
+          icon={<Receipt size={16} />}
+          label="Чеков"
+          value={counts ? String(counts.receipts) : '—'}
+          sub="расходов"
+        />
+        <StatCard
+          icon={<FileText size={16} />}
+          label="Документов"
+          value={counts ? String(counts.documents) : '—'}
+          sub="PDF и шаблонов"
+        />
+        <StatCard
+          icon={<Bell size={16} />}
+          label="Событий"
+          value={counts ? String(counts.events) : '—'}
+          sub="напоминаний"
+        />
+      </div>
+
+      {generatedAt && (
+        <p className="text-[11px] text-slate-400 mt-2 text-center">
+          обновлено {new Date(generatedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}
+        </p>
+      )}
     </section>
   )
 }

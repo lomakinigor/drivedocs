@@ -12,8 +12,15 @@ create table if not exists workspaces (
   tax_mode            text        not null,
   vehicle_usage_model text        not null,
   is_configured       boolean     not null default false,
+  -- drivedocs-671 — реф-система пост-MVP. Колонки зарезервированы заранее,
+  -- чтобы не делать миграцию по существующим workspace'ам позже.
+  referral_code       text,
+  referred_by_code    text,
   created_at          timestamptz not null default now()
 );
+
+-- Index for fast lookup by referral code (используется при парсинге ?ref=XXXX).
+create index if not exists idx_workspaces_referral_code on workspaces(referral_code) where referral_code is not null;
 
 -- ─── org_profiles ─────────────────────────────────────────────────────────────
 

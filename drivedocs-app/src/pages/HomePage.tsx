@@ -152,6 +152,34 @@ export function HomePage() {
             Сегодня
           </h1>
           <div className="text-[13px] text-slate-500 mt-0.5">{todayLabel()}</div>
+          {isBackendConfigured && (
+            isAuthenticated ? (
+              <div
+                className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-full text-[11px] font-semibold"
+                style={{
+                  background: 'oklch(96% 0.05 155)',
+                  color: 'oklch(40% 0.13 155)',
+                  border: '1px solid oklch(90% 0.08 155)',
+                }}
+                title="Данные синхронизируются с облаком"
+              >
+                <Cloud size={11} strokeWidth={2.5} />
+                Синхронизация
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate(`/w/${id}/settings`)}
+                className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-full text-[11px] font-semibold active:opacity-80"
+                style={{
+                  background: 'oklch(96% 0.04 80)',
+                  color: 'oklch(45% 0.13 65)',
+                  border: '1px solid oklch(90% 0.06 75)',
+                }}
+              >
+                🔓 Без аккаунта
+              </button>
+            )
+          )}
         </div>
         <div className="flex items-center gap-2.5 shrink-0 pt-1">
           <button
