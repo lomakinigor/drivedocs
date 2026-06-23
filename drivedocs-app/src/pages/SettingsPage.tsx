@@ -753,22 +753,62 @@ export function SettingsPage() {
               </button>
             </Card>
           ) : (
-            // Backend есть, но юзер не залогинен — soft CTA на регистрацию
+            // Backend есть, но юзер не залогинен — инструкция «без аккаунта vs с аккаунтом» + CTA
             <Card className="overflow-hidden">
               <div className="px-4 py-5">
-                <h3
-                  className="text-[15px] font-bold text-slate-900 mb-2 leading-tight"
-                  style={{ fontFamily: SORA }}
-                >
-                  Сохраните данные в облаке
-                </h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[18px]">🔓</span>
+                  <p className="text-[14px] font-bold text-slate-900" style={{ fontFamily: SORA }}>
+                    Сейчас вы без аккаунта
+                  </p>
+                </div>
                 <p className="text-[12px] text-slate-500 leading-relaxed mb-4">
-                  Войдите чтобы работать с разных устройств и не потерять
-                  документы. Регистрация бесплатная, занимает 30 секунд.
+                  Приложением можно пользоваться без регистрации — это нормально для теста.
+                  Регистрация бесплатная и занимает 30 секунд.
                 </p>
+
+                {/* Live storage usage */}
+                <StorageUsage />
+
+                {/* Два списка: что доступно сейчас vs что даёт аккаунт */}
+                <div className="mt-4 space-y-3">
+                  <div
+                    className="rounded-xl p-3"
+                    style={{ background: 'oklch(96% 0.02 80)', border: '1px solid oklch(92% 0.02 80)' }}
+                  >
+                    <p className="text-[12px] font-bold text-slate-800 mb-2">Что работает без аккаунта</p>
+                    <ul className="space-y-1 text-[12px] text-slate-600 leading-relaxed">
+                      <li>✓ Создавать поездки, чеки, путевые листы</li>
+                      <li>✓ Скачивать PDF документов</li>
+                      <li>✓ Считать ГСМ и расходы для ФНС</li>
+                    </ul>
+                    <p className="text-[11px] text-slate-500 leading-relaxed mt-2">
+                      Данные хранятся <b>только в этом браузере</b>. Очистка cookies,
+                      переустановка приложения или другое устройство — и данные пропадут.
+                    </p>
+                  </div>
+
+                  <div
+                    className="rounded-xl p-3"
+                    style={{ background: 'oklch(97% 0.04 285)', border: '1px solid oklch(90% 0.08 285)' }}
+                  >
+                    <p className="text-[12px] font-bold text-slate-800 mb-2">Что добавит аккаунт</p>
+                    <ul className="space-y-1 text-[12px] text-slate-600 leading-relaxed">
+                      <li>☁ Облачное сохранение — данные не потеряются</li>
+                      <li>📱 Доступ с телефона и компьютера одновременно</li>
+                      <li>🔄 Автосинхронизация между устройствами</li>
+                      <li>🛟 Восстановление, если телефон сломался или потерян</li>
+                    </ul>
+                    <p className="text-[11px] text-slate-500 leading-relaxed mt-2">
+                      Локальные данные <b>перенесутся в облако автоматически</b> при первом входе —
+                      ничего не потеряется.
+                    </p>
+                  </div>
+                </div>
+
                 <button
                   onClick={() => navigate('/auth')}
-                  className="w-full py-3 rounded-xl text-[14px] font-bold text-white active:opacity-90"
+                  className="w-full mt-4 py-3 rounded-xl text-[14px] font-bold text-white active:opacity-90"
                   style={{
                     background: 'oklch(52% 0.225 285)',
                     boxShadow: '0 4px 14px oklch(52% 0.225 285 / 0.30)',

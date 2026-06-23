@@ -6,7 +6,9 @@ import { TripDetailSheet } from '@/features/trips/TripDetailSheet'
 import { DocumentDetailSheet } from '@/features/documents/DocumentDetailSheet'
 import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
-import { useCurrentWorkspace } from '@/app/store/workspaceStore'
+import { useCurrentWorkspace, useWorkspaceStore } from '@/app/store/workspaceStore'
+import { isBackendConfigured } from '@/lib/supabase'
+import { Cloud } from 'lucide-react'
 import { useHomeData } from '@/features/home/useHomeData'
 import { EssentialsReminderCard, EssentialsSheet, useEssentialsStatus } from '@/features/home/EssentialsReminder'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
@@ -75,6 +77,8 @@ export function HomePage() {
   const [essentialsOpen, setEssentialsOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const essentialsStatus = useEssentialsStatus(id)
+  const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
+  const showAuthHint = isBackendConfigured && !isAuthenticated
 
   // F-028 — фиксируем посещение редизайн-экрана
   useEffect(() => { recordMetric('view.home') }, [])
@@ -329,6 +333,39 @@ export function HomePage() {
           />
         </div>
       </div>
+
+      {showAuthHint && (
+        <button
+          onClick={() => navigate(`/w/${id}/settings`)}
+          className="mt-6 w-full text-left rounded-2xl p-4 active:opacity-90"
+          style={{
+            background: 'oklch(97% 0.04 285)',
+            border: '1px solid oklch(90% 0.08 285)',
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: 'oklch(92% 0.07 285)' }}
+            >
+              <Cloud size={18} style={{ color: 'oklch(45% 0.20 285)' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-slate-900 leading-tight">
+                Сейчас данные хранятся только на этом устройстве
+              </p>
+              <p className="text-[12px] text-slate-600 leading-relaxed mt-1">
+                Чтобы не потерять поездки и документы при очистке браузера или смене телефона —
+                <span className="font-semibold text-slate-800"> сохраните их в облаке</span>.
+                Бесплатно, 30 секунд.
+              </p>
+              <p className="text-[12px] font-semibold mt-2" style={{ color: 'oklch(45% 0.20 285)' }}>
+                Подробнее в Настройках →
+              </p>
+            </div>
+          </div>
+        </button>
+      )}
 
       {feedbackOpen && <FeedbackSheet onClose={() => setFeedbackOpen(false)} />}
 
