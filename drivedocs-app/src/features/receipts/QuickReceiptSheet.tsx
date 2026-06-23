@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Camera, RotateCcw, Loader, Info } from 'lucide-react'
+import { X, Camera, RotateCcw, Loader, Info, QrCode } from 'lucide-react'
 import { useWorkspaceStore, todayISO } from '@/app/store/workspaceStore'
 import { usePhotoCapture } from '@/shared/hooks/usePhotoCapture'
 import { useOcrExtract } from '@/shared/hooks/useOcrExtract'
@@ -136,9 +136,23 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
         <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
           {/* Photo capture — primary entry point, OCR autofills fields below */}
           <Field label="Фото чека">
-            <p className="text-xs text-slate-500 -mt-1 mb-1.5">
+            <p className="text-xs text-slate-500 -mt-1 mb-2">
               Сфотографируйте чек — сумма, дата и категория заполнятся автоматически
             </p>
+
+            {/* QR-код = можно не хранить бумажный чек (54-ФЗ) */}
+            <div
+              className="flex items-start gap-2 px-3 py-2 rounded-xl mb-2"
+              style={{ background: 'oklch(96% 0.05 155)', border: '1px solid oklch(92% 0.06 155)' }}
+            >
+              <QrCode size={14} style={{ color: 'oklch(40% 0.14 155)', marginTop: 2 }} className="shrink-0" />
+              <p className="text-[11px] leading-relaxed" style={{ color: 'oklch(38% 0.13 155)' }}>
+                Если на&nbsp;фото читается <b>QR-код</b> — бумажный чек можно
+                не&nbsp;хранить. Электронная копия юридически равна оригиналу
+                (54-ФЗ).
+              </p>
+            </div>
+
             <input
               ref={photo.inputRef}
               type="file"
