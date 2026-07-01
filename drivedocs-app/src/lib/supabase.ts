@@ -53,3 +53,14 @@ export function getCurrentUserId(): string | null {
   // For Phase 9, user id is obtained via onAuthStateChange subscription in store.
   return null  // use subscribeToAuthChanges for reliable access
 }
+
+/**
+ * Async — возвращает id залогиненного юзера или null.
+ * Используется в repository layer для автозаполнения driver_user_id при insert
+ * (multi-driver schema требует, чтобы RLS-policy пропустила запись).
+ */
+export async function getAuthUserId(): Promise<string | null> {
+  if (!supabase) return null
+  const { data } = await supabase.auth.getSession()
+  return data.session?.user?.id ?? null
+}

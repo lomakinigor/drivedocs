@@ -11,7 +11,7 @@
  * from the Supabase auth user after setAuthUser() is called.
  */
 
-import { supabase } from '../supabase'
+import { supabase, getAuthUserId } from '../supabase'
 import type {
   Workspace,
   OrganizationProfile,
@@ -172,7 +172,7 @@ function rowToTrip(r: TripRow): Trip {
   }
 }
 
-function tripToRow(t: Trip): TripRow {
+function tripToRow(t: Trip, driverUserId?: string | null): TripRow {
   return {
     id: t.id,
     workspace_id: t.workspaceId,
@@ -183,7 +183,10 @@ function tripToRow(t: Trip): TripRow {
     purpose: t.purpose,
     notes: t.notes ?? null,
     created_at: t.createdAt,
-  }
+    // Multi-driver schema: RLS требует driver_user_id для новых строк.
+    // Для single-driver MVP — просто ставим текущего юзера.
+    driver_user_id: driverUserId ?? null,
+  } as TripRow
 }
 
 function rowToReceipt(r: ReceiptRow): Receipt {
@@ -199,7 +202,7 @@ function rowToReceipt(r: ReceiptRow): Receipt {
   }
 }
 
-function receiptToRow(r: Receipt): ReceiptRow {
+function receiptToRow(r: Receipt, driverUserId?: string | null): ReceiptRow {
   return {
     id: r.id,
     workspace_id: r.workspaceId,
@@ -209,7 +212,8 @@ function receiptToRow(r: Receipt): ReceiptRow {
     category: r.category,
     description: r.description ?? null,
     created_at: new Date().toISOString(),
-  }
+    driver_user_id: driverUserId ?? null,
+  } as ReceiptRow
 }
 
 // ─── Auth error guard ─────────────────────────────────────────────────────────
@@ -258,6 +262,23 @@ export const workspaceRepo = {
     if (error) {
       throwIfAuthError(error.message)
       throw new Error(error.message)
+    }
+    // Multi-driver schema (drivedocs-p9d): при создании workspace автоматически
+    // создаём запись owner в workspace_members. UNIQUE (workspace_id, user_id)
+    // гарантирует идемпотентность — повторный вызов ничего не сломает.
+    const userId = await getAuthUserId()
+    if (userId && userId === workspace.userId) {
+      await supabase
+        .from('workspace_members')
+        .upsert(
+          {
+            workspace_id: workspace.id,
+            user_id: userId,
+            role: 'owner',
+            is_active_driver: true,
+          },
+          { onConflict: 'workspace_id,user_id', ignoreDuplicates: true },
+        )
     }
   },
 
@@ -323,12 +344,38 @@ export const vehicleProfileRepo = {
 
   async upsert(profile: VehicleProfile): Promise<void> {
     if (!supabase) return
-    const { error } = await supabase
+    // Multi-driver schema: vehicle_profiles.id — новый PK (было workspace_id).
+    // Один workspace может иметь до 5 машин. Для MVP single-driver: ищем
+    // существующую машину по workspace_id — если есть, обновляем; иначе — insert.
+    const { data: existing, error: qErr } = await supabase
       .from('vehicle_profiles')
-      .upsert(vehicleProfileToRow(profile))
-    if (error) {
-      throwIfAuthError(error.message)
-      throw new Error(error.message)
+      .select('id')
+      .eq('workspace_id', profile.workspaceId)
+      .limit(1)
+      .maybeSingle()
+    if (qErr && qErr.code !== 'PGRST116') {
+      throwIfAuthError(qErr.message)
+      throw new Error(qErr.message)
+    }
+    const row = vehicleProfileToRow(profile)
+    const userId = await getAuthUserId()
+    if (existing?.id) {
+      const { error } = await supabase
+        .from('vehicle_profiles')
+        .update(row)
+        .eq('id', existing.id)
+      if (error) {
+        throwIfAuthError(error.message)
+        throw new Error(error.message)
+      }
+    } else {
+      const { error } = await supabase
+        .from('vehicle_profiles')
+        .insert({ ...row, added_by_user_id: userId } as never)
+      if (error) {
+        throwIfAuthError(error.message)
+        throw new Error(error.message)
+      }
     }
   },
 
@@ -372,7 +419,8 @@ export const tripRepo = {
 
   async insert(trip: Trip): Promise<void> {
     if (!supabase) return
-    const { error } = await supabase.from('trips').insert(tripToRow(trip))
+    const driverUserId = await getAuthUserId()
+    const { error } = await supabase.from('trips').insert(tripToRow(trip, driverUserId))
     if (error) {
       throwIfAuthError(error.message)
       throw new Error(error.message)
@@ -408,7 +456,8 @@ export const receiptRepo = {
 
   async insert(receipt: Receipt): Promise<void> {
     if (!supabase) return
-    const { error } = await supabase.from('receipts').insert(receiptToRow(receipt))
+    const driverUserId = await getAuthUserId()
+    const { error } = await supabase.from('receipts').insert(receiptToRow(receipt, driverUserId))
     if (error) {
       throwIfAuthError(error.message)
       throw new Error(error.message)
