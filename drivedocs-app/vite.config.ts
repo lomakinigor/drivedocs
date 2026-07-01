@@ -9,7 +9,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' — новый SW ждёт активации через updateServiceWorker(true),
+      // юзер видит индикатор «Обновить» и решает сам. autoUpdate + skipWaiting
+      // раньше мог применять новую версию в середине сессии, что создавало
+      // непредсказуемые баги (mid-session inconsistencies).
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
         name: 'Drivedocs — учёт расходов на авто',
@@ -47,7 +51,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        skipWaiting: true,
+        // skipWaiting: false — новый SW ждёт вызова updateServiceWorker(true)
+        // из UI-компонента (PwaUpdatePrompt), не активируется сам.
+        skipWaiting: false,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],

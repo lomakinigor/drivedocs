@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { InstallPrompt } from '@/shared/components/InstallPrompt'
 import { AppErrorBoundary } from '@/shared/components/AppErrorBoundary'
+import { PwaUpdatePrompt } from '@/shared/components/PwaUpdatePrompt'
 import { initDevMode } from '@/lib/devMode'
 
 initDevMode()
@@ -161,6 +162,7 @@ export function App() {
     <AppErrorBoundary>
       <RouterProvider router={router} />
       <InstallPrompt />
+      <PwaUpdatePrompt />
     </AppErrorBoundary>
   )
 }

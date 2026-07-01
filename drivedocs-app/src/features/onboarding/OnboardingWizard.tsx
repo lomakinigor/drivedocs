@@ -127,7 +127,9 @@ export function OnboardingWizard() {
     // машину будет оформлять сам приглашённый водитель через join-flow.
     // Ставим дефолт ORG_VEHICLE, чтобы не сломать логику генерации документов.
     if (currentStep === 'tax_mode' && state.isSelfDriving === false) {
-      setState((s) => ({ ...s, vehicleUsageModel: s.vehicleUsageModel ?? 'ORG_VEHICLE' }))
+      // Дефолт для «только владелец» — служебный авто на балансе (BALANCE).
+      // Реальная модель может быть уточнена позже в настройках.
+      setState((s) => ({ ...s, vehicleUsageModel: s.vehicleUsageModel ?? 'BALANCE' }))
       setCurrentStep('summary')
       return
     }
