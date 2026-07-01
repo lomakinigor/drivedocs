@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { EntityTypeStep } from './steps/EntityTypeStep'
+import { SelfDrivingStep } from './steps/SelfDrivingStep'
 import { WorkspaceNameStep } from './steps/WorkspaceNameStep'
 import { TaxModeStep } from './steps/TaxModeStep'
 import { VehicleModelStep } from './steps/VehicleModelStep'
@@ -10,13 +11,15 @@ import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import type { EntityType, TaxMode, VehicleUsageModel } from '@/entities/types/domain'
 import { generateInitialDocuments } from '@/features/documents/initialDocuments'
 import { buildDemoSeedData } from '@/lib/demo/demoSeed'
+import { workspaceMemberRepo } from '@/lib/db/repository'
 
 // ─── Step config ─────────────────────────────────────────────────────────────
 
-type Step = 'entity_type' | 'workspace_name' | 'tax_mode' | 'vehicle_model' | 'summary'
+type Step = 'entity_type' | 'self_driving' | 'workspace_name' | 'tax_mode' | 'vehicle_model' | 'summary'
 
 const STEP_ORDER: Step[] = [
   'entity_type',
+  'self_driving',
   'workspace_name',
   'tax_mode',
   'vehicle_model',
@@ -27,6 +30,10 @@ const STEP_META: Record<Step, { label: string; title: string }> = {
   entity_type: {
     label: 'Статус',
     title: 'Кто вы по юридическому статусу?',
+  },
+  self_driving: {
+    label: 'Водитель',
+    title: 'Вы сами будете водителем?',
   },
   workspace_name: {
     label: 'Название',
@@ -50,6 +57,7 @@ const STEP_META: Record<Step, { label: string; title: string }> = {
 
 interface WizardState {
   entityType?: EntityType
+  isSelfDriving?: boolean
   workspaceName: string
   taxMode?: TaxMode
   vehicleUsageModel?: VehicleUsageModel
@@ -61,6 +69,8 @@ function canProceed(step: Step, state: WizardState): boolean {
   switch (step) {
     case 'entity_type':
       return !!state.entityType
+    case 'self_driving':
+      return state.isSelfDriving !== undefined
     case 'workspace_name':
       return state.workspaceName.trim().length >= 2
     case 'tax_mode':
@@ -113,7 +123,24 @@ export function OnboardingWizard() {
       handleComplete()
       return
     }
+    // Если владелец не сам водитель — пропускаем шаг vehicle_model,
+    // машину будет оформлять сам приглашённый водитель через join-flow.
+    // Ставим дефолт ORG_VEHICLE, чтобы не сломать логику генерации документов.
+    if (currentStep === 'tax_mode' && state.isSelfDriving === false) {
+      setState((s) => ({ ...s, vehicleUsageModel: s.vehicleUsageModel ?? 'ORG_VEHICLE' }))
+      setCurrentStep('summary')
+      return
+    }
     setCurrentStep(STEP_ORDER[stepIndex + 1])
+  }
+
+  const handleBackSmart = () => {
+    // При «не сам вожу» пропущенный шаг vehicle_model возвращать нельзя
+    if (currentStep === 'summary' && state.isSelfDriving === false) {
+      setCurrentStep('tax_mode')
+      return
+    }
+    handleBack()
   }
 
   // Jump to a specific step (used from summary "edit" taps)
@@ -180,11 +207,26 @@ export function OnboardingWizard() {
       )
       await initWorkspaceDocuments(workspaceId, docs)
 
+      // Split onboarding: если владелец не сам водитель — помечаем в
+      // workspace_members что owner не активный водитель. Приглашённые
+      // водители будут добавляться отдельно через invite-flow (B1.3).
+      if (state.isSelfDriving === false) {
+        try {
+          await workspaceMemberRepo.setOwnerActiveDriver(workspaceId, user.id, false)
+        } catch {
+          // не блокируем онбординг — потом можно исправить в Settings
+        }
+      }
+
       // Seed demo data so the user immediately sees what the app can do
-      const seed = buildDemoSeedData(workspaceId, state.entityType, state.vehicleUsageModel)
-      await Promise.all(seed.trips.map((t) => addTrip(t)))
-      await Promise.all(seed.receipts.map((r) => addReceipt(r)))
-      seed.events.forEach((e) => addEvent(e))
+      // Только для self-driving: если водители будут наёмные, демо-поездки
+      // от их лица создавать некорректно.
+      if (state.isSelfDriving !== false) {
+        const seed = buildDemoSeedData(workspaceId, state.entityType, state.vehicleUsageModel)
+        await Promise.all(seed.trips.map((t) => addTrip(t)))
+        await Promise.all(seed.receipts.map((r) => addReceipt(r)))
+        seed.events.forEach((e) => addEvent(e))
+      }
 
       navigate(`/w/${workspaceId}/home`)
     }
@@ -224,7 +266,7 @@ export function OnboardingWizard() {
       <div className="flex items-center gap-2 px-4 pt-12 pb-4">
         <button
           type="button"
-          onClick={handleBack}
+          onClick={handleBackSmart}
           className="p-2 -ml-2 rounded-xl text-slate-500 active:bg-slate-100"
           aria-label="Назад"
         >
@@ -271,6 +313,13 @@ export function OnboardingWizard() {
         {/* Step body */}
         {currentStep === 'entity_type' && (
           <EntityTypeStep selected={state.entityType} onSelect={setEntityType} />
+        )}
+
+        {currentStep === 'self_driving' && (
+          <SelfDrivingStep
+            selected={state.isSelfDriving}
+            onSelect={(isSelf) => setState((s) => ({ ...s, isSelfDriving: isSelf }))}
+          />
         )}
 
         {currentStep === 'workspace_name' && state.entityType && (

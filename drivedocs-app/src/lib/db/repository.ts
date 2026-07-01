@@ -298,6 +298,27 @@ export const workspaceRepo = {
   },
 }
 
+// ─── WorkspaceMember repo (multi-driver) ──────────────────────────────────────
+
+export const workspaceMemberRepo = {
+  /**
+   * Обновляет флаг is_active_driver у owner-члена workspace.
+   * Используется в split-onboarding: если владелец «только владелец, не сам вожу»
+   * — выставляем false, тогда owner не появляется в dropdown водителей.
+   */
+  async setOwnerActiveDriver(workspaceId: string, userId: string, isActive: boolean): Promise<void> {
+    if (!supabase) return
+    const { error } = await supabase
+      .from('workspace_members')
+      .update({ is_active_driver: isActive })
+      .match({ workspace_id: workspaceId, user_id: userId, role: 'owner' })
+    if (error) {
+      throwIfAuthError(error.message)
+      throw new Error(error.message)
+    }
+  },
+}
+
 // ─── OrgProfile repo ──────────────────────────────────────────────────────────
 
 export const orgProfileRepo = {
