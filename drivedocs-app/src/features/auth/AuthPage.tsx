@@ -1,11 +1,18 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { isBackendConfigured } from '@/lib/supabase'
 
 type Tab = 'signin' | 'signup'
 
 export function AuthPage() {
+  const [searchParams] = useSearchParams()
+  const redirectTo = searchParams.get('redirect') ?? '/'
+  // Защита от open-redirect: пускаем только относительные пути в пределах приложения
+  const safeRedirect = redirectTo.startsWith('/') && !redirectTo.startsWith('//')
+    ? redirectTo
+    : '/'
+
   const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
   const authChecked = useWorkspaceStore((s) => s.authChecked)
   const signIn = useWorkspaceStore((s) => s.signIn)
@@ -20,7 +27,7 @@ export function AuthPage() {
 
   // localStorage mode or already authenticated → skip auth
   if (!isBackendConfigured || (authChecked && isAuthenticated)) {
-    return <Navigate to="/" replace />
+    return <Navigate to={safeRedirect} replace />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
