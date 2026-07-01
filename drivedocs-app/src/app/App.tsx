@@ -22,6 +22,7 @@ import { WelcomePage } from '@/pages/WelcomePage'
 import { AuthPage } from '@/features/auth/AuthPage'
 import { PasswordResetRequestPage } from '@/features/auth/PasswordResetRequestPage'
 import { PasswordResetPage } from '@/features/auth/PasswordResetPage'
+import { JoinPage } from '@/pages/JoinPage'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { subscribeToAuthChanges } from '@/lib/supabase'
 import { isBackendConfigured } from '@/lib/supabase'
@@ -80,6 +81,12 @@ const router = createBrowserRouter([
   {
     path: '/reset-password',
     element: <PasswordResetPage />,
+  },
+  {
+    // Join-flow для приглашённых водителей (B1.3). Публичный, но внутри
+    // редиректит на /auth если не залогинен.
+    path: '/join',
+    element: <JoinPage />,
   },
   {
     path: '/',

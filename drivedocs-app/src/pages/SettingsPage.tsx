@@ -20,6 +20,7 @@ import {
   FileText,
   ChevronRight,
   MessageCircle,
+  UserPlus,
 } from 'lucide-react'
 import {
   useWorkspaceStore,
@@ -41,6 +42,7 @@ import { recordMetric } from '@/lib/metrics/featureMetrics'
 import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE } from '@/entities/config/onboardingHelp'
 import type { HelpContent } from '@/entities/config/onboardingHelp'
 import { FeedbackSheet } from '@/features/feedback/FeedbackSheet'
+import { InviteDriverSheet } from '@/features/team/InviteDriverSheet'
 import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
 import { VehicleProfileSheet } from '@/features/workspace/VehicleProfileSheet'
 import { DriversSheet } from '@/features/workspace/DriversSheet'
@@ -407,6 +409,7 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
   const drivers = useDrivers(workspaceId)
   const [vehicleSheetOpen, setVehicleSheetOpen] = useState(false)
   const [driversSheetOpen, setDriversSheetOpen] = useState(false)
+  const [inviteDriverOpen, setInviteDriverOpen] = useState(false)
 
   return (
     <section>
@@ -441,7 +444,20 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
           }
           onClick={() => setDriversSheetOpen(true)}
         />
+        {isBackendConfigured && (
+          <>
+            <Divider />
+            <Row
+              icon={<UserPlus size={14} style={{ color: INDIGO }} />}
+              title="Пригласить водителя"
+              subtitle="Отправьте код — водитель заполнит свои данные сам"
+              onClick={() => setInviteDriverOpen(true)}
+            />
+          </>
+        )}
       </Card>
+
+      {inviteDriverOpen && <InviteDriverSheet onClose={() => setInviteDriverOpen(false)} />}
 
       {vehicleSheetOpen && vehicleProfile && (
         <VehicleProfileSheet
