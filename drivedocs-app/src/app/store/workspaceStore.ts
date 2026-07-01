@@ -208,10 +208,20 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 
       signUp: async (email, password) => {
         if (!supabase) return { error: 'Backend не подключён' }
-        const { error } = await supabase.auth.signUp({ email, password })
+        // emailRedirectTo — обязательно, иначе Supabase редиректит на Site URL,
+        // который может быть настроен на dev-домен. После клика в письме юзер
+        // окажется на '/', RootRedirect направит его на онбординг или /home.
+        const emailRedirectTo = typeof window !== 'undefined'
+          ? `${window.location.origin}/`
+          : undefined
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: emailRedirectTo ? { emailRedirectTo } : undefined,
+        })
         if (error) return { error: mapAuthErrorMessage(error.message) }
         // Supabase sends confirmation email; session may be active immediately
-        // depending on project email confirmation settings.
+        // depending на «Confirm email» settings в проекте.
         return { error: null }
       },
 

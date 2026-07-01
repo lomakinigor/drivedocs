@@ -20,6 +20,8 @@ import { AdminPage } from '@/pages/AdminPage'
 import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard'
 import { WelcomePage } from '@/pages/WelcomePage'
 import { AuthPage } from '@/features/auth/AuthPage'
+import { PasswordResetRequestPage } from '@/features/auth/PasswordResetRequestPage'
+import { PasswordResetPage } from '@/features/auth/PasswordResetPage'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { subscribeToAuthChanges } from '@/lib/supabase'
 import { isBackendConfigured } from '@/lib/supabase'
@@ -70,6 +72,14 @@ const router = createBrowserRouter([
   {
     path: '/auth',
     element: <AuthPage />,
+  },
+  {
+    path: '/reset-password-request',
+    element: <PasswordResetRequestPage />,
+  },
+  {
+    path: '/reset-password',
+    element: <PasswordResetPage />,
   },
   {
     path: '/',

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { isBackendConfigured } from '@/lib/supabase'
 
@@ -150,6 +150,17 @@ export function AuthPage() {
               ? 'Войти'
               : 'Зарегистрироваться'}
           </button>
+
+          {tab === 'signin' && (
+            <div className="text-center pt-1">
+              <Link
+                to="/reset-password-request"
+                className="text-[13px] text-blue-600 active:text-blue-800"
+              >
+                Забыли пароль?
+              </Link>
+            </div>
+          )}
         </form>
       </div>
 
