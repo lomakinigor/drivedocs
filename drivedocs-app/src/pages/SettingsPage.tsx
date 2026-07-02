@@ -43,6 +43,7 @@ import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE } from '@/entities/config/onboardin
 import type { HelpContent } from '@/entities/config/onboardingHelp'
 import { FeedbackSheet } from '@/features/feedback/FeedbackSheet'
 import { InviteDriverSheet } from '@/features/team/InviteDriverSheet'
+import { TeamMembersSheet } from '@/features/team/TeamMembersSheet'
 import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
 import { VehicleProfileSheet } from '@/features/workspace/VehicleProfileSheet'
 import { DriversSheet } from '@/features/workspace/DriversSheet'
@@ -410,6 +411,7 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
   const [vehicleSheetOpen, setVehicleSheetOpen] = useState(false)
   const [driversSheetOpen, setDriversSheetOpen] = useState(false)
   const [inviteDriverOpen, setInviteDriverOpen] = useState(false)
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false)
 
   return (
     <section>
@@ -448,6 +450,13 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
           <>
             <Divider />
             <Row
+              icon={<Users size={14} style={{ color: INDIGO }} />}
+              title="Команда"
+              subtitle="Список водителей, отозвать доступ"
+              onClick={() => setTeamMembersOpen(true)}
+            />
+            <Divider />
+            <Row
               icon={<UserPlus size={14} style={{ color: INDIGO }} />}
               title="Пригласить водителя"
               subtitle="Отправьте код — водитель заполнит свои данные сам"
@@ -458,6 +467,9 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
       </Card>
 
       {inviteDriverOpen && <InviteDriverSheet onClose={() => setInviteDriverOpen(false)} />}
+      {teamMembersOpen && (
+        <TeamMembersSheet workspaceId={workspaceId} onClose={() => setTeamMembersOpen(false)} />
+      )}
 
       {vehicleSheetOpen && vehicleProfile && (
         <VehicleProfileSheet
