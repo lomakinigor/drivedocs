@@ -193,6 +193,11 @@ export interface Trip {
   odometerStart?: number    // км на момент выезда
   odometerEnd?: number      // км на момент возврата
   tripMode?: TripMode       // по умолчанию 'city'
+
+  // Multi-driver (B1.5/B1.6) — кто ездил + на какой машине.
+  // Опциональны для обратной совместимости со старыми записями.
+  driverUserId?: string
+  vehicleId?: string
 }
 
 // ─── Receipt ─────────────────────────────────────────────────────────────────
@@ -208,6 +213,9 @@ export interface Receipt {
   category: ReceiptCategory
   description?: string
   imageUrl?: string
+
+  // Multi-driver (B1.5/B1.6) — кто внёс расход.
+  driverUserId?: string
 }
 
 // ─── Expense ─────────────────────────────────────────────────────────────────

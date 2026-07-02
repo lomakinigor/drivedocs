@@ -7,8 +7,10 @@ import {
   useReceiptsForPeriod,
   useVehicleProfile,
   useDrivers,
+  useWorkspaceStore,
   todayISO,
 } from '@/app/store/workspaceStore'
+import { useUserRole } from '@/features/team/useUserRole'
 import { buildAttentionItems, buildExpiryItems } from './attentionRules'
 import type { AttentionItem } from './attentionRules'
 import type { Trip } from '@/entities/types/domain'
@@ -67,10 +69,19 @@ function currentMonthLabel(): string {
 
 export function useHomeData(workspaceId: string): HomeData {
   const workspace = useCurrentWorkspace()
+  const authUserId = useWorkspaceStore((s) => s.authUserId)
+  const role = useUserRole(workspaceId)
 
-  // Trips — live from store
-  const allTrips = useWorkspaceTrips(workspaceId)
-  const todayTrips = useTodayTrips(workspaceId)
+  // Trips — live from store, отфильтрованы по роли (driver видит только свои)
+  const allTripsRaw = useWorkspaceTrips(workspaceId)
+  const todayTripsRaw = useTodayTrips(workspaceId)
+  const shouldFilterByDriver = role === 'driver' && !!authUserId
+  const allTrips = shouldFilterByDriver
+    ? allTripsRaw.filter((t) => !t.driverUserId || t.driverUserId === authUserId)
+    : allTripsRaw
+  const todayTrips = shouldFilterByDriver
+    ? todayTripsRaw.filter((t) => !t.driverUserId || t.driverUserId === authUserId)
+    : todayTripsRaw
 
   // Documents — live from store selector (reactive to updateDocumentStatus)
   const urgentDocs = useUrgentDocuments(workspaceId)
@@ -87,7 +98,10 @@ export function useHomeData(workspaceId: string): HomeData {
   const unattachedReceipts = recentReceipts.filter((r) => !r.tripId)
 
   // All receipts for current month (for expense banner)
-  const monthReceipts = useReceiptsForPeriod(workspaceId, currentMonthStart(), todayISO())
+  const monthReceiptsRaw = useReceiptsForPeriod(workspaceId, currentMonthStart(), todayISO())
+  const monthReceipts = shouldFilterByDriver
+    ? monthReceiptsRaw.filter((r) => !r.driverUserId || r.driverUserId === authUserId)
+    : monthReceiptsRaw
   const monthlyExpenseTotal = monthReceipts.reduce((sum, r) => sum + r.amount, 0)
 
   // Vehicle and drivers for expiry rules

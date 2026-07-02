@@ -8,7 +8,8 @@ import { QuickReceiptSheet } from '@/features/receipts/QuickReceiptSheet'
 import { useOpenQuickTrip } from '@/features/trips/QuickTripContext'
 import { useCurrentWorkspace, useWorkspaceStore } from '@/app/store/workspaceStore'
 import { isBackendConfigured } from '@/lib/supabase'
-import { Cloud } from 'lucide-react'
+import { Cloud, UserCircle2 } from 'lucide-react'
+import { useUserRole } from '@/features/team/useUserRole'
 import { useHomeData } from '@/features/home/useHomeData'
 import { EssentialsReminderCard, EssentialsSheet, useEssentialsStatus } from '@/features/home/EssentialsReminder'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
@@ -79,6 +80,8 @@ export function HomePage() {
   const essentialsStatus = useEssentialsStatus(id)
   const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
   const showAuthHint = isBackendConfigured && !isAuthenticated
+  const userRole = useUserRole(id)
+  const showDriverChip = isBackendConfigured && isAuthenticated && userRole === 'driver'
 
   // F-028 — фиксируем посещение редизайн-экрана
   useEffect(() => { recordMetric('view.home') }, [])
@@ -152,33 +155,46 @@ export function HomePage() {
             Сегодня
           </h1>
           <div className="text-[13px] text-slate-500 mt-0.5">{todayLabel()}</div>
-          {isBackendConfigured && (
-            isAuthenticated ? (
-              <div
-                className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-full text-[11px] font-semibold"
-                style={{
-                  background: 'oklch(96% 0.05 155)',
-                  color: 'oklch(40% 0.13 155)',
-                  border: '1px solid oklch(90% 0.08 155)',
-                }}
-                title="Данные синхронизируются с облаком"
-              >
-                <Cloud size={11} strokeWidth={2.5} />
-                Синхронизация
-              </div>
-            ) : (
-              <button
-                onClick={() => navigate(`/w/${id}/settings`)}
-                className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-full text-[11px] font-semibold active:opacity-80"
-                style={{
-                  background: 'oklch(96% 0.04 80)',
-                  color: 'oklch(45% 0.13 65)',
-                  border: '1px solid oklch(90% 0.06 75)',
-                }}
-              >
-                🔓 Без аккаунта
-              </button>
-            )
+          {isBackendConfigured && isAuthenticated && (
+            <div
+              className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-full text-[11px] font-semibold"
+              style={{
+                background: 'oklch(96% 0.05 155)',
+                color: 'oklch(40% 0.13 155)',
+                border: '1px solid oklch(90% 0.08 155)',
+              }}
+              title="Данные синхронизируются с облаком"
+            >
+              <Cloud size={11} strokeWidth={2.5} />
+              Синхронизация
+            </div>
+          )}
+          {showDriverChip && (
+            <div
+              className="inline-flex items-center gap-1.5 mt-2 ml-1 px-2 py-1 rounded-full text-[11px] font-semibold"
+              style={{
+                background: 'oklch(96% 0.04 285)',
+                color: 'oklch(45% 0.20 285)',
+                border: '1px solid oklch(90% 0.06 285)',
+              }}
+              title="Вы работаете как водитель этой компании"
+            >
+              <UserCircle2 size={11} strokeWidth={2.5} />
+              Водитель
+            </div>
+          )}
+          {isBackendConfigured && !isAuthenticated && (
+            <button
+              onClick={() => navigate(`/w/${id}/settings`)}
+              className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-full text-[11px] font-semibold active:opacity-80"
+              style={{
+                background: 'oklch(96% 0.04 80)',
+                color: 'oklch(45% 0.13 65)',
+                border: '1px solid oklch(90% 0.06 75)',
+              }}
+            >
+              🔓 Без аккаунта
+            </button>
           )}
         </div>
         <div className="flex items-center gap-2.5 shrink-0 pt-1">

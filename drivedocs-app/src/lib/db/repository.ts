@@ -69,6 +69,8 @@ interface TripRow {
   purpose: string
   notes: string | null
   created_at: string
+  driver_user_id?: string | null
+  vehicle_id?: string | null
 }
 
 interface ReceiptRow {
@@ -80,6 +82,7 @@ interface ReceiptRow {
   category: string
   description: string | null
   created_at: string
+  driver_user_id?: string | null
 }
 
 // ─── Mappers ──────────────────────────────────────────────────────────────────
@@ -169,6 +172,8 @@ function rowToTrip(r: TripRow): Trip {
     purpose: r.purpose,
     notes: r.notes ?? undefined,
     createdAt: r.created_at,
+    driverUserId: r.driver_user_id ?? undefined,
+    vehicleId: r.vehicle_id ?? undefined,
   }
 }
 
@@ -183,10 +188,11 @@ function tripToRow(t: Trip, driverUserId?: string | null): TripRow {
     purpose: t.purpose,
     notes: t.notes ?? null,
     created_at: t.createdAt,
-    // Multi-driver schema: RLS требует driver_user_id для новых строк.
-    // Для single-driver MVP — просто ставим текущего юзера.
-    driver_user_id: driverUserId ?? null,
-  } as TripRow
+    // Приоритет: явно переданный driverUserId → поле в Trip → null.
+    // Для single-driver MVP repo автопередаёт auth.uid() при insert.
+    driver_user_id: driverUserId ?? t.driverUserId ?? null,
+    vehicle_id: t.vehicleId ?? null,
+  }
 }
 
 function rowToReceipt(r: ReceiptRow): Receipt {
@@ -198,6 +204,7 @@ function rowToReceipt(r: ReceiptRow): Receipt {
     amount: Number(r.amount),
     category: r.category as Receipt['category'],
     description: r.description ?? undefined,
+    driverUserId: r.driver_user_id ?? undefined,
     // imageUrl intentionally omitted — object URLs are ephemeral (D-009)
   }
 }
@@ -212,8 +219,8 @@ function receiptToRow(r: Receipt, driverUserId?: string | null): ReceiptRow {
     category: r.category,
     description: r.description ?? null,
     created_at: new Date().toISOString(),
-    driver_user_id: driverUserId ?? null,
-  } as ReceiptRow
+    driver_user_id: driverUserId ?? r.driverUserId ?? null,
+  }
 }
 
 // ─── Auth error guard ─────────────────────────────────────────────────────────
