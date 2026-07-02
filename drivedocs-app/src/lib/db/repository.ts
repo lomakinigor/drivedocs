@@ -240,12 +240,15 @@ export class AuthError extends Error {
 // ─── Workspace repo ───────────────────────────────────────────────────────────
 
 export const workspaceRepo = {
-  async listByUser(userId: string): Promise<Workspace[]> {
+  async listByUser(_userId: string): Promise<Workspace[]> {
     if (!supabase) return []
+    // Multi-driver: возвращаем все workspaces, где юзер — член команды.
+    // RLS-policy is_workspace_member(id) уже отфильтрует нужные строки,
+    // явный фильтр по user_id ломал бы driver'а (он не owner).
+    // Параметр userId оставлен в сигнатуре для обратной совместимости.
     const { data, error } = await supabase
       .from('workspaces')
       .select('*')
-      .eq('user_id', userId)
       .order('created_at')
     if (error) {
       throwIfAuthError(error.message)
@@ -322,12 +325,11 @@ export const workspaceMemberRepo = {
 // ─── OrgProfile repo ──────────────────────────────────────────────────────────
 
 export const orgProfileRepo = {
-  async listByUser(userId: string): Promise<OrganizationProfile[]> {
+  async listByUser(_userId: string): Promise<OrganizationProfile[]> {
     if (!supabase) return []
     const { data, error } = await supabase
       .from('org_profiles')
-      .select('*, workspaces!inner(user_id)')
-      .eq('workspaces.user_id', userId)
+      .select('*')
     if (error) {
       throwIfAuthError(error.message)
       throw new Error(error.message)
@@ -350,12 +352,11 @@ export const orgProfileRepo = {
 // ─── VehicleProfile repo ──────────────────────────────────────────────────────
 
 export const vehicleProfileRepo = {
-  async listByUser(userId: string): Promise<VehicleProfile[]> {
+  async listByUser(_userId: string): Promise<VehicleProfile[]> {
     if (!supabase) return []
     const { data, error } = await supabase
       .from('vehicle_profiles')
-      .select('*, workspaces!inner(user_id)')
-      .eq('workspaces.user_id', userId)
+      .select('*')
     if (error) {
       throwIfAuthError(error.message)
       throw new Error(error.message)
@@ -424,12 +425,11 @@ export const vehicleProfileRepo = {
 // ─── Trip repo ────────────────────────────────────────────────────────────────
 
 export const tripRepo = {
-  async listByUser(userId: string): Promise<Trip[]> {
+  async listByUser(_userId: string): Promise<Trip[]> {
     if (!supabase) return []
     const { data, error } = await supabase
       .from('trips')
-      .select('*, workspaces!inner(user_id)')
-      .eq('workspaces.user_id', userId)
+      .select('*')
       .order('date', { ascending: false })
     if (error) {
       throwIfAuthError(error.message)
@@ -461,12 +461,11 @@ export const tripRepo = {
 // ─── Receipt repo ─────────────────────────────────────────────────────────────
 
 export const receiptRepo = {
-  async listByUser(userId: string): Promise<Receipt[]> {
+  async listByUser(_userId: string): Promise<Receipt[]> {
     if (!supabase) return []
     const { data, error } = await supabase
       .from('receipts')
-      .select('*, workspaces!inner(user_id)')
-      .eq('workspaces.user_id', userId)
+      .select('*')
       .order('date', { ascending: false })
     if (error) {
       throwIfAuthError(error.message)
@@ -543,12 +542,11 @@ function documentToRow(d: WorkspaceDocument): DocumentRow {
 }
 
 export const documentRepo = {
-  async listByUser(userId: string): Promise<WorkspaceDocument[]> {
+  async listByUser(_userId: string): Promise<WorkspaceDocument[]> {
     if (!supabase) return []
     const { data, error } = await supabase
       .from('documents')
-      .select('*, workspaces!inner(user_id)')
-      .eq('workspaces.user_id', userId)
+      .select('*')
       .order('created_at')
     if (error) {
       throwIfAuthError(error.message)
@@ -633,12 +631,11 @@ function eventToRow(e: WorkspaceEvent): EventRow {
 }
 
 export const eventRepo = {
-  async listByUser(userId: string): Promise<WorkspaceEvent[]> {
+  async listByUser(_userId: string): Promise<WorkspaceEvent[]> {
     if (!supabase) return []
     const { data, error } = await supabase
       .from('events')
-      .select('*, workspaces!inner(user_id)')
-      .eq('workspaces.user_id', userId)
+      .select('*')
       .order('date', { ascending: false })
     if (error) {
       throwIfAuthError(error.message)
@@ -723,12 +720,11 @@ export const subscriptionRepo = {
     return data ? rowToSubscription(data as SubscriptionRow) : null
   },
 
-  async listByUser(userId: string): Promise<WorkspaceSubscription[]> {
+  async listByUser(_userId: string): Promise<WorkspaceSubscription[]> {
     if (!supabase) return []
     const { data, error } = await supabase
       .from('subscriptions')
-      .select('*, workspaces!inner(user_id)')
-      .eq('workspaces.user_id', userId)
+      .select('*')
     if (error) {
       throwIfAuthError(error.message)
       throw new Error(error.message)
