@@ -9,14 +9,14 @@ export function SelfDrivingStep({ selected, onSelect }: SelfDrivingStepProps) {
   return (
     <div className="space-y-3">
       <p className="text-[13px] text-slate-500 leading-relaxed mb-3">
-        От этого зависит, что будем заполнять сейчас, а что — когда пригласите водителей.
+        От этого зависит, что будем заполнять сейчас, а что — когда пригласите ещё водителей.
       </p>
 
       <Card
         active={selected === true}
         icon={<User size={20} />}
-        title="Да, я сам вожу"
-        subtitle="Один водитель — это я. Заполню данные о себе и машине."
+        title="Да, я вожу"
+        subtitle="Заполню сейчас данные о себе и машине. Если позже понадобятся ещё водители — приглашу их по коду в настройках."
         onClick={() => onSelect(true)}
       />
 
@@ -24,9 +24,14 @@ export function SelfDrivingStep({ selected, onSelect }: SelfDrivingStepProps) {
         active={selected === false}
         icon={<Users size={20} />}
         title="Нет, я только владелец"
-        subtitle="Водители — сотрудники. Приглашу их по коду после настройки, они сами заполнят свои данные и данные машины."
+        subtitle="Водители — сотрудники. Приглашу их сразу после настройки, они сами заполнят свои данные и данные машины."
         onClick={() => onSelect(false)}
       />
+
+      <p className="text-[12px] text-slate-500 leading-relaxed mt-3 px-1">
+        В любой момент можно добавить или убрать водителей в разделе «Настройки» → «Команда».
+        Всего в одной компании — до 10 водителей и до 5 машин.
+      </p>
     </div>
   )
 }

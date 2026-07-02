@@ -33,7 +33,7 @@ const STEP_META: Record<Step, { label: string; title: string }> = {
   },
   self_driving: {
     label: 'Водитель',
-    title: 'Вы сами будете водителем?',
+    title: 'Кто будет водить машину?',
   },
   workspace_name: {
     label: 'Название',
