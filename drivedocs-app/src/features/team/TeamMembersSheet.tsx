@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X, User, UserX, Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useUserRole } from './useUserRole'
 
 interface TeamMembersSheetProps {
   workspaceId: string
@@ -21,6 +22,8 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
   const [members, setMembers] = useState<Member[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [revokingId, setRevokingId] = useState<string | null>(null)
+  const userRole = useUserRole(workspaceId)
+  const canRevoke = userRole === 'owner'
 
   useEffect(() => {
     void load()
@@ -123,10 +126,15 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
                 <MemberCard
                   key={m.id}
                   member={m}
-                  onRevoke={() => void revoke(m.id)}
+                  onRevoke={canRevoke ? () => void revoke(m.id) : undefined}
                   isRevoking={revokingId === m.id}
                 />
               ))}
+              {!canRevoke && drivers.length > 0 && (
+                <p className="text-[11px] text-slate-500 leading-relaxed mt-3 px-1">
+                  Отзывать доступ у водителей может только владелец компании.
+                </p>
+              )}
             </>
           )}
         </div>

@@ -44,6 +44,7 @@ import type { HelpContent } from '@/entities/config/onboardingHelp'
 import { FeedbackSheet } from '@/features/feedback/FeedbackSheet'
 import { InviteDriverSheet } from '@/features/team/InviteDriverSheet'
 import { TeamMembersSheet } from '@/features/team/TeamMembersSheet'
+import { useUserRole } from '@/features/team/useUserRole'
 import { VehicleSchemeSheet } from '@/features/workspace/VehicleSchemeSheet'
 import { VehicleProfileSheet } from '@/features/workspace/VehicleProfileSheet'
 import { DriversSheet } from '@/features/workspace/DriversSheet'
@@ -412,6 +413,10 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
   const [driversSheetOpen, setDriversSheetOpen] = useState(false)
   const [inviteDriverOpen, setInviteDriverOpen] = useState(false)
   const [teamMembersOpen, setTeamMembersOpen] = useState(false)
+  // Owner-only функционал: приглашение и удаление водителей.
+  // Driver'у эти кнопки не показываем — RLS всё равно отклонит, но UX чище.
+  const userRole = useUserRole(workspaceId)
+  const isOwner = userRole === 'owner' || userRole === null
 
   return (
     <section>
@@ -446,7 +451,7 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
           }
           onClick={() => setDriversSheetOpen(true)}
         />
-        {isBackendConfigured && (
+        {isBackendConfigured && isOwner && (
           <>
             <Divider />
             <Row
@@ -462,6 +467,16 @@ function VehicleAndDriversSection({ workspaceId }: { workspaceId: string }) {
               subtitle="Отправьте код — водитель заполнит свои данные сам"
               onClick={() => setInviteDriverOpen(true)}
             />
+          </>
+        )}
+        {isBackendConfigured && !isOwner && (
+          <>
+            <Divider />
+            <div className="px-4 py-3">
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Приглашать и удалять водителей может только владелец компании.
+              </p>
+            </div>
           </>
         )}
       </Card>
