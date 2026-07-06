@@ -14,6 +14,7 @@ import {
   PlusSquare,
   MoreVertical,
   Download,
+  Users,
 } from 'lucide-react'
 
 const SORA = 'Sora, system-ui, sans-serif'
@@ -249,6 +250,11 @@ export function WelcomePage() {
               icon={Smartphone}
               title="Документы всегда в кармане"
               desc="PWA-приложение устанавливается на iPhone и Android. Создайте поездку в момент когда она нужна — не вечером дома в Excel."
+            />
+            <TrustBadge
+              icon={Users}
+              title="Права доступа для команды"
+              desc="Приглашать и удалять водителей может только владелец компании. Водитель видит команду, но редактирует только свои поездки. До 10 водителей и 5 машин."
             />
           </div>
         </div>
