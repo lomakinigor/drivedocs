@@ -41,6 +41,8 @@ export function buildTemplateContext(
     inn: org?.inn || '',
     orgInn: org?.inn || '',
     ogrn: org?.ogrn || '',
+    orgAddress: org?.address || '',
+    orgPhone: org?.phone || '',
     city: org?.city || '',
     accountantName: org?.accountantName || '',
 
@@ -60,6 +62,11 @@ export function buildTemplateContext(
     // Водитель
     driverFullName: defaultDriver?.fullName || '',
     driverLicense: defaultDriver?.licenseNumber || '',
+    driverLicenseIssueDate: defaultDriver?.licenseIssueDate
+      ? new Date(defaultDriver.licenseIssueDate + 'T00:00:00').toLocaleDateString('ru-RU')
+      : '',
+    // СНИЛС — обязательный реквизит путевого листа по Приказу Минтранса № 390 (ред. 05.05.2023)
+    driverSnils: defaultDriver?.snils || '',
 
     // Заполняется пользователем
     orderNumber: '',

@@ -9,11 +9,16 @@ const TRIP_ROWS = 8
 export const balanceWaybillFields = (v: TemplateValues): TemplateField[] => [
   { key: 'waybillNumber', label: 'Номер путевого листа', value: v.waybillNumber || '', required: true, placeholder: '42' },
   { key: 'orgName', label: 'Организация', value: v.orgName, required: true },
+  { key: 'ogrn', label: 'ОГРН', value: v.ogrn || '', required: true, placeholder: '1027700123456' },
+  { key: 'orgAddress', label: 'Адрес организации', value: v.orgAddress || '', required: true },
+  { key: 'orgPhone', label: 'Телефон организации', value: v.orgPhone || '', required: true, placeholder: '+7 900 123-45-67' },
   { key: 'vehicleMake', label: 'Марка', value: v.vehicleMake, required: true },
   { key: 'vehicleModel', label: 'Модель', value: v.vehicleModel, required: false },
   { key: 'licensePlate', label: 'Гос. номер', value: v.licensePlate, required: true },
   { key: 'driverFullName', label: 'ФИО водителя', value: v.driverFullName, required: true },
-  { key: 'driverLicense', label: 'Водительское удостоверение', value: v.driverLicense, required: false, placeholder: '99 01 123456' },
+  { key: 'driverLicense', label: 'Водительское удостоверение', value: v.driverLicense, required: true, placeholder: '99 01 123456' },
+  { key: 'driverLicenseIssueDate', label: 'Дата выдачи ВУ', value: v.driverLicenseIssueDate || '', required: false, placeholder: '12.05.2018' },
+  { key: 'driverSnils', label: 'СНИЛС водителя', value: v.driverSnils || '', required: true, placeholder: '123-456-789 00' },
   { key: 'odometerStart', label: 'Показания одометра при выезде (км)', value: v.odometerStart, required: false, placeholder: '45000' },
   { key: 'odometerEnd', label: 'Показания одометра при возврате (км)', value: v.odometerEnd, required: false, placeholder: '45250' },
   { key: 'fuelIssued', label: 'Выдано топлива (л)', value: v.fuelIssued || '', required: false, placeholder: '30' },
@@ -47,6 +52,30 @@ export function BalanceWaybill({ v }: { v: TemplateValues }) {
       <table className="doc-info-table">
         <tbody>
           <tr>
+            <td className="doc-info-label">ОГРН:</td>
+            <td className="doc-info-value">{blank(v.ogrn)}</td>
+          </tr>
+          <tr>
+            <td className="doc-info-label">Адрес:</td>
+            <td className="doc-info-value">{blank(v.orgAddress)}</td>
+          </tr>
+          <tr>
+            <td className="doc-info-label">Телефон:</td>
+            <td className="doc-info-value">{blank(v.orgPhone)}</td>
+          </tr>
+          <tr>
+            <td className="doc-info-label">Вид перевозки:</td>
+            <td className="doc-info-value">Для собственных нужд</td>
+          </tr>
+          <tr>
+            <td className="doc-info-label">Вид сообщения:</td>
+            <td className="doc-info-value">Городское, пригородное</td>
+          </tr>
+          <tr>
+            <td className="doc-info-label">Тип ТС:</td>
+            <td className="doc-info-value">Легковой автомобиль</td>
+          </tr>
+          <tr>
             <td className="doc-info-label">Автомобиль:</td>
             <td className="doc-info-value">
               <strong>{blank(vehicle || v.vehicleMake)}</strong>, гос.&nbsp;номер&nbsp;
@@ -58,7 +87,12 @@ export function BalanceWaybill({ v }: { v: TemplateValues }) {
             <td className="doc-info-value">
               <strong>{blank(v.driverFullName)}</strong>
               {v.driverLicense && `, ВУ № ${v.driverLicense}`}
+              {v.driverLicenseIssueDate && `, выдано ${v.driverLicenseIssueDate}`}
             </td>
+          </tr>
+          <tr>
+            <td className="doc-info-label">СНИЛС водителя:</td>
+            <td className="doc-info-value">{blank(v.driverSnils)}</td>
           </tr>
         </tbody>
       </table>
