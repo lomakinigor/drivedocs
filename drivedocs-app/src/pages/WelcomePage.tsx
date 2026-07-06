@@ -97,7 +97,7 @@ export function WelcomePage() {
           <p className="text-[15px] sm:text-[17px] text-slate-600 leading-relaxed max-w-xl mx-auto mb-5">
             Раньше — час на&nbsp;каждый путевой и&nbsp;страх претензий
             ФНС. Сейчас — путевые листы, ГСМ и&nbsp;приказы в&nbsp;телефоне.
-            Соответствуют приказу Минтранса&nbsp;№368.
+            Соответствуют приказу Минтранса&nbsp;№390.
           </p>
 
           {/* Пилы: ранний доступ + сегментация. Закрывают «для кого» выше fold */}
@@ -147,7 +147,7 @@ export function WelcomePage() {
 
           {/* Compliance badges — trust signals выше fold */}
           <div className="flex flex-wrap justify-center gap-2 mb-8">
-            <ComplianceBadge icon={FileCheck} label="Приказ №368" />
+            <ComplianceBadge icon={FileCheck} label="Приказ №390" />
             <ComplianceBadge icon={Fuel} label="АМ-23-р" />
             <ComplianceBadge icon={Shield} label="152-ФЗ" />
           </div>
@@ -210,7 +210,7 @@ export function WelcomePage() {
             <StepRow
               num="03"
               title="Скачивайте PDF-документы для ФНС"
-              desc="Путевой лист за день или период, отчёт по расходу ГСМ, приказы и акты — готовые к подписи документы по форме приказа №368."
+              desc="Путевой лист за день или период, отчёт по расходу ГСМ, приказы и акты — готовые к подписи документы по форме приказа №390."
               accent="oklch(55% 0.18 305)"
               mockup={<WaybillPdfMockup />}
             />
@@ -232,8 +232,8 @@ export function WelcomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <TrustBadge
               icon={FileCheck}
-              title="Приказ Минтранса №368"
-              desc="Путевые листы соответствуют форме от 28.09.2022. Минимальный и расширенный варианты."
+              title="Приказ Минтранса №390"
+              desc="Путевые листы соответствуют форме от 28.09.2022 (в ред. от 05.05.2023). Минимальный и расширенный варианты."
             />
             <TrustBadge
               icon={Fuel}
@@ -856,7 +856,7 @@ function WaybillPdfMockup() {
 
           {/* Footer compliance */}
           <div className="mt-2 text-[5px] text-slate-500 italic">
-            Форма по приказу Минтранса №368 от 28.09.2022
+            Форма по приказу Минтранса №390 от 28.09.2022
           </div>
         </div>
       </div>

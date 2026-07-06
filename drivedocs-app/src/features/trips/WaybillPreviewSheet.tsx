@@ -154,7 +154,7 @@ export function WaybillPreviewSheet({
               <TemplateOption
                 active={template === 'minimal'}
                 title="Минимальный"
-                subtitle="10 обязательных реквизитов приказа 368"
+                subtitle="Обязательные реквизиты приказа №390"
                 badge="По умолчанию"
                 onClick={() => {
                   setTemplate('minimal')
@@ -164,7 +164,7 @@ export function WaybillPreviewSheet({
               <TemplateOption
                 active={template === 'extended'}
                 title="Расширенный"
-                subtitle="+ ГСМ (АМ-23-р), VIN, ВУ, медконтроль"
+                subtitle="+ ГСМ (АМ-23-р), VIN, категории ВУ"
                 badge="Рекомендуем"
                 badgeIcon={<Sparkles size={11} />}
                 onClick={() => {
@@ -185,7 +185,7 @@ export function WaybillPreviewSheet({
             )}
             {template === 'minimal' && (
               <p className="text-[11px] text-slate-500 mt-2 leading-relaxed px-1">
-                Полное соответствие приказу 368 — для повседневной отчётности.
+                Полное соответствие приказу Минтранса №390 — для повседневной отчётности.
                 Готовим PDF за&nbsp;5–10 секунд.
               </p>
             )}

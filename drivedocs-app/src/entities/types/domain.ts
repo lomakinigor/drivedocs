@@ -166,16 +166,17 @@ export interface Driver {
   licenseIssueDate?: string // ISO date
   licenseExpires?: string   // ISO date — напоминание за 30 и 7 дней
   licenseCategories?: string // напр. «B, C»
+  snils?: string            // СНИЛС — обязательный реквизит путевого листа (Приказ Минтранса № 390)
   isDefault?: boolean       // основной водитель для путевых листов
 }
 
 // ─── Trip ─────────────────────────────────────────────────────────────────────
 
-/** F-027 · приказ Минтранса 368 — режим поездки для расчёта нормы расхода */
+/** F-027 · приказ Минтранса № 390 — режим поездки для расчёта нормы расхода */
 export type TripMode = 'city' | 'suburban'
 
-/** F-032 — формат путевого листа. Minimal = 10 обяз. реквизитов приказа 368.
- *  Extended = + ГСМ-таблица (АМ-23-р), VIN, год, ВУ, расширенные подписи. */
+/** F-032 — формат путевого листа. Minimal = обяз. реквизиты приказа Минтранса № 390.
+ *  Extended = + ГСМ-таблица (АМ-23-р), VIN, год, категории ВУ, расширенные подписи. */
 export type WaybillTemplate = 'minimal' | 'extended'
 
 export interface Trip {
@@ -189,7 +190,7 @@ export interface Trip {
   notes?: string
   createdAt: string
 
-  // F-027 — показания одометра (приказ 368 п. 6 — обязательное поле путевого)
+  // F-027 — показания одометра (приказ Минтранса № 390 — обязательное поле путевого)
   odometerStart?: number    // км на момент выезда
   odometerEnd?: number      // км на момент возврата
   tripMode?: TripMode       // по умолчанию 'city'

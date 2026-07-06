@@ -52,7 +52,7 @@ interface FormState {
   distanceKm: string
   purpose: PurposeOption | ''
   customPurpose: string
-  // F-027 — приказ 368: одометр обязателен для путевого
+  // F-027 — приказ Минтранса № 390: одометр обязателен для путевого
   odometerStart: string
   odometerEnd: string
 }
@@ -253,7 +253,7 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
             </div>
           </Field>
 
-          {/* Odometer — пара (приказ 368, обязательное поле путевого) */}
+          {/* Odometer — пара (приказ Минтранса № 390, обязательное поле путевого) */}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Одометр, выезд">
               <input

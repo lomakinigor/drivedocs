@@ -36,25 +36,12 @@ function formatLitres(n: number): string {
 }
 
 function buildExtendedSection(data: MonthlyWaybillData): string {
-  // Расширенные блоки: расширенные реквизиты + таблица рейсов с одометром + ГСМ
-  const orgExtras = [
-    data.organizationAddress
-      ? `<tr><td class="wb-meta-label">Адрес:</td><td class="wb-meta-value">${escapeHtml(data.organizationAddress)}</td></tr>`
-      : '',
-    data.organizationPhone
-      ? `<tr><td class="wb-meta-label">Телефон:</td><td class="wb-meta-value">${escapeHtml(data.organizationPhone)}</td></tr>`
-      : '',
-    data.organizationKpp
-      ? `<tr><td class="wb-meta-label">КПП:</td><td class="wb-meta-value">${escapeHtml(data.organizationKpp)}</td></tr>`
-      : '',
-  ]
-    .filter(Boolean)
-    .join('')
+  // Расширенные блоки — сверх обязательного минимума: VIN, год, КПП, категории ВУ, таблица одометра, ГСМ
+  const orgExtras = data.organizationKpp
+    ? `<tr><td class="wb-meta-label">КПП:</td><td class="wb-meta-value">${escapeHtml(data.organizationKpp)}</td></tr>`
+    : ''
 
   const vehicleExtras = [
-    data.vehicleTypeLabel
-      ? `<tr><td class="wb-meta-label">Тип ТС:</td><td class="wb-meta-value">${escapeHtml(data.vehicleTypeLabel)}</td></tr>`
-      : '',
     data.vehicleVin
       ? `<tr><td class="wb-meta-label">VIN:</td><td class="wb-meta-value">${escapeHtml(data.vehicleVin)}</td></tr>`
       : '',
@@ -65,16 +52,9 @@ function buildExtendedSection(data: MonthlyWaybillData): string {
     .filter(Boolean)
     .join('')
 
-  const driverExtras = [
-    data.driverLicense
-      ? `<tr><td class="wb-meta-label">Водительское удостоверение:</td><td class="wb-meta-value">${escapeHtml(data.driverLicense)}</td></tr>`
-      : '',
-    data.driverLicenseCategories
-      ? `<tr><td class="wb-meta-label">Категории:</td><td class="wb-meta-value">${escapeHtml(data.driverLicenseCategories)}</td></tr>`
-      : '',
-  ]
-    .filter(Boolean)
-    .join('')
+  const driverExtras = data.driverLicenseCategories
+    ? `<tr><td class="wb-meta-label">Категории ВУ:</td><td class="wb-meta-value">${escapeHtml(data.driverLicenseCategories)}</td></tr>`
+    : ''
 
   const extraMetaTable =
     orgExtras + vehicleExtras + driverExtras
@@ -148,14 +128,10 @@ function buildExtendedSection(data: MonthlyWaybillData): string {
       </p>`
     : ''
 
-  // Расширенные подписи: медосмотры, техконтроль, дата приёмки
+  // Расширенная отметка: послерейсовый медосмотр (сверх обязательного минимума)
   const signatureExtras = `
-    <p class="wb-section">ОТМЕТКИ О КОНТРОЛЕ</p>
+    <p class="wb-section">ДОПОЛНИТЕЛЬНЫЕ ОТМЕТКИ</p>
     <table class="wb-meta-table">
-      <tr><td class="wb-meta-label">Предрейсовый медосмотр:</td><td class="wb-meta-value">Дата ___________  Время _______  Допущен: ☐ Да ☐ Нет</td></tr>
-      <tr><td class="wb-meta-label">Подпись медработника:</td><td class="wb-meta-value">_______________________</td></tr>
-      <tr><td class="wb-meta-label">Предрейсовый техконтроль:</td><td class="wb-meta-value">Дата ___________  Время _______  ТС исправно: ☐ Да ☐ Нет</td></tr>
-      <tr><td class="wb-meta-label">Подпись механика:</td><td class="wb-meta-value">_______________________</td></tr>
       <tr><td class="wb-meta-label">Послерейсовый медосмотр:</td><td class="wb-meta-value">Дата ___________  Время _______  Подпись: ____________</td></tr>
     </table>`
 
@@ -201,11 +177,37 @@ function buildWaybillHtml(data: MonthlyWaybillData, template: WaybillTemplate): 
     data.organizationOgrn
       ? `<tr><td class="wb-meta-label">${ogrnLabel}:</td><td class="wb-meta-value">${escapeHtml(data.organizationOgrn)}</td></tr>`
       : '',
+    data.organizationAddress
+      ? `<tr><td class="wb-meta-label">Адрес:</td><td class="wb-meta-value">${escapeHtml(data.organizationAddress)}</td></tr>`
+      : '',
+    data.organizationPhone
+      ? `<tr><td class="wb-meta-label">Телефон:</td><td class="wb-meta-value">${escapeHtml(data.organizationPhone)}</td></tr>`
+      : '',
+    `<tr><td class="wb-meta-label">Вид перевозки:</td><td class="wb-meta-value">Для собственных нужд</td></tr>`,
+    `<tr><td class="wb-meta-label">Вид сообщения:</td><td class="wb-meta-value">Городское, пригородное</td></tr>`,
+    data.vehicleTypeLabel
+      ? `<tr><td class="wb-meta-label">Тип ТС:</td><td class="wb-meta-value">${escapeHtml(data.vehicleTypeLabel)}</td></tr>`
+      : '',
     `<tr><td class="wb-meta-label">Транспортное средство:</td><td class="wb-meta-value">${escapeHtml(data.vehicleLabel)}</td></tr>`,
     `<tr><td class="wb-meta-label">Водитель:</td><td class="wb-meta-value">${escapeHtml(data.driverLabel)}</td></tr>`,
+    data.driverLicense
+      ? `<tr><td class="wb-meta-label">Водительское удостоверение:</td><td class="wb-meta-value">${escapeHtml(data.driverLicense)}${data.driverLicenseIssueDate ? `, выдано ${escapeHtml(formatRowDate(data.driverLicenseIssueDate))}` : ''}</td></tr>`
+      : '',
+    data.driverSnils
+      ? `<tr><td class="wb-meta-label">СНИЛС водителя:</td><td class="wb-meta-value">${escapeHtml(data.driverSnils)}</td></tr>`
+      : '',
   ]
     .filter(Boolean)
     .join('')
+
+  const controlMarks = `
+    <p class="wb-section">ОТМЕТКИ О КОНТРОЛЕ</p>
+    <table class="wb-meta-table">
+      <tr><td class="wb-meta-label">Предрейсовый медосмотр:</td><td class="wb-meta-value">Дата ___________  Время _______  Допущен: ☐ Да ☐ Нет</td></tr>
+      <tr><td class="wb-meta-label">Подпись медработника:</td><td class="wb-meta-value">_______________________</td></tr>
+      <tr><td class="wb-meta-label">Предрейсовый техконтроль:</td><td class="wb-meta-value">Дата ___________  Время _______  ТС исправно: ☐ Да ☐ Нет</td></tr>
+      <tr><td class="wb-meta-label">Подпись механика:</td><td class="wb-meta-value">_______________________</td></tr>
+    </table>`
 
   return `
     <div class="doc-body">
@@ -215,6 +217,8 @@ function buildWaybillHtml(data: MonthlyWaybillData, template: WaybillTemplate): 
 
       <p class="wb-section">РЕКВИЗИТЫ</p>
       <table class="wb-meta-table">${metaRows}</table>
+
+      ${controlMarks}
 
       <p class="wb-section">СЛУЖЕБНЫЕ ПОЕЗДКИ ЗА ПЕРИОД</p>
       <table class="doc-table wb-trips">

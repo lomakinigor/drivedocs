@@ -60,7 +60,9 @@ export interface MonthlyWaybillData {
   vehicleYear: number | null
   vehicleTypeLabel: string | null  // "Легковой" / "Грузовой" — пока всегда "Легковой автомобиль"
   driverLicense: string | null
+  driverLicenseIssueDate: string | null
   driverLicenseCategories: string | null
+  driverSnils: string | null       // обязательный реквизит по Приказу Минтранса № 390 (ред. 05.05.2023)
   fuelSummary: WaybillFuelSummary | null
 }
 
@@ -93,7 +95,8 @@ const FUEL_TYPE_LABEL: Record<string, string> = {
  * fromDate is used only for periodLabel derivation.
  */
 export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWaybillData {
-  const { workspace, orgProfile, vehicleProfile, trips, fromDate } = input
+  const { workspace, orgProfile, vehicleProfile, trips, fromDate, drivers, fuelProfile } = input
+  const defaultDriver = drivers?.find((d) => d.isDefault) ?? drivers?.[0] ?? null
   const warnings: string[] = []
 
   // Period label — "30 апреля 2026" for single day, "апрель 2026" for month range
@@ -118,6 +121,16 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
 
   if (!orgProfile) {
     warnings.push('Не указан профиль организации')
+  } else {
+    if (!orgProfile.ogrn) {
+      warnings.push(orgProfile.entityType === 'IP' ? 'Не указан ОГРНИП' : 'Не указан ОГРН')
+    }
+    if (!orgProfile.address) {
+      warnings.push('Не указан адрес — обязательный реквизит путевого листа')
+    }
+    if (!orgProfile.phone) {
+      warnings.push('Не указан телефон — обязательный реквизит путевого листа')
+    }
   }
 
   // Vehicle label
@@ -138,6 +151,13 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
 
   if (!hasDriverName) {
     warnings.push('Не указано ФИО водителя')
+  }
+
+  if (defaultDriver && !defaultDriver.snils) {
+    warnings.push('Не указан СНИЛС водителя — обязательный реквизит путевого листа')
+  }
+  if (defaultDriver && !defaultDriver.licenseNumber) {
+    warnings.push('Не указано водительское удостоверение')
   }
 
   if (trips.length === 0) {
@@ -168,15 +188,12 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
   const isExportReady = trips.length > 0 && vehicleProfile !== null && !!orgProfile
 
   // F-032 — расширенные поля
-  const { drivers, fuelProfile } = input
-  const defaultDriver = drivers?.find((d) => d.isDefault) ?? drivers?.[0] ?? null
-
   const fuelTypeKey = vehicleProfile?.fuelType ?? 'gasoline'
   const baseRate = vehicleProfile?.fuelConsumptionPer100km ?? null
 
   let fuelSummary: WaybillFuelSummary | null = null
   if (trips.length > 0 && baseRate != null) {
-    // По умолчанию tripMode='city' (приказ 368 / F-027) — суммарно по периоду
+    // По умолчанию tripMode='city' (приказ Минтранса № 390 / F-027) — суммарно по периоду
     const vehicleAgeYears = vehicleProfile?.year
       ? new Date().getFullYear() - vehicleProfile.year
       : undefined
@@ -229,7 +246,9 @@ export function buildMonthlyWaybillData(input: MonthlyWaybillInput): MonthlyWayb
     vehicleYear: vehicleProfile?.year ?? null,
     vehicleTypeLabel: vehicleProfile ? 'Легковой автомобиль' : null,
     driverLicense: defaultDriver?.licenseNumber ?? null,
+    driverLicenseIssueDate: defaultDriver?.licenseIssueDate ?? null,
     driverLicenseCategories: defaultDriver?.licenseCategories ?? null,
+    driverSnils: defaultDriver?.snils ?? null,
     fuelSummary,
   }
 }

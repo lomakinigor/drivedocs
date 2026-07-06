@@ -125,6 +125,9 @@ function DriverCard({
         {driver.licenseCategories && (
           <p className="text-xs text-slate-500">Категории: {driver.licenseCategories}</p>
         )}
+        {driver.snils && (
+          <p className="text-xs text-slate-500">СНИЛС: {driver.snils}</p>
+        )}
       </div>
       <div className="flex items-center gap-1 shrink-0">
         {!driver.isDefault && (
@@ -172,6 +175,7 @@ function DriverForm({
     licenseIssueDate: initial?.licenseIssueDate ?? '',
     licenseExpires: initial?.licenseExpires ?? '',
     licenseCategories: initial?.licenseCategories ?? '',
+    snils: initial?.snils ?? '',
   })
 
   const patch = (p: Partial<typeof form>) => setForm((f) => ({ ...f, ...p }))
@@ -185,6 +189,7 @@ function DriverForm({
       licenseIssueDate: form.licenseIssueDate || undefined,
       licenseExpires: form.licenseExpires || undefined,
       licenseCategories: form.licenseCategories.trim() || undefined,
+      snils: form.snils.trim() || undefined,
     })
   }
 
@@ -209,6 +214,9 @@ function DriverForm({
       </div>
       <Field label="Открытые категории">
         <input className={cls} value={form.licenseCategories} onChange={(e) => patch({ licenseCategories: e.target.value })} placeholder="B, C" />
+      </Field>
+      <Field label="СНИЛС">
+        <input className={cls} value={form.snils} onChange={(e) => patch({ snils: e.target.value })} placeholder="123-456-789 00" />
       </Field>
       <div className="flex gap-2 pt-1">
         <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-500 active:bg-slate-50">

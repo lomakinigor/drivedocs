@@ -88,7 +88,7 @@ export function HelpFuelNormsSheet({ onClose }: { onClose: () => void }) {
           {/* Legal */}
           <Block title="Нормативные документы">
             <Legal text={LEGAL_REFS.AM23R} />
-            <Legal text={LEGAL_REFS.ORDER368} />
+            <Legal text={LEGAL_REFS.ORDER390} />
             <Legal text={LEGAL_REFS.FZ259} />
             <Legal text={LEGAL_REFS.NK_264} />
           </Block>
