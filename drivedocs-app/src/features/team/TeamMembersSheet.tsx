@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { X, User, UserX, Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUserRole } from './useUserRole'
+import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { HELP_TEAM_ROLES } from '@/entities/config/onboardingHelp'
 
 interface TeamMembersSheetProps {
   workspaceId: string
@@ -24,6 +26,7 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
   const [revokingId, setRevokingId] = useState<string | null>(null)
   const userRole = useUserRole(workspaceId)
   const canRevoke = userRole === 'owner'
+  const [showRolesHelp, setShowRolesHelp] = useState(false)
 
   useEffect(() => {
     void load()
@@ -68,13 +71,22 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
   const owners = members?.filter((m) => m.role === 'owner') ?? []
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={onClose}>
       <div
         className="w-full max-w-md bg-white rounded-t-3xl overflow-hidden max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100">
-          <h2 className="text-[17px] font-bold text-slate-900">Команда</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-[17px] font-bold text-slate-900">Команда</h2>
+            <button
+              onClick={() => setShowRolesHelp(true)}
+              className="text-[11px] font-semibold text-blue-600 active:text-blue-700"
+            >
+              Кто что может?
+            </button>
+          </div>
           <button onClick={onClose} className="p-1.5 rounded-lg active:bg-slate-100">
             <X size={18} className="text-slate-500" />
           </button>
@@ -140,6 +152,11 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
         </div>
       </div>
     </div>
+
+    {showRolesHelp && (
+      <HelpInfoSheet content={HELP_TEAM_ROLES} onClose={() => setShowRolesHelp(false)} />
+    )}
+    </>
   )
 }
 

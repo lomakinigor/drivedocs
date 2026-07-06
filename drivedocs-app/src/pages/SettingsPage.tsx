@@ -39,7 +39,7 @@ import {
 } from '@/entities/constants/labels'
 import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
-import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE } from '@/entities/config/onboardingHelp'
+import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE, HELP_TEAM_ROLES } from '@/entities/config/onboardingHelp'
 import type { HelpContent } from '@/entities/config/onboardingHelp'
 import { FeedbackSheet } from '@/features/feedback/FeedbackSheet'
 import { InviteDriverSheet } from '@/features/team/InviteDriverSheet'
@@ -729,6 +729,13 @@ export function SettingsPage() {
               title="Путевой и маршрутный лист"
               subtitle="В чём разница"
               onClick={() => setHelpSheet(HELP_WAYBILL_VS_ROUTE)}
+            />
+            <Divider />
+            <Row
+              icon={<Users size={14} style={{ color: INDIGO }} />}
+              title="Права водителя и владельца"
+              subtitle="Кто может добавлять и удалять водителей"
+              onClick={() => setHelpSheet(HELP_TEAM_ROLES)}
             />
           </Card>
         </section>
