@@ -21,6 +21,7 @@ import {
   ChevronRight,
   MessageCircle,
   UserPlus,
+  HelpCircle,
 } from 'lucide-react'
 import {
   useWorkspaceStore,
@@ -39,7 +40,7 @@ import {
 } from '@/entities/constants/labels'
 import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
 import { recordMetric } from '@/lib/metrics/featureMetrics'
-import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE, HELP_TEAM_ROLES } from '@/entities/config/onboardingHelp'
+import { HELP_STORAGE, HELP_WAYBILL_VS_ROUTE, HELP_TEAM_ROLES, HELP_FAQ } from '@/entities/config/onboardingHelp'
 import type { HelpContent } from '@/entities/config/onboardingHelp'
 import { FeedbackSheet } from '@/features/feedback/FeedbackSheet'
 import { InviteDriverSheet } from '@/features/team/InviteDriverSheet'
@@ -697,14 +698,21 @@ export function SettingsPage() {
           <BillingSection workspaceId={id} />
         </div>
 
-        {/* ── Support / Feedback (F-033) ── */}
+        {/* ── Support / Feedback (F-033, B6) ── */}
         <section>
           <SectionLabel>Поддержка</SectionLabel>
           <Card>
             <Row
+              icon={<HelpCircle size={14} style={{ color: INDIGO }} />}
+              title="Частые вопросы"
+              subtitle="10 ответов — ФНС, водители, оплата, перенос данных"
+              onClick={() => setHelpSheet(HELP_FAQ)}
+            />
+            <Divider />
+            <Row
               icon={<MessageCircle size={14} style={{ color: INDIGO }} />}
               title="Связаться с нами"
-              subtitle="Идеи, баги, вопросы — через Telegram"
+              subtitle="Отвечаем лично за 24 часа (пн–пт, 10–19 МСК)"
               onClick={() => {
                 recordMetric('feedback.open')
                 setFeedbackOpen(true)

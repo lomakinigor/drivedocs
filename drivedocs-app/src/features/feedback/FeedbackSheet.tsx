@@ -185,8 +185,13 @@ export function FeedbackSheet({ onClose, initialKind }: FeedbackSheetProps & { i
                 ? autoDelivered
                   ? 'Отправили — обычно отвечаем в течение дня'
                   : 'Текст скопирован — вставьте в чат и отправьте'
-                : 'Напишите или надиктуйте — отвечаем лично'}
+                : 'Напишите или надиктуйте — отвечаем лично, не ботом'}
             </p>
+            {!sent && (
+              <p className="text-[11px] text-slate-500 mt-1">
+                Ответим за 24 часа в рабочее время (пн–пт, 10:00–19:00 МСК)
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
