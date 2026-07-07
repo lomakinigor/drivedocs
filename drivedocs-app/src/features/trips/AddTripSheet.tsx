@@ -7,6 +7,7 @@ import { HelpFuelNormsSheet } from '@/features/help/HelpFuelNorms'
 import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
 import { HELP_TRIP_PURPOSE } from '@/entities/config/onboardingHelp'
 import { getAutofillValue, recordFieldValue } from '@/lib/memory/fieldMemory'
+import { useFormDraft, clearDraft } from '@/lib/drafts/useFormDraft'
 import type { Trip, WorkspaceEvent } from '@/entities/types/domain'
 
 // 2026-05-15 — GLONASS/GPS-функции убраны из MVP.
@@ -94,6 +95,12 @@ function isValid(form: FormState): boolean {
   return Object.keys(validate(form)).length === 0
 }
 
+// Черновик стоит предлагать восстановить, только если в нём есть реальный
+// ввод — иначе плашка вылезала бы на пустой форме с одними дефолтами.
+function hasMeaningfulContent(form: FormState): boolean {
+  return !!(form.from.trim() || form.distanceKm.trim() || form.customPurpose.trim() || form.odometerEnd.trim())
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface AddTripSheetProps {
@@ -129,6 +136,22 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
   })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [touched, setTouched] = useState(false)
+
+  // S5 — автосохранение черновика раз в 3с + плашка восстановления при открытии
+  const draftKey = `trip:${workspaceId}`
+  const { initialDraft } = useFormDraft(draftKey, form)
+  const [showRestoreBanner, setShowRestoreBanner] = useState(
+    () => !!initialDraft && hasMeaningfulContent(initialDraft),
+  )
+
+  const restoreDraft = () => {
+    if (initialDraft) setForm(initialDraft)
+    setShowRestoreBanner(false)
+  }
+  const dismissDraft = () => {
+    clearDraft(draftKey)
+    setShowRestoreBanner(false)
+  }
   // Auto-focus first field after sheet animates in
   useEffect(() => {
     const t = setTimeout(() => fromRef.current?.focus(), 150)
@@ -187,6 +210,7 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
     }
     addEvent(event)
 
+    clearDraft(draftKey)
     onSaved()
   }
 
@@ -222,6 +246,29 @@ export function AddTripSheet({ workspaceId, onClose, onSaved }: AddTripSheetProp
 
         {/* Scrollable form */}
         <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
+          {showRestoreBanner && (
+            <div className="flex items-center gap-3 px-3.5 py-3 rounded-2xl bg-blue-50 border border-blue-100">
+              <p className="flex-1 text-xs text-blue-800 leading-relaxed">
+                Нашли несохранённый черновик поездки — восстановить последний ввод?
+              </p>
+              <div className="flex gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={dismissDraft}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-500 active:bg-slate-100"
+                >
+                  Нет
+                </button>
+                <button
+                  type="button"
+                  onClick={restoreDraft}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 active:bg-blue-700"
+                >
+                  Восстановить
+                </button>
+              </div>
+            </div>
+          )}
           {/* From */}
           <Field label="Откуда" error={touched ? errors.from : undefined}>
             <div className="flex items-center gap-1.5">

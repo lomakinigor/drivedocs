@@ -6,6 +6,7 @@ import { useOcrExtract } from '@/shared/hooks/useOcrExtract'
 import { VoiceMicButton } from '@/shared/ui/VoiceMicButton'
 import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
 import { HELP_RECEIPT_CATEGORIES } from '@/entities/config/onboardingHelp'
+import { useFormDraft, clearDraft } from '@/lib/drafts/useFormDraft'
 import type { Receipt, ReceiptCategory } from '@/entities/types/domain'
 
 // ─── Category options ─────────────────────────────────────────────────────────
@@ -32,6 +33,19 @@ function initialState(): FormState {
   return { amount: '', category: '', date: todayISO(), description: '', imageUrl: undefined }
 }
 
+// S5 — черновик хранит только текстовые поля, БЕЗ фото (imageUrl — base64,
+// может быть мегабайты, а localStorage лимит ~5MB — см. StorageUsage в Settings).
+interface DraftFields {
+  amount: string
+  category: ReceiptCategory | ''
+  date: string
+  description: string
+}
+
+function hasMeaningfulContent(d: DraftFields): boolean {
+  return !!(d.amount.trim() || d.description.trim())
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface QuickReceiptSheetProps {
@@ -45,6 +59,23 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
   const [touched, setTouched] = useState(false)
   const [showCategoryHelp, setShowCategoryHelp] = useState(false)
   const set = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }))
+
+  // S5 — автосохранение черновика раз в 3с + плашка восстановления при открытии
+  const draftKey = `receipt:${workspaceId}`
+  const draftFields: DraftFields = { amount: form.amount, category: form.category, date: form.date, description: form.description }
+  const { initialDraft } = useFormDraft(draftKey, draftFields)
+  const [showRestoreBanner, setShowRestoreBanner] = useState(
+    () => !!initialDraft && hasMeaningfulContent(initialDraft),
+  )
+
+  const restoreDraft = () => {
+    if (initialDraft) set(initialDraft)
+    setShowRestoreBanner(false)
+  }
+  const dismissDraft = () => {
+    clearDraft(draftKey)
+    setShowRestoreBanner(false)
+  }
 
   const ocr = useOcrExtract()
 
@@ -99,6 +130,7 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
     }
 
     addReceipt(receipt)
+    clearDraft(draftKey)
     onClose()
   }
 
@@ -134,6 +166,29 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
 
         {/* Scrollable form */}
         <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
+          {showRestoreBanner && (
+            <div className="flex items-center gap-3 px-3.5 py-3 rounded-2xl bg-blue-50 border border-blue-100">
+              <p className="flex-1 text-xs text-blue-800 leading-relaxed">
+                Нашли несохранённый черновик чека — восстановить последний ввод?
+              </p>
+              <div className="flex gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={dismissDraft}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-500 active:bg-slate-100"
+                >
+                  Нет
+                </button>
+                <button
+                  type="button"
+                  onClick={restoreDraft}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 active:bg-blue-700"
+                >
+                  Восстановить
+                </button>
+              </div>
+            </div>
+          )}
           {/* Photo capture — primary entry point, OCR autofills fields below */}
           <Field label="Фото чека">
             <p className="text-xs text-slate-500 -mt-1 mb-2">
