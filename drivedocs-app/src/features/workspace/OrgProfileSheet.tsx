@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, AlertCircle } from 'lucide-react'
 import { useWorkspaceStore, useOrgProfile } from '@/app/store/workspaceStore'
 import type { EntityType } from '@/entities/types/domain'
+import { validateInn, validateOgrn } from '@/lib/validation/innOgrn'
 
 interface OrgProfileSheetProps {
   workspaceId: string
@@ -31,6 +32,9 @@ export function OrgProfileSheet({ workspaceId, entityType, onClose }: OrgProfile
   })
 
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }))
+
+  const innCheck = validateInn(form.inn)
+  const ogrnCheck = validateOgrn(form.ogrn)
 
   const handleSave = () => {
     addOrgProfile({
@@ -116,13 +120,19 @@ export function OrgProfileSheet({ workspaceId, entityType, onClose }: OrgProfile
           <Section title="Регистрационные данные">
             <Row label="ИНН">
               <input
-                className={cls}
+                className={innCheck.valid ? cls : clsError}
                 value={form.inn}
                 inputMode="numeric"
                 onChange={(e) => set({ inn: e.target.value })}
                 placeholder={isIP ? '123456789012' : '7712345678'}
                 maxLength={isIP ? 12 : 10}
               />
+              {!innCheck.valid && (
+                <p className="flex items-center gap-1.5 text-xs text-red-600 mt-1.5">
+                  <AlertCircle size={12} className="shrink-0" />
+                  {innCheck.reason}
+                </p>
+              )}
             </Row>
             {!isIP && (
               <Row label="КПП">
@@ -138,13 +148,19 @@ export function OrgProfileSheet({ workspaceId, entityType, onClose }: OrgProfile
             )}
             <Row label={isIP ? 'ОГРНИП' : 'ОГРН'}>
               <input
-                className={cls}
+                className={ogrnCheck.valid ? cls : clsError}
                 value={form.ogrn}
                 inputMode="numeric"
                 onChange={(e) => set({ ogrn: e.target.value })}
                 placeholder={isIP ? '312345678901234' : '1027700000001'}
                 maxLength={isIP ? 15 : 13}
               />
+              {!ogrnCheck.valid && (
+                <p className="flex items-center gap-1.5 text-xs text-red-600 mt-1.5">
+                  <AlertCircle size={12} className="shrink-0" />
+                  {ogrnCheck.reason}
+                </p>
+              )}
             </Row>
           </Section>
 
@@ -237,6 +253,7 @@ export function OrgProfileSheet({ workspaceId, entityType, onClose }: OrgProfile
 }
 
 const cls = 'w-full px-3.5 py-3 text-sm text-slate-900 placeholder-slate-300 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 transition-colors'
+const clsError = 'w-full px-3.5 py-3 text-sm text-slate-900 placeholder-slate-300 bg-white border-2 border-red-300 rounded-xl outline-none focus:border-red-500 transition-colors'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

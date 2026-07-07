@@ -12,6 +12,7 @@ import type { EntityType, TaxMode, VehicleUsageModel } from '@/entities/types/do
 import { generateInitialDocuments } from '@/features/documents/initialDocuments'
 import { buildDemoSeedData } from '@/lib/demo/demoSeed'
 import { workspaceMemberRepo } from '@/lib/db/repository'
+import { captureAppError } from '@/lib/sentry'
 
 // ─── Step config ─────────────────────────────────────────────────────────────
 
@@ -102,6 +103,8 @@ export function OnboardingWizard() {
   const [state, setState] = useState<WizardState>({
     workspaceName: '',
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const stepIndex = STEP_ORDER.indexOf(currentStep)
   const totalSteps = STEP_ORDER.length
@@ -153,6 +156,26 @@ export function OnboardingWizard() {
   // ── Completion ──────────────────────────────────────────────────────────────
 
   const handleComplete = async () => {
+    if (!state.entityType || !state.taxMode || !state.vehicleUsageModel) return
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+    setSubmitError(null)
+    try {
+      await handleCompleteInner()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      captureAppError(error)
+      setSubmitError(
+        'Не удалось сохранить профиль. Проверьте соединение с интернетом и попробуйте ещё раз.',
+      )
+      setIsSubmitting(false)
+    }
+    // При успехе — navigate() уже увёл со страницы, isSubmitting сбрасывать не нужно
+    // (компонент размонтируется вместе с этим состоянием).
+  }
+
+  const handleCompleteInner = async () => {
     if (!state.entityType || !state.taxMode || !state.vehicleUsageModel) return
 
     const workspaceName =
@@ -364,17 +387,26 @@ export function OnboardingWizard() {
 
       {/* ── Footer CTA ── */}
       <div className="px-4 pb-10 pt-4 border-t border-slate-100">
+        {submitError && (
+          <div className="mb-3 px-4 py-3 bg-red-50 border border-red-100 rounded-2xl">
+            <p className="text-sm text-red-700 leading-relaxed">{submitError}</p>
+          </div>
+        )}
         <button
           type="button"
           onClick={handleNext}
-          disabled={!ok}
+          disabled={!ok || isSubmitting}
           className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
-            ok
+            ok && !isSubmitting
               ? 'bg-blue-600 text-white active:bg-blue-700'
               : 'bg-slate-100 text-slate-500 cursor-not-allowed'
           }`}
         >
-          {ctaLabel(currentStep, !!targetWsId)}
+          {isSubmitting
+            ? 'Сохраняем…'
+            : submitError
+            ? 'Повторить'
+            : ctaLabel(currentStep, !!targetWsId)}
         </button>
 
       </div>
