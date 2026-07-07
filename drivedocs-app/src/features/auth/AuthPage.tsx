@@ -21,6 +21,7 @@ export function AuthPage() {
   const [tab, setTab] = useState<Tab>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [consentChecked, setConsentChecked] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
@@ -142,11 +143,37 @@ export function AuthPage() {
             </div>
           )}
 
+          {tab === 'signup' && (
+            <label className="flex items-start gap-2.5 px-0.5 py-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consentChecked}
+                onChange={(e) => setConsentChecked(e.target.checked)}
+                required
+                className="mt-0.5 size-4 accent-blue-600 shrink-0"
+              />
+              <span className="text-[12px] text-slate-500 leading-relaxed">
+                Даю согласие на{' '}
+                <Link to="/legal/consent" target="_blank" className="text-blue-600 underline decoration-blue-200 underline-offset-2">
+                  обработку персональных данных
+                </Link>{' '}
+                в соответствии с 152-ФЗ и принимаю условия{' '}
+                <Link to="/legal/offer" target="_blank" className="text-blue-600 underline decoration-blue-200 underline-offset-2">
+                  Оферты
+                </Link>{' '}
+                и{' '}
+                <Link to="/legal/privacy" target="_blank" className="text-blue-600 underline decoration-blue-200 underline-offset-2">
+                  Политики конфиденциальности
+                </Link>
+              </span>
+            </label>
+          )}
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (tab === 'signup' && !consentChecked)}
             className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors mt-1 ${
-              loading
+              loading || (tab === 'signup' && !consentChecked)
                 ? 'bg-blue-300 text-white cursor-not-allowed'
                 : 'bg-blue-600 text-white active:bg-blue-700'
             }`}
@@ -173,7 +200,7 @@ export function AuthPage() {
 
       {/* Footer */}
       <p className="text-center text-xs text-slate-500 mt-auto py-8">
-        drivedocs · v0.1.0
+        drivedocs · {__APP_VERSION__}
       </p>
     </div>
   )

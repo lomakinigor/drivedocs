@@ -214,10 +214,16 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         const emailRedirectTo = typeof window !== 'undefined'
           ? `${window.location.origin}/`
           : undefined
+        // B5 — фиксируем момент согласия с офертой/152-ФЗ в user_metadata.
+        // Форма регистрации (AuthPage) не даёт отправить signUp без отметки
+        // о согласии, так что штамп времени здесь = момент акцепта.
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: emailRedirectTo ? { emailRedirectTo } : undefined,
+          options: {
+            ...(emailRedirectTo ? { emailRedirectTo } : {}),
+            data: { consent_152fz_at: new Date().toISOString() },
+          },
         })
         if (error) return { error: mapAuthErrorMessage(error.message) }
         // Supabase sends confirmation email; session may be active immediately

@@ -20,6 +20,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard'
 import { WelcomePage } from '@/pages/WelcomePage'
+import { LegalPage } from '@/pages/LegalPage'
 import { AuthPage } from '@/features/auth/AuthPage'
 import { PasswordResetRequestPage } from '@/features/auth/PasswordResetRequestPage'
 import { PasswordResetPage } from '@/features/auth/PasswordResetPage'
@@ -109,6 +110,11 @@ const router = createBrowserRouter([
     // подтянуть их в облако (см. hydrateFromBackend → upload).
     path: '/onboarding',
     element: <OnboardingWizard />,
+  },
+  {
+    // B5 — публичные юридические документы (оферта, политика ПД, согласие)
+    path: '/legal/:doc',
+    element: <LegalPage />,
   },
   {
     path: '/w/:workspaceId',

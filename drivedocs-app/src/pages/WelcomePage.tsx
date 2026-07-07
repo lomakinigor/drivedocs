@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { isBackendConfigured } from '@/lib/supabase'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import {
@@ -360,6 +360,11 @@ export function WelcomePage() {
           >
             @drivedocs_bot
           </a>
+        </p>
+        <p className="text-[11px] text-slate-500 mt-2 flex items-center justify-center gap-x-3 gap-y-1 flex-wrap">
+          <Link to="/legal/offer" className="underline decoration-slate-300 underline-offset-2">Оферта</Link>
+          <Link to="/legal/privacy" className="underline decoration-slate-300 underline-offset-2">Политика конфиденциальности</Link>
+          <Link to="/legal/consent" className="underline decoration-slate-300 underline-offset-2">Согласие на обработку ПД</Link>
         </p>
       </footer>
     </div>
