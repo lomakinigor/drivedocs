@@ -21,6 +21,7 @@ import { AdminPage } from '@/pages/AdminPage'
 import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard'
 import { WelcomePage } from '@/pages/WelcomePage'
 import { LegalPage } from '@/pages/LegalPage'
+import { setSentryUser } from '@/lib/sentry'
 import { AuthPage } from '@/features/auth/AuthPage'
 import { PasswordResetRequestPage } from '@/features/auth/PasswordResetRequestPage'
 import { PasswordResetPage } from '@/features/auth/PasswordResetPage'
@@ -155,6 +156,8 @@ const router = createBrowserRouter([
 
 export function App() {
   const setAuthUser = useWorkspaceStore((s) => s.setAuthUser)
+  const authUserId = useWorkspaceStore((s) => s.authUserId)
+  const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)
 
   useEffect(() => {
     // Subscribe to Supabase auth state changes.
@@ -163,6 +166,11 @@ export function App() {
     // starts as isAuthenticated=true and ProtectedRoute skips the guard entirely.
     return subscribeToAuthChanges(setAuthUser)
   }, [setAuthUser])
+
+  // S7 — контекст пользователя в Sentry для группировки ошибок по юзеру/воркспейсу.
+  useEffect(() => {
+    setSentryUser({ userId: authUserId, email: null, workspaceId: currentWorkspaceId })
+  }, [authUserId, currentWorkspaceId])
 
   return (
     <AppErrorBoundary>

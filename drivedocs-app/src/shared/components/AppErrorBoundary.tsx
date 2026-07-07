@@ -1,4 +1,5 @@
 import React from 'react'
+import { captureAppError } from '@/lib/sentry'
 
 interface State {
   hasError: boolean
@@ -18,6 +19,7 @@ export class AppErrorBoundary extends React.Component<{ children: React.ReactNod
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[AppErrorBoundary]', error, info)
+    captureAppError(error, { componentStack: info.componentStack })
   }
 
   handleReset = async () => {
