@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Share, PlusSquare, MoreVertical } from 'lucide-react'
+import { X, Share, PlusSquare, MoreVertical, Smartphone } from 'lucide-react'
 
 const STORAGE_KEY = 'pwa-install-dismissed'
 
@@ -42,6 +42,7 @@ function usePathname(): string {
 export function InstallPrompt() {
   const [show, setShow] = useState(false)
   const [platform, setPlatform] = useState<Platform>('android-manual')
+  const [iosGuideOpen, setIosGuideOpen] = useState(false)
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null)
   const pathname = usePathname()
 
@@ -94,6 +95,7 @@ export function InstallPrompt() {
   if (HIDDEN_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'))) return null
 
   return (
+    <>
     <div className="fixed bottom-4 left-4 right-4 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
       <button
         onClick={dismiss}
@@ -108,13 +110,22 @@ export function InstallPrompt() {
         <div className="flex-1 min-w-0 pr-4">
           <p className="text-sm font-semibold text-slate-900">Установить приложение</p>
           {platform === 'ios' && (
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              Нажмите{' '}
-              <Share size={12} className="inline align-middle" />{' '}
-              в браузере, затем{' '}
-              <span className="font-medium">«На экран Домой»</span>
-              {' '}<PlusSquare size={12} className="inline align-middle" />
-            </p>
+            <>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Нажмите{' '}
+                <Share size={12} className="inline align-middle" />{' '}
+                в браузере, затем{' '}
+                <span className="font-medium">«На экран Домой»</span>
+                {' '}<PlusSquare size={12} className="inline align-middle" />
+              </p>
+              <button
+                type="button"
+                onClick={() => setIosGuideOpen(true)}
+                className="text-xs font-semibold text-blue-600 active:text-blue-800 mt-1"
+              >
+                Показать по шагам →
+              </button>
+            </>
           )}
           {platform === 'android-native' && (
             <p className="text-xs text-slate-500 mt-1">
@@ -141,5 +152,63 @@ export function InstallPrompt() {
         </button>
       )}
     </div>
+
+    {iosGuideOpen && <IosInstallGuideSheet onClose={() => setIosGuideOpen(false)} />}
+    </>
+  )
+}
+
+// S3 — пошаговая инструкция установки на iOS (Safari не поддерживает
+// beforeinstallprompt, единственный путь — Share → «На экран Домой»).
+const IOS_STEPS = [
+  {
+    icon: Share,
+    title: 'Нажмите «Поделиться»',
+    desc: 'Кнопка внизу экрана в Safari (квадрат со стрелкой вверх)',
+  },
+  {
+    icon: PlusSquare,
+    title: '«На экран Домой»',
+    desc: 'Пролистайте список действий вниз и найдите этот пункт',
+  },
+  {
+    icon: Smartphone,
+    title: 'Готово',
+    desc: 'Иконка Drivedocs появится на главном экране — открывается как обычное приложение',
+  },
+]
+
+function IosInstallGuideSheet({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-[70] bg-black/40" onClick={onClose} aria-hidden="true" />
+      <div className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-3xl safe-bottom animate-slide-up">
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-slate-200 rounded-full" />
+        </div>
+        <div className="flex items-center justify-between px-5 pt-1 pb-3">
+          <h2 className="text-base font-semibold text-slate-900">Установка на iPhone</h2>
+          <button onClick={onClose} className="p-3 -mr-1 rounded-xl text-slate-500 active:bg-slate-100" aria-label="Закрыть">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="px-5 pb-8 space-y-4">
+          {IOS_STEPS.map((step, i) => (
+            <div key={step.title} className="flex items-start gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">
+                {i + 1}
+              </div>
+              <div className="flex-1 min-w-0 pt-1">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <step.icon size={14} className="text-slate-500" />
+                  <p className="text-sm font-semibold text-slate-900">{step.title}</p>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">{step.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   )
 }
