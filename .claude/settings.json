@@ -20,13 +20,13 @@
       "Bash(bd:*)",
       "Bash(mkdir:*)",
       "Bash(cp:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(sudo:*)"
     ],
     "deny": [
       "Bash(rm -rf:*)",
       "Bash(git push --force:*)",
       "Bash(git reset --hard:*)",
-      "Bash(sudo:*)",
       "Bash(chmod 777:*)",
       "Bash(curl * | bash:*)",
       "Bash(wget * | bash:*)"
