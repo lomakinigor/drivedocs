@@ -2,9 +2,27 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { execSync } from 'node:child_process'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Версия для отображения в Настройках (F-033) — короткий хэш коммита.
+// На Vercel берём из VERCEL_GIT_COMMIT_SHA (надёжнее, чем git в песочнице сборки),
+// локально — из `git rev-parse`, если git недоступен — 'dev'.
+function resolveCommitHash(): string {
+  const vercelSha = process.env.VERCEL_GIT_COMMIT_SHA
+  if (vercelSha) return vercelSha.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'dev'
+  }
+}
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(resolveCommitHash()),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     tailwindcss(),

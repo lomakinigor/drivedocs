@@ -937,7 +937,9 @@ export function SettingsPage() {
           </button>
         )}
 
-        <p className="text-center text-[11px] text-slate-500">drivedocs · v0.1.0</p>
+        <p className="text-center text-[11px] text-slate-500">
+          drivedocs · {__APP_VERSION__} · {new Date(__BUILD_DATE__).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </p>
       </div>
 
       {/* Sheets */}
