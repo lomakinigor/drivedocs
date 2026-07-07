@@ -92,7 +92,7 @@ export function EssentialsSheet({ workspaceId, onClose }: EssentialsSheetProps) 
               не будет принят налоговой.
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0">
+          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0" aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>

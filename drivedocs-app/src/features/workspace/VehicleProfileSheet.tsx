@@ -85,7 +85,7 @@ export function VehicleProfileSheet({ workspaceId, profile, onClose }: VehiclePr
         </div>
         <div className="flex items-center justify-between px-5 pt-1 pb-3 shrink-0">
           <h2 className="text-base font-semibold text-slate-900">Профиль автомобиля</h2>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100" aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>

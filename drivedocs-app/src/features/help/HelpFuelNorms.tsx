@@ -32,7 +32,7 @@ export function HelpFuelNormsSheet({ onClose }: { onClose: () => void }) {
               По распоряжению Минтранса РФ № АМ-23-р. Норма нужна для подтверждения расходов на ГСМ в налоговой.
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0">
+          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0" aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>

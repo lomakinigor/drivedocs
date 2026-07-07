@@ -43,6 +43,7 @@ export function VehicleSchemeSheet({ current, onSelect, onClose }: VehicleScheme
           <button
             onClick={onClose}
             className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
+            aria-label="Закрыть"
           >
             <X size={20} />
           </button>

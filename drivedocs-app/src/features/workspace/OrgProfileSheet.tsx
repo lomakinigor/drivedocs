@@ -67,7 +67,7 @@ export function OrgProfileSheet({ workspaceId, entityType, onClose }: OrgProfile
           <h2 className="text-base font-semibold text-slate-900">
             {isIP ? 'Реквизиты ИП' : 'Реквизиты организации'}
           </h2>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100" aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>

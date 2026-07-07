@@ -87,7 +87,7 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
               Кто что может?
             </button>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg active:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 rounded-lg active:bg-slate-100" aria-label="Закрыть">
             <X size={18} className="text-slate-500" />
           </button>
         </div>

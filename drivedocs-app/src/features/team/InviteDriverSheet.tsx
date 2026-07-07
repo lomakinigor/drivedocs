@@ -98,7 +98,7 @@ export function InviteDriverSheet({ onClose }: InviteDriverSheetProps) {
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <h2 className="text-[17px] font-bold text-slate-900">Пригласить водителя</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg active:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 rounded-lg active:bg-slate-100" aria-label="Закрыть">
             <X size={18} className="text-slate-500" />
           </button>
         </div>
