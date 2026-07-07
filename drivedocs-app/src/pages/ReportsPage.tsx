@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Download, Calendar, FileText } from 'lucide-react'
 import { useWorkspaceTrips, useWorkspaceReceipts } from '@/app/store/workspaceStore'
 import { MonthlyReportSheet } from '@/features/trips/MonthlyReportSheet'
@@ -42,6 +42,7 @@ function sumAmount(receipts: Receipt[]): number {
 export function ReportsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const id = workspaceId ?? ''
+  const navigate = useNavigate()
   const allTrips = useWorkspaceTrips(id)
   const allReceipts = useWorkspaceReceipts(id)
 
@@ -197,9 +198,17 @@ export function ReportsPage() {
       {primary.tripsCount === 0 && current.tripsCount === 0 && (
         <div className="bg-slate-50 rounded-2xl p-4 flex gap-3 items-start mt-2">
           <FileText size={18} className="text-slate-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Добавьте поездки и чеки — здесь появится готовый месячный отчёт для бухгалтерии.
-          </p>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-slate-500 leading-relaxed mb-2.5">
+              Начните вносить поездки — здесь появится готовый месячный отчёт для бухгалтерии.
+            </p>
+            <button
+              onClick={() => navigate(`/w/${id}/trips`)}
+              className="text-xs font-semibold text-blue-600 active:text-blue-800"
+            >
+              Добавить первую поездку →
+            </button>
+          </div>
         </div>
       )}
 

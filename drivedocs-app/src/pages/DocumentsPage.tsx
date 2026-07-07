@@ -171,6 +171,14 @@ export function DocumentsPage() {
             icon={<FileText size={48} />}
             title="Документов нет"
             description="Список документов формируется на основе налогового режима и правовой модели предприятия"
+            action={
+              <button
+                onClick={() => navigate(`/w/${id}/settings`)}
+                className="bg-blue-600 text-white text-sm font-medium px-5 py-2.5 rounded-xl"
+              >
+                Настроить профиль
+              </button>
+            }
           />
         )}
 
