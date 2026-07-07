@@ -213,7 +213,7 @@ export function WelcomePage() {
               num="02"
               title="Создавайте поездки одной кнопкой"
               desc="Маршрут, расстояние, цель — на главном экране. Все поездки попадают в журнал, из которого формируется путевой лист."
-              accent="oklch(60% 0.18 195)"
+              accent="oklch(42% 0.18 195)"
               reverse
               mockup={<AddTripMockup />}
             />
@@ -221,7 +221,7 @@ export function WelcomePage() {
               num="03"
               title="Скачивайте PDF-документы для ФНС"
               desc="Путевой лист за день или период, отчёт по расходу ГСМ, приказы и акты — готовые к подписи документы по форме приказа №390."
-              accent="oklch(55% 0.18 305)"
+              accent="oklch(48% 0.18 305)"
               mockup={<WaybillPdfMockup />}
             />
           </div>
@@ -660,7 +660,7 @@ function WizardEntityTypeMockup() {
           >
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-              style={{ background: 'oklch(60% 0.20 250)', fontFamily: SORA }}
+              style={{ background: 'oklch(48% 0.20 250)', fontFamily: SORA }}
             >
               ИП
             </div>
