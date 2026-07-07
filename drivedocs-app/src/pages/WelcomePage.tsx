@@ -31,6 +31,15 @@ export function WelcomePage() {
   const isAuthenticated = useWorkspaceStore((s) => s.isAuthenticated)
   const authChecked = useWorkspaceStore((s) => s.authChecked)
 
+  // S6 — вкладка/SEO: без этого document.title на /welcome — просто "Drivedocs"
+  // (общий из index.html), не совпадает с og:title и не описывает страницу.
+  // Должен идти до любых early return — иначе хук вызывается условно.
+  useEffect(() => {
+    const prev = document.title
+    document.title = 'Drivedocs — путевые листы и документы для ФНС за 30 секунд'
+    return () => { document.title = prev }
+  }, [])
+
   // Залогиненного юзера на лендинге быть не должно — уносим в приложение
   // через RootRedirect (он решит: онбординг если нет workspaces, либо home)
   if (isBackendConfigured && authChecked && isAuthenticated) {
@@ -49,7 +58,7 @@ export function WelcomePage() {
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/app-icon-source.png" alt="DriveDocs" className="w-8 h-8 rounded-lg" />
+            <img src="/pwa-64x64.png" alt="DriveDocs" width={32} height={32} className="w-8 h-8 rounded-lg" />
             <span className="font-bold text-slate-900 text-[15px]" style={{ fontFamily: SORA }}>
               DriveDocs
             </span>

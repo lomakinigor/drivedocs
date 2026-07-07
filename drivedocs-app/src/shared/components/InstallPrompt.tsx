@@ -106,7 +106,7 @@ export function InstallPrompt() {
       </button>
 
       <div className="flex items-start gap-3">
-        <img src="/pwa-64x64.png" alt="Drivedocs" className="w-12 h-12 rounded-xl flex-shrink-0" />
+        <img src="/pwa-64x64.png" alt="Drivedocs" width={48} height={48} className="w-12 h-12 rounded-xl flex-shrink-0" />
         <div className="flex-1 min-w-0 pr-4">
           <p className="text-sm font-semibold text-slate-900">Установить приложение</p>
           {platform === 'ios' && (
