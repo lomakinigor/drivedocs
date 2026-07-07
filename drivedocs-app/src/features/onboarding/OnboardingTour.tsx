@@ -20,7 +20,7 @@ export function OnboardingTour() {
           <div className="px-6 pt-6 pb-5 relative">
             <button
               onClick={completeTour}
-              className="absolute top-5 right-5 p-1.5 text-slate-500 active:text-slate-600"
+              className="absolute top-5 right-5 p-3 text-slate-500 active:text-slate-600"
               aria-label="Закрыть"
             >
               <X size={18} />

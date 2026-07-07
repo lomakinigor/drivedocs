@@ -42,7 +42,7 @@ export function VehicleSchemeSheet({ current, onSelect, onClose }: VehicleScheme
           <h2 className="text-base font-semibold text-slate-900">Схема оформления авто</h2>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
+            className="p-3 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
             aria-label="Закрыть"
           >
             <X size={20} />

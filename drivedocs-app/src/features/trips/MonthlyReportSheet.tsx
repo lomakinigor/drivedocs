@@ -291,7 +291,7 @@ export function MonthlyReportSheet({ workspaceId, onClose }: MonthlyReportSheetP
               <p className="text-xs text-slate-500 mt-0.5 capitalize">{periodLabel}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100" aria-label="Закрыть">
+          <button onClick={onClose} className="p-3 -mr-1 rounded-xl text-slate-500 active:bg-slate-100" aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>

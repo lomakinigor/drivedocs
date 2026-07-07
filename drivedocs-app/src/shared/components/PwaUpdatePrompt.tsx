@@ -86,7 +86,7 @@ export function PwaUpdatePrompt() {
         </button>
         <button
           onClick={() => setDismissed(true)}
-          className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center active:bg-white/10"
+          className="shrink-0 w-10 h-10 -mr-1 rounded-lg flex items-center justify-center active:bg-white/10"
           aria-label="Отложить"
         >
           <X size={14} className="opacity-70" />

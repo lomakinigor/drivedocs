@@ -125,7 +125,7 @@ export function QuickReceiptSheet({ workspaceId, onClose }: QuickReceiptSheetPro
           <h2 className="text-base font-semibold text-slate-900">Новый чек</h2>
           <button
             onClick={onClose}
-            className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
+            className="p-3 -mr-1 rounded-xl text-slate-500 active:bg-slate-100"
             aria-label="Закрыть"
           >
             <X size={20} />
@@ -366,7 +366,7 @@ export function PhotoPicker({
               <button
                 type="button"
                 onClick={onRemove}
-                className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white active:bg-black/70"
+                className="absolute top-2 right-2 p-3 bg-black/50 rounded-full text-white active:bg-black/70"
                 aria-label="Удалить фото"
               >
                 <X size={13} />

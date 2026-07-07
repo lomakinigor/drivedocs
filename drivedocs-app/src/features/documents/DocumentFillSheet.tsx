@@ -69,7 +69,7 @@ export function DocumentFillSheet({ doc, onClose }: Props) {
             <p className="text-xs text-slate-500 mb-0.5">Шаблон документа</p>
             <h2 className="text-sm font-bold text-slate-900 leading-snug">{doc.title}</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0" aria-label="Закрыть">
+          <button onClick={onClose} className="p-3 -mr-1 rounded-xl text-slate-500 active:bg-slate-100 shrink-0" aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>
