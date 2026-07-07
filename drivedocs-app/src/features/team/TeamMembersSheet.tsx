@@ -3,6 +3,7 @@ import { X, User, UserX, Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUserRole } from './useUserRole'
 import { HelpInfoSheet } from '@/shared/ui/components/HelpInfoSheet'
+import { ConfirmDialog } from '@/shared/ui/components/ConfirmDialog'
 import { HELP_TEAM_ROLES } from '@/entities/config/onboardingHelp'
 
 interface TeamMembersSheetProps {
@@ -24,6 +25,8 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
   const [members, setMembers] = useState<Member[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [revokingId, setRevokingId] = useState<string | null>(null)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
+  const [pendingRevoke, setPendingRevoke] = useState<Member | null>(null)
   const userRole = useUserRole(workspaceId)
   const canRevoke = userRole === 'owner'
   const [showRolesHelp, setShowRolesHelp] = useState(false)
@@ -53,15 +56,16 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
 
   async function revoke(memberId: string) {
     if (!supabase) return
-    if (!confirm('Отозвать доступ у этого водителя? Он больше не сможет пользоваться приложением.')) return
+    setRevokeError(null)
     setRevokingId(memberId)
     const { error: err } = await supabase
       .from('workspace_members')
       .delete()
       .eq('id', memberId)
     setRevokingId(null)
+    setPendingRevoke(null)
     if (err) {
-      alert('Не удалось отозвать доступ: ' + err.message)
+      setRevokeError('Не удалось отозвать доступ: ' + err.message)
       return
     }
     void load()
@@ -87,7 +91,7 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
               Кто что может?
             </button>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg active:bg-slate-100" aria-label="Закрыть">
+          <button onClick={onClose} className="p-3 -mr-1 rounded-lg active:bg-slate-100" aria-label="Закрыть">
             <X size={18} className="text-slate-500" />
           </button>
         </div>
@@ -96,6 +100,11 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
           {error && (
             <div className="mb-3 bg-red-50 border border-red-100 rounded-xl p-3">
               <p className="text-[12px] text-red-700">{error}</p>
+            </div>
+          )}
+          {revokeError && (
+            <div className="mb-3 bg-red-50 border border-red-100 rounded-xl p-3">
+              <p className="text-[12px] text-red-700">{revokeError}</p>
             </div>
           )}
 
@@ -138,7 +147,7 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
                 <MemberCard
                   key={m.id}
                   member={m}
-                  onRevoke={canRevoke ? () => void revoke(m.id) : undefined}
+                  onRevoke={canRevoke ? () => setPendingRevoke(m) : undefined}
                   isRevoking={revokingId === m.id}
                 />
               ))}
@@ -155,6 +164,18 @@ export function TeamMembersSheet({ workspaceId, onClose }: TeamMembersSheetProps
 
     {showRolesHelp && (
       <HelpInfoSheet content={HELP_TEAM_ROLES} onClose={() => setShowRolesHelp(false)} />
+    )}
+
+    {pendingRevoke && (
+      <ConfirmDialog
+        title="Отозвать доступ"
+        message={`Отозвать доступ у водителя «${pendingRevoke.driver_full_name?.trim() || 'без имени'}»? Он больше не сможет пользоваться приложением.`}
+        confirmLabel="Отозвать"
+        danger
+        busy={revokingId === pendingRevoke.id}
+        onConfirm={() => void revoke(pendingRevoke.id)}
+        onCancel={() => setPendingRevoke(null)}
+      />
     )}
     </>
   )

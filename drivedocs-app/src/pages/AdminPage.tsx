@@ -3,6 +3,7 @@ import { Users, Route, FileText, Receipt, TrendingUp, Database, BarChart2, Activ
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { isBackendConfigured, supabase } from '@/lib/supabase'
 import { getAllMetrics, clearMetrics } from '@/lib/metrics/featureMetrics'
+import { ConfirmDialog } from '@/shared/ui/components/ConfirmDialog'
 import { useState, useEffect, useCallback } from 'react'
 
 interface AdminCounts {
@@ -191,6 +192,7 @@ export function AdminPage() {
 
 function MetricsSection() {
   const [snapshot, setSnapshot] = useState(() => getAllMetrics())
+  const [confirmClear, setConfirmClear] = useState(false)
   useEffect(() => {
     const i = setInterval(() => setSnapshot(getAllMetrics()), 1500)
     return () => clearInterval(i)
@@ -202,12 +204,7 @@ function MetricsSection() {
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Метрики фич (локально)</h2>
         {entries.length > 0 && (
           <button
-            onClick={() => {
-              if (confirm('Очистить все метрики?')) {
-                clearMetrics()
-                setSnapshot({})
-              }
-            }}
+            onClick={() => setConfirmClear(true)}
             className="flex items-center gap-1 text-[11px] text-red-500 active:text-red-700"
           >
             <Trash2 size={11} />
@@ -215,6 +212,20 @@ function MetricsSection() {
           </button>
         )}
       </div>
+      {confirmClear && (
+        <ConfirmDialog
+          title="Очистить метрики"
+          message="Удалить все локальные метрики фич? Действие необратимо."
+          confirmLabel="Очистить"
+          danger
+          onConfirm={() => {
+            clearMetrics()
+            setSnapshot({})
+            setConfirmClear(false)
+          }}
+          onCancel={() => setConfirmClear(false)}
+        />
+      )}
       {entries.length === 0 ? (
         <p className="text-xs text-slate-500 text-center py-6 bg-white rounded-2xl border border-slate-100">
           Ещё нет событий. Походите по приложению — счётчики появятся.
