@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { InstallPrompt } from '@/shared/components/InstallPrompt'
 import { AppErrorBoundary } from '@/shared/components/AppErrorBoundary'
 import { PwaUpdatePrompt } from '@/shared/components/PwaUpdatePrompt'
+import { NetworkStatusIndicator } from '@/shared/components/NetworkStatusIndicator'
 import { initDevMode } from '@/lib/devMode'
 
 initDevMode()
@@ -174,6 +175,7 @@ export function App() {
 
   return (
     <AppErrorBoundary>
+      <NetworkStatusIndicator />
       <RouterProvider router={router} />
       <InstallPrompt />
       <PwaUpdatePrompt />
