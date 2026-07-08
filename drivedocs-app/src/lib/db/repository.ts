@@ -37,6 +37,8 @@ interface WorkspaceRow {
   vehicle_usage_model: string
   is_configured: boolean
   created_at: string
+  referral_code?: string | null
+  referred_by_code?: string | null
 }
 
 interface OrgProfileRow {
@@ -97,6 +99,8 @@ function rowToWorkspace(r: WorkspaceRow): Workspace {
     vehicleUsageModel: r.vehicle_usage_model as Workspace['vehicleUsageModel'],
     isConfigured: r.is_configured,
     createdAt: r.created_at,
+    referralCode: r.referral_code ?? undefined,
+    referredByCode: r.referred_by_code ?? null,
   }
 }
 
@@ -110,6 +114,8 @@ function workspaceToRow(ws: Workspace): WorkspaceRow {
     vehicle_usage_model: ws.vehicleUsageModel,
     is_configured: ws.isConfigured,
     created_at: ws.createdAt,
+    referral_code: ws.referralCode ?? null,
+    referred_by_code: ws.referredByCode ?? null,
   }
 }
 
@@ -300,6 +306,8 @@ export const workspaceRepo = {
     if (patch.taxMode !== undefined) row.tax_mode = patch.taxMode
     if (patch.vehicleUsageModel !== undefined) row.vehicle_usage_model = patch.vehicleUsageModel
     if (patch.isConfigured !== undefined) row.is_configured = patch.isConfigured
+    if (patch.referralCode !== undefined) row.referral_code = patch.referralCode
+    if (patch.referredByCode !== undefined) row.referred_by_code = patch.referredByCode
     const { error } = await supabase.from('workspaces').update(row).eq('id', id)
     if (error) {
       throwIfAuthError(error.message)

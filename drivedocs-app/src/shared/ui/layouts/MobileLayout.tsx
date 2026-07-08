@@ -8,6 +8,7 @@ import { AddTripSheet } from '@/features/trips/AddTripSheet'
 import { QuickTripProvider } from '@/features/trips/QuickTripContext'
 import { OnboardingTour } from '@/features/onboarding/OnboardingTour'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
+import { generateReferralCode } from '@/lib/referral'
 
 export function MobileLayout() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
@@ -15,6 +16,8 @@ export function MobileLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const setCurrentWorkspace = useWorkspaceStore((s) => s.setCurrentWorkspace)
+  const updateWorkspace = useWorkspaceStore((s) => s.updateWorkspace)
+  const workspaces = useWorkspaceStore((s) => s.workspaces)
 
   // T-143 · T-144 · F-025 — страницы Visual Phase владеют собственным header'ом;
   // глобальный MobileHeader дублирует и должен быть скрыт на этих маршрутах.
@@ -38,6 +41,15 @@ useEffect(() => {
     setCurrentWorkspace(workspaceId)
   }
 }, [workspaceId, setCurrentWorkspace])
+
+// drivedocs-671 — лениво доначисляем referralCode workspace'ам, созданным
+// до появления этой фичи (у новых он уже есть с момента онбординга).
+useEffect(() => {
+  const ws = workspaces.find((w) => w.id === workspaceId)
+  if (ws && !ws.referralCode) {
+    void updateWorkspace(ws.id, { referralCode: generateReferralCode() })
+  }
+}, [workspaceId, workspaces, updateWorkspace])
 
   const handleSelectWorkspace = (wsId: string) => {
     setCurrentWorkspace(wsId)

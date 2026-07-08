@@ -17,6 +17,13 @@ interface AdminCounts {
   ios_guide_opens: number
 }
 
+interface ReferralRow {
+  name: string
+  referral_code: string | null
+  referred_by_code: string | null
+  created_at: string
+}
+
 // ─── Admin access guard ───────────────────────────────────────────────────────
 
 // Список админов на фронте — для guard'а доступа к странице.
@@ -258,6 +265,7 @@ function MetricsSection() {
 
 function LiveStatsSection() {
   const [counts, setCounts] = useState<AdminCounts | null>(null)
+  const [referrals, setReferrals] = useState<ReferralRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [generatedAt, setGeneratedAt] = useState<string | null>(null)
@@ -284,8 +292,13 @@ function LiveStatsSection() {
         setError(body?.error ?? `HTTP ${resp.status}`)
         return
       }
-      const body = (await resp.json()) as { counts: AdminCounts; generated_at: string }
+      const body = (await resp.json()) as {
+        counts: AdminCounts
+        referrals: ReferralRow[]
+        generated_at: string
+      }
       setCounts(body.counts)
+      setReferrals(body.referrals ?? [])
       setGeneratedAt(body.generated_at)
     } catch (e) {
       setError((e as Error).message)
@@ -393,6 +406,62 @@ function LiveStatsSection() {
           обновлено {new Date(generatedAt).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}
         </p>
       )}
+
+      <ReferralsTable referrals={referrals} />
     </section>
+  )
+}
+
+// ─── drivedocs-671 · Реферальные коды (базовое отслеживание) ──────────────────
+
+function ReferralsTable({ referrals }: { referrals: ReferralRow[] }) {
+  if (referrals.length === 0) return null
+
+  const nameByCode = new Map(
+    referrals
+      .filter((r) => r.referral_code)
+      .map((r) => [r.referral_code as string, r.name]),
+  )
+  const referredCount = referrals.filter((r) => r.referred_by_code).length
+
+  return (
+    <div className="mt-5">
+      <div className="flex items-center gap-2 mb-3">
+        <Users size={16} className="text-slate-500" />
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Реферальные коды
+        </h2>
+        <span className="text-[11px] text-slate-400">
+          {referredCount} из {referrals.length} — по приглашению
+        </span>
+      </div>
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm divide-y divide-slate-50 max-h-80 overflow-y-auto">
+        {referrals.map((r, i) => {
+          const referrerName = r.referred_by_code ? nameByCode.get(r.referred_by_code) : undefined
+          return (
+            <div key={`${r.name}-${i}`} className="px-4 py-2.5 flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-900 truncate">{r.name}</p>
+                {r.referred_by_code ? (
+                  <p className="text-xs text-slate-500 truncate">
+                    приглашён: {referrerName ?? `код ${r.referred_by_code}`}
+                    {!referrerName && ' (не найден среди workspaces)'}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-300">органика</p>
+                )}
+              </div>
+              <span className="text-xs font-mono text-slate-400 shrink-0">
+                {r.referral_code ?? '—'}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+        Если код в «приглашён» принадлежит workspace, у которого он сам появился по приглашению —
+        это и есть цепочка «передали дальше».
+      </p>
+    </div>
   )
 }

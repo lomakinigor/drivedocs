@@ -13,6 +13,7 @@ import { generateInitialDocuments } from '@/features/documents/initialDocuments'
 import { buildDemoSeedData } from '@/lib/demo/demoSeed'
 import { workspaceMemberRepo } from '@/lib/db/repository'
 import { captureAppError } from '@/lib/sentry'
+import { generateReferralCode, getCapturedReferral } from '@/lib/referral'
 
 // ─── Step config ─────────────────────────────────────────────────────────────
 
@@ -217,6 +218,8 @@ export function OnboardingWizard() {
         vehicleUsageModel: state.vehicleUsageModel,
         isConfigured: true,
         createdAt: new Date().toISOString(),
+        referralCode: generateReferralCode(),
+        referredByCode: getCapturedReferral(),
       })
       addOrgProfile({
         workspaceId,

@@ -76,6 +76,14 @@ export interface Workspace {
    */
   fuelProfile?: FuelProfile
   createdAt: string
+  /**
+   * drivedocs-671 — реферальный код этого workspace (8 симв., генерируется
+   * лениво при первом обращении). Пока без бонус-механики — только атрибуция:
+   * кто кого привёл, важно для будущих платных тарифов.
+   */
+  referralCode?: string
+  /** Код из ?ref=XXXX, с которым пришёл этот workspace (null — органика). */
+  referredByCode?: string | null
 }
 
 // F-027 — Fuel norm profile (АМ-23-р)

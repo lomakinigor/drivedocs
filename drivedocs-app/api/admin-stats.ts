@@ -18,6 +18,13 @@ interface Counts {
   ios_guide_opens: number
 }
 
+interface ReferralRow {
+  name: string
+  referral_code: string | null
+  referred_by_code: string | null
+  created_at: string
+}
+
 function cors(): HeadersInit {
   return {
     'Access-Control-Allow-Origin': '*',
@@ -72,6 +79,17 @@ async function countRowsWhere(
   return Number.parseInt(total, 10) || 0
 }
 
+async function fetchReferrals(url: string, serviceKey: string): Promise<ReferralRow[]> {
+  // drivedocs-671 — сырые строки (не агрегат): нужно видеть кто кого привёл,
+  // чтобы вручную проследить цепочки (A привёл B, B передал код C).
+  const resp = await fetch(
+    `${url}/rest/v1/workspaces?select=name,referral_code,referred_by_code,created_at&order=created_at.desc&limit=500`,
+    { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
+  )
+  if (!resp.ok) return []
+  return ((await resp.json().catch(() => [])) as ReferralRow[]) ?? []
+}
+
 async function countAuthUsers(url: string, serviceKey: string): Promise<number> {
   // GoTrue Admin API — листинг пользователей. Берём 1 на странице, total — из заголовка.
   const resp = await fetch(`${url}/auth/v1/admin/users?page=1&per_page=1`, {
@@ -121,7 +139,7 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   // Параллельно считаем все таблицы + auth users.
-  const [registered, workspaces, trips, receipts, documents, events, installs, iosGuideOpens] =
+  const [registered, workspaces, trips, receipts, documents, events, installs, iosGuideOpens, referrals] =
     await Promise.all([
       countAuthUsers(url, serviceKey),
       countRows(url, serviceKey, 'workspaces'),
@@ -131,6 +149,7 @@ export default async function handler(req: Request): Promise<Response> {
       countRows(url, serviceKey, 'events'),
       countRowsWhere(url, serviceKey, 'install_events', 'platform=in.(android_installed,desktop_installed)'),
       countRowsWhere(url, serviceKey, 'install_events', 'platform=eq.ios_guide_opened'),
+      fetchReferrals(url, serviceKey),
     ])
 
   const counts: Counts = {
@@ -144,5 +163,5 @@ export default async function handler(req: Request): Promise<Response> {
     ios_guide_opens: iosGuideOpens,
   }
 
-  return json(200, { counts, generated_at: new Date().toISOString() })
+  return json(200, { counts, referrals, generated_at: new Date().toISOString() })
 }
