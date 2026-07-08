@@ -417,11 +417,6 @@ function LiveStatsSection() {
 function ReferralsTable({ referrals }: { referrals: ReferralRow[] }) {
   if (referrals.length === 0) return null
 
-  const nameByCode = new Map(
-    referrals
-      .filter((r) => r.referral_code)
-      .map((r) => [r.referral_code as string, r.name]),
-  )
   const referredCount = referrals.filter((r) => r.referred_by_code).length
 
   return (
@@ -436,27 +431,21 @@ function ReferralsTable({ referrals }: { referrals: ReferralRow[] }) {
         </span>
       </div>
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm divide-y divide-slate-50 max-h-80 overflow-y-auto">
-        {referrals.map((r, i) => {
-          const referrerName = r.referred_by_code ? nameByCode.get(r.referred_by_code) : undefined
-          return (
-            <div key={`${r.name}-${i}`} className="px-4 py-2.5 flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-900 truncate">{r.name}</p>
-                {r.referred_by_code ? (
-                  <p className="text-xs text-slate-500 truncate">
-                    приглашён: {referrerName ?? `код ${r.referred_by_code}`}
-                    {!referrerName && ' (не найден среди workspaces)'}
-                  </p>
-                ) : (
-                  <p className="text-xs text-slate-300">органика</p>
-                )}
-              </div>
-              <span className="text-xs font-mono text-slate-400 shrink-0">
-                {r.referral_code ?? '—'}
-              </span>
+        {referrals.map((r, i) => (
+          <div key={`${r.name}-${i}`} className="px-4 py-2.5 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-slate-900 truncate">{r.name}</p>
+              {r.referred_by_code ? (
+                <p className="text-xs text-slate-500 truncate">приглашён: {r.referred_by_code}</p>
+              ) : (
+                <p className="text-xs text-slate-300">органика</p>
+              )}
             </div>
-          )
-        })}
+            <span className="text-xs font-mono text-slate-400 shrink-0">
+              {r.referral_code ?? '—'}
+            </span>
+          </div>
+        ))}
       </div>
       <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
         Если код в «приглашён» принадлежит workspace, у которого он сам появился по приглашению —
