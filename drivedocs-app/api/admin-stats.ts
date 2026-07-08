@@ -14,6 +14,8 @@ interface Counts {
   receipts: number
   documents: number
   events: number
+  installs: number
+  ios_guide_opens: number
 }
 
 function cors(): HeadersInit {
@@ -37,6 +39,26 @@ async function countRows(
   table: string,
 ): Promise<number> {
   const resp = await fetch(`${url}/rest/v1/${table}?select=id`, {
+    method: 'HEAD',
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      Prefer: 'count=exact',
+      Range: '0-0',
+    },
+  })
+  const range = resp.headers.get('content-range') ?? '*/0'
+  const total = range.split('/')[1] ?? '0'
+  return Number.parseInt(total, 10) || 0
+}
+
+async function countRowsWhere(
+  url: string,
+  serviceKey: string,
+  table: string,
+  filter: string,
+): Promise<number> {
+  const resp = await fetch(`${url}/rest/v1/${table}?select=id&${filter}`, {
     method: 'HEAD',
     headers: {
       apikey: serviceKey,
@@ -99,14 +121,17 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   // Параллельно считаем все таблицы + auth users.
-  const [registered, workspaces, trips, receipts, documents, events] = await Promise.all([
-    countAuthUsers(url, serviceKey),
-    countRows(url, serviceKey, 'workspaces'),
-    countRows(url, serviceKey, 'trips'),
-    countRows(url, serviceKey, 'receipts'),
-    countRows(url, serviceKey, 'documents'),
-    countRows(url, serviceKey, 'events'),
-  ])
+  const [registered, workspaces, trips, receipts, documents, events, installs, iosGuideOpens] =
+    await Promise.all([
+      countAuthUsers(url, serviceKey),
+      countRows(url, serviceKey, 'workspaces'),
+      countRows(url, serviceKey, 'trips'),
+      countRows(url, serviceKey, 'receipts'),
+      countRows(url, serviceKey, 'documents'),
+      countRows(url, serviceKey, 'events'),
+      countRowsWhere(url, serviceKey, 'install_events', 'platform=in.(android_installed,desktop_installed)'),
+      countRowsWhere(url, serviceKey, 'install_events', 'platform=eq.ios_guide_opened'),
+    ])
 
   const counts: Counts = {
     registered_users: registered,
@@ -115,6 +140,8 @@ export default async function handler(req: Request): Promise<Response> {
     receipts,
     documents,
     events,
+    installs,
+    ios_guide_opens: iosGuideOpens,
   }
 
   return json(200, { counts, generated_at: new Date().toISOString() })

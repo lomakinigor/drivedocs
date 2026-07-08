@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Share, PlusSquare, MoreVertical, Smartphone } from 'lucide-react'
+import { supabase, isBackendConfigured } from '@/lib/supabase'
+import { recordMetric } from '@/lib/metrics/featureMetrics'
 
 const STORAGE_KEY = 'pwa-install-dismissed'
 
@@ -9,6 +11,16 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 type Platform = 'ios' | 'android-native' | 'android-manual'
+
+// Анонимный write-only лог установок (см. supabase/migrations/20260708210000_install_events.sql).
+// iOS не даёт API для отслеживания самой установки — только intent (открытие инструкции).
+type InstallEventPlatform = 'android_installed' | 'desktop_installed' | 'ios_guide_opened'
+
+function logInstallEvent(platform: InstallEventPlatform) {
+  recordMetric(`install.${platform}`)
+  if (!isBackendConfigured || !supabase) return
+  void supabase.from('install_events').insert({ platform }).then(() => {})
+}
 
 // Маршруты, где баннер «Установить» перекрывает primary CTA внизу экрана —
 // /welcome, /onboarding, /auth имеют sticky-кнопку и не используют BottomNav.
@@ -74,6 +86,20 @@ export function InstallPrompt() {
     return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
+  // appinstalled — единственное надёжное подтверждение реальной установки
+  // (срабатывает и после нативного prompt'а, и после ручного «Добавить на
+  // главный экран» через меню браузера — Chrome/Edge на Android и десктопе).
+  useEffect(() => {
+    const onInstalled = () => {
+      const isAndroid = /android/i.test(navigator.userAgent)
+      logInstallEvent(isAndroid ? 'android_installed' : 'desktop_installed')
+      localStorage.setItem(STORAGE_KEY, '1')
+      setShow(false)
+    }
+    window.addEventListener('appinstalled', onInstalled)
+    return () => window.removeEventListener('appinstalled', onInstalled)
+  }, [])
+
   const dismiss = () => {
     localStorage.setItem(STORAGE_KEY, '1')
     setShow(false)
@@ -120,7 +146,10 @@ export function InstallPrompt() {
               </p>
               <button
                 type="button"
-                onClick={() => setIosGuideOpen(true)}
+                onClick={() => {
+                  logInstallEvent('ios_guide_opened')
+                  setIosGuideOpen(true)
+                }}
                 className="text-xs font-semibold text-blue-600 active:text-blue-800 mt-1"
               >
                 Показать по шагам →

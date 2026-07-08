@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { Users, Route, FileText, Receipt, TrendingUp, Database, BarChart2, Activity, Trash2, RefreshCw, FolderOpen, Bell } from 'lucide-react'
+import { Users, Route, FileText, Receipt, TrendingUp, Database, BarChart2, Activity, Trash2, RefreshCw, FolderOpen, Bell, Download, Smartphone } from 'lucide-react'
 import { useWorkspaceStore } from '@/app/store/workspaceStore'
 import { isBackendConfigured, supabase } from '@/lib/supabase'
 import { getAllMetrics, clearMetrics } from '@/lib/metrics/featureMetrics'
@@ -13,6 +13,8 @@ interface AdminCounts {
   receipts: number
   documents: number
   events: number
+  installs: number
+  ios_guide_opens: number
 }
 
 // ─── Admin access guard ───────────────────────────────────────────────────────
@@ -371,6 +373,18 @@ function LiveStatsSection() {
           label="Событий"
           value={counts ? String(counts.events) : '—'}
           sub="напоминаний"
+        />
+        <StatCard
+          icon={<Download size={16} />}
+          label="Установлено"
+          value={counts ? String(counts.installs) : '—'}
+          sub="Android + десктоп"
+        />
+        <StatCard
+          icon={<Smartphone size={16} />}
+          label="iOS: открыли инструкцию"
+          value={counts ? String(counts.ios_guide_opens) : '—'}
+          sub="Apple не даёт трекать саму установку"
         />
       </div>
 
